@@ -5,7 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\UserModel;
-use App\Models\RaeeModel;
+use App\Models\DonationModel;
 use App\Models\TecnicoModel;
 use App\Models\InstitucionModel;
 use Firebase\JWT\JWT;
@@ -14,14 +14,14 @@ use Firebase\JWT\Key;
 class AuthController extends BaseController
 {
     protected $userModel;
-    protected $raeeModel;
+    protected $donationModel;
     protected $tecnicoModel;
     protected $institucionModel;
     
     public function __construct()
     {
         $this->userModel = new UserModel();
-        $this->raeeModel = new RaeeModel();
+        $this->donationModel = new DonationModel();
         $this->tecnicoModel = new TecnicoModel();
         $this->institucionModel = new InstitucionModel();
     }
@@ -93,7 +93,7 @@ class AuthController extends BaseController
                             'descripcion' => $json->dispositivo->descripcion ?? '',
                             'ubicacion_donacion' => $json->dispositivo->ubicacion ?? ''
                         ];
-                        $this->raeeModel->insert($raeeData);
+                        $this->donationModel->insert($raeeData);
                     }
                     break;
                     

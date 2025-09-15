@@ -4,7 +4,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class RaeeModel extends Model
+class DonationModel extends Model
 {
     protected $table            = 'raee';
     protected $primaryKey       = 'id';

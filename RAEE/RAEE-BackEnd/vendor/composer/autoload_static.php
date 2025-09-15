@@ -107,9 +107,12 @@ class ComposerStaticInit657ac079313fab046eb8c29fe1d6992b
     public static $classMap = array (
         'App\\Controllers\\AuthController' => __DIR__ . '/../..' . '/app/Controllers/AuthController.php',
         'App\\Controllers\\BaseController' => __DIR__ . '/../..' . '/app/Controllers/BaseController.php',
+        'App\\Controllers\\DonationController' => __DIR__ . '/../..' . '/app/Controllers/DonationController.php',
         'App\\Controllers\\Home' => __DIR__ . '/../..' . '/app/Controllers/Home.php',
+        'App\\Controllers\\InstitutionController' => __DIR__ . '/../..' . '/app/Controllers/InstitutionController.php',
+        'App\\Controllers\\TechnicianController' => __DIR__ . '/../..' . '/app/Controllers/TechnicianController.php',
+        'App\\Models\\DonationModel' => __DIR__ . '/../..' . '/app/Models/DonationModel.php',
         'App\\Models\\InstitucionModel' => __DIR__ . '/../..' . '/app/Models/InstitucionModel.php',
-        'App\\Models\\RaeeModel' => __DIR__ . '/../..' . '/app/Models/RaeeModel.php',
         'App\\Models\\TecnicoModel' => __DIR__ . '/../..' . '/app/Models/TecnicoModel.php',
         'App\\Models\\UserModel' => __DIR__ . '/../..' . '/app/Models/UserModel.php',
         'CodeIgniter\\API\\ResponseTrait' => __DIR__ . '/..' . '/codeigniter4/framework/system/API/ResponseTrait.php',

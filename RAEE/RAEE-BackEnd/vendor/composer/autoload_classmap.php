@@ -8,9 +8,12 @@ $baseDir = dirname($vendorDir);
 return array(
     'App\\Controllers\\AuthController' => $baseDir . '/app/Controllers/AuthController.php',
     'App\\Controllers\\BaseController' => $baseDir . '/app/Controllers/BaseController.php',
+    'App\\Controllers\\DonationController' => $baseDir . '/app/Controllers/DonationController.php',
     'App\\Controllers\\Home' => $baseDir . '/app/Controllers/Home.php',
+    'App\\Controllers\\InstitutionController' => $baseDir . '/app/Controllers/InstitutionController.php',
+    'App\\Controllers\\TechnicianController' => $baseDir . '/app/Controllers/TechnicianController.php',
+    'App\\Models\\DonationModel' => $baseDir . '/app/Models/DonationModel.php',
     'App\\Models\\InstitucionModel' => $baseDir . '/app/Models/InstitucionModel.php',
-    'App\\Models\\RaeeModel' => $baseDir . '/app/Models/RaeeModel.php',
     'App\\Models\\TecnicoModel' => $baseDir . '/app/Models/TecnicoModel.php',
     'App\\Models\\UserModel' => $baseDir . '/app/Models/UserModel.php',
     'CodeIgniter\\API\\ResponseTrait' => $vendorDir . '/codeigniter4/framework/system/API/ResponseTrait.php',

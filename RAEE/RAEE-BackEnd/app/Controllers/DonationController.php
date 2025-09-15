@@ -4,19 +4,19 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
-use App\Models\RaeeModel;
+use App\Models\DonationModel;
 use App\Models\UserModel;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 class DonationController extends BaseController
 {
-    protected $raeeModel;
+    protected $donationModel;
     protected $userModel;
     
     public function __construct()
     {
-        $this->raeeModel = new RaeeModel();
+        $this->donationModel = new DonationModel();
         $this->userModel = new UserModel();
     }
 
@@ -69,7 +69,7 @@ class DonationController extends BaseController
                 'fecha_donacion' => date('Y-m-d H:i:s')
             ];
             
-            $donacionId = $this->raeeModel->insert($data);
+            $donacionId = $this->donationModel->insert($data);
             
             if ($donacionId) {
                 return $this->response->setJSON([
@@ -113,7 +113,7 @@ class DonationController extends BaseController
             $key = getenv('JWT_SECRET') ?: 'your-secret-key';
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
             
-            $donaciones = $this->raeeModel
+            $donaciones = $this->donationModel
                 ->where('usuario_id', $decoded->data->id)
                 ->where('tipo_usuario', $decoded->data->tipo)
                 ->orderBy('fecha_donacion', 'DESC')
@@ -135,7 +135,7 @@ class DonationController extends BaseController
     public function getAllDonations()
     {
         try {
-            $donaciones = $this->raeeModel
+            $donaciones = $this->donationModel
                 ->select('raee.*, users.nombre as donante_nombre, users.email as donante_email')
                 ->join('users', 'users.id = raee.usuario_id AND raee.tipo_usuario = "donante"', 'left')
                 ->orderBy('fecha_donacion', 'DESC')
@@ -198,7 +198,7 @@ class DonationController extends BaseController
                 $updateData['notas_procesamiento'] = $json->notas;
             }
             
-            $result = $this->raeeModel->update($id, $updateData);
+            $result = $this->donationModel->update($id, $updateData);
             
             if ($result) {
                 return $this->response->setJSON([
@@ -235,7 +235,7 @@ class DonationController extends BaseController
             $key = getenv('JWT_SECRET') ?: 'your-secret-key';
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
             
-            $donacion = $this->raeeModel->find($id);
+            $donacion = $this->donationModel->find($id);
             
             if (!$donacion) {
                 return $this->response->setJSON([
