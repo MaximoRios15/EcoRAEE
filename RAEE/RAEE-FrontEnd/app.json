@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "EcoRAEE",
+    "slug": "ecoraee",
+    "version": "1.1.0",
+    "sdkVersion": "54.0.0",
+    "orientation": "portrait",
+    "icon": "./logo-EcoRAEE.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./logo-EcoRAEE.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./logo-EcoRAEE.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "web": {
+      "favicon": "./logo-EcoRAEE.png"
+    }
+  }
+}
