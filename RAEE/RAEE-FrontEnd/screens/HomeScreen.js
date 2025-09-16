@@ -139,7 +139,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>Sobre EcoRAEE</Text>
           <Text style={styles.infoText}>
-            EcoRAEE es una plataforma que conecta ciudadanos donantes de residuos electrónicos con técnicos especializados e instituciones educativas para promover el reciclaje responsable y la economía circular.
+            EcoRAEE es una plataforma que conecta ciudadanos con técnicos especializados e instituciones educativas para promover el reciclaje responsable de residuos electrónicos y la economía circular.
           </Text>
         </View>
       </ScrollView>

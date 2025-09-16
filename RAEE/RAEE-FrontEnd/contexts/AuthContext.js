@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
           try {
             const response = await ApiService.getProfile();
             if (response.success) {
-              userData = response.user;
+              userData = response.data.user;
             } else {
               // Si el token no es válido, eliminarlo
               userToken = null;
@@ -120,8 +120,8 @@ export const AuthProvider = ({ children }) => {
           
           dispatch({
             type: 'SIGN_IN',
-            token: response.token,
-            user: profileResponse.success ? profileResponse.user : null,
+            token: response.data.token,
+            user: profileResponse.success ? profileResponse.data.user : null,
           });
           
           return { success: true, message: response.message };
@@ -188,8 +188,8 @@ export const AuthProvider = ({ children }) => {
 
         const response = await ApiService.getProfile();
         if (response.success) {
-          dispatch({ type: 'UPDATE_USER', userData: response.user });
-          return response.user;
+          dispatch({ type: 'UPDATE_USER', userData: response.data.user });
+          return response.data.user;
         } else {
           throw new Error(response.message || 'Error al cargar perfil');
         }

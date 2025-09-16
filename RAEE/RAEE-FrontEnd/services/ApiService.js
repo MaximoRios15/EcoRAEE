@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 class ApiService {
   constructor() {
     // URL base del backend CodeIgniter 4
-    this.baseURL = 'http://192.168.0.9/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
+    this.baseURL = 'http://192.168.0.9/RAEE/RAEE-BackEnd/public/api';
     this.token = null;
   }
 
@@ -101,8 +101,8 @@ class ApiService {
   async login(credentials) {
     const response = await this.makeRequest('login', 'POST', credentials, false);
     
-    if (response.success && response.token) {
-      await this.saveToken(response.token);
+    if (response.success && response.data && response.data.token) {
+      await this.saveToken(response.data.token);
     }
     
     return response;

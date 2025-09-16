@@ -16,7 +16,7 @@ class App extends BaseConfig
      *
      * E.g., http://example.com/
      */
-    public string $baseURL = 'http://192.168.0.9/EcoRAEE/RAEE/RAEE-BackEnd/public/';
+    public string $baseURL = 'http://localhost:8080/';
 
     /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.
@@ -29,7 +29,7 @@ class App extends BaseConfig
      *
      * @var list<string>
      */
-    public array $allowedHostnames = ['192.168.0.9', 'localhost'];
+    public array $allowedHostnames = [];
 
     /**
      * --------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 ## Descripción del Proyecto
 
-EcoRAEE es una aplicación móvil desarrollada con React Native y Expo que conecta ciudadanos donantes de residuos electrónicos (RAEE) con técnicos especializados e instituciones educativas para promover el reciclaje responsable y la economía circular.
+EcoRAEE es una aplicación móvil desarrollada con React Native y Expo que conecta ciudadanos con técnicos especializados e instituciones educativas para promover el reciclaje responsable de residuos electrónicos (RAEE) y la economía circular.
 
 ## Arquitectura y Tecnologías
 
