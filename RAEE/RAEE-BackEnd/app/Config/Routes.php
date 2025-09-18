@@ -13,6 +13,7 @@ $routes->group('api', function($routes) {
     $routes->post('register', 'AuthController::register');
     $routes->post('login', 'AuthController::login');
     $routes->get('profile', 'AuthController::profile');
+    $routes->get('user/points', 'AuthController::getUserPoints');
     $routes->post('logout', 'AuthController::logout');
     
     // Donation routes
@@ -32,4 +33,8 @@ $routes->group('api', function($routes) {
     $routes->get('technician/profile', 'TechnicianController::profile');
     $routes->put('technician/profile', 'TechnicianController::updateProfile');
     $routes->get('technicians', 'TechnicianController::index');
+    
+    // Category and State routes (public endpoints)
+    $routes->get('categories', 'CategoryController::index');
+    $routes->get('states', 'StateController::index');
 });

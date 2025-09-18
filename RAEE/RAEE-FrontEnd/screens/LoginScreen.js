@@ -14,8 +14,8 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function LoginScreen({ navigation }) {
   const [formData, setFormData] = useState({
-    dni: '',
-    password: '',
+    DNI_Usuarios: '',
+    Password_Usuarios: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +36,7 @@ export default function LoginScreen({ navigation }) {
     console.log(`[BUTTON] EL USUARIO APRETO EL BOTON INICIAR SESION - ${time} ${date}`);
     
     // Validación básica
-    if (!formData.dni || !formData.password) {
+    if (!formData.DNI_Usuarios || !formData.Password_Usuarios) {
       Alert.alert('Error', 'Por favor completa todos los campos');
       return;
     }
@@ -45,8 +45,8 @@ export default function LoginScreen({ navigation }) {
 
     try {
       const result = await signIn({
-        dni: formData.dni,
-        password: formData.password,
+        DNI_Usuarios: formData.DNI_Usuarios,
+        Password_Usuarios: formData.Password_Usuarios,
       });
 
       if (result.success) {
@@ -85,8 +85,8 @@ export default function LoginScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="Ingresa tu DNI"
-            value={formData.dni}
-            onChangeText={(value) => handleInputChange('dni', value)}
+            value={formData.DNI_Usuarios}
+            onChangeText={(value) => handleInputChange('DNI_Usuarios', value)}
             onFocus={() => {
               const now = new Date();
               const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -102,8 +102,8 @@ export default function LoginScreen({ navigation }) {
             <TextInput
               style={styles.passwordInput}
               placeholder="Ingresa tu contraseña"
-              value={formData.password}
-              onChangeText={(value) => handleInputChange('password', value)}
+              value={formData.Password_Usuarios}
+              onChangeText={(value) => handleInputChange('Password_Usuarios', value)}
               onFocus={() => {
                  const now = new Date();
                  const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });

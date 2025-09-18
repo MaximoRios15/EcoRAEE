@@ -99,9 +99,9 @@ export default function HomeScreen({ navigation }) {
         {/* Tarjeta de Bienvenida */}
         <View style={styles.welcomeCard}>
           <Text style={styles.welcomeTitle}>¡Bienvenido!</Text>
-          <Text style={styles.userName}>{user?.apellido}, {user?.nombre}</Text>
+          <Text style={styles.userName}>{user?.Apellidos_Usuarios}, {user?.Nombres_Usuarios}</Text>
           <Text style={styles.userType}>Ciudadano</Text>
-          <Text style={styles.pointsText}>Puntos: <Text style={styles.pointsValue}>{user?.puntos || 0}</Text></Text>
+          <Text style={styles.pointsText}>Puntos: <Text style={styles.pointsValue}>{user?.Puntos_Usuarios || 0}</Text></Text>
         </View>
 
         {/* Acciones Rápidas */}

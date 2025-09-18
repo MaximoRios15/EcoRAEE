@@ -38,33 +38,35 @@ class AuthController extends ResourceController
             }
 
             // Validate required fields
-            $requiredFields = ['nombre', 'apellido', 'email', 'password', 'dni', 'telefono', 'tipo_usuario'];
+            $requiredFields = ['Nombres_Usuarios', 'Apellidos_Usuarios', 'Email_Usuarios', 'Password_Usuarios', 'DNI_Usuarios', 'Telefono_Usuarios', 'Roles_Usuarios'];
             foreach ($requiredFields as $field) {
                 if (empty($data[$field])) {
                     return $this->fail("El campo {$field} es obligatorio", 400);
                 }
             }
 
-            // Validate user type
-            if (!in_array($data['tipo_usuario'], ['ciudadano', 'institucion', 'tecnico'])) {
-                return $this->fail('Tipo de usuario no válido', 400);
+            // Validate user role (assuming 1=ciudadano, 2=institucion, 3=tecnico)
+            if (!in_array($data['Roles_Usuarios'], [1, 2, 3])) {
+                return $this->fail('Rol de usuario no válido', 400);
             }
 
             // Check if email already exists
-            if ($this->userModel->where('email', $data['email'])->first()) {
+            if ($this->userModel->where('Email_Usuarios', $data['Email_Usuarios'])->first()) {
                 return $this->fail('El email ya está registrado', 409);
             }
 
             // Check if DNI already exists
-            if ($this->userModel->where('dni', $data['dni'])->first()) {
+            if ($this->userModel->where('DNI_Usuarios', $data['DNI_Usuarios'])->first()) {
                 return $this->fail('El DNI ya está registrado', 409);
             }
 
             // Set default values
-            $data['puntos'] = 0;
-            $data['activo'] = 1;
-            $data['provincia'] = $data['provincia'] ?? 'Misiones';
-            $data['municipio'] = $data['municipio'] ?? 'No especificado';
+            $data['Puntos_Usuarios'] = 0;
+            $data['Activo_Usuarios'] = 1;
+            $data['Provincia_Usuarios'] = $data['Provincia_Usuarios'] ?? 'Misiones';
+            $data['Municipios_Usuarios'] = $data['Municipios_Usuarios'] ?? 'No especificado';
+
+            // Password will be hashed by the model callback
 
             // Create user
             $userId = $this->userModel->insert($data);
@@ -74,25 +76,22 @@ class AuthController extends ResourceController
                 return $this->fail('Error al crear usuario: ' . implode(', ', $errors), 400);
             }
 
-            // Create profile based on user type
+            // Create profile based on user role
             $profileCreated = true;
             $profileData = [];
 
-            if ($data['tipo_usuario'] === 'ciudadano') {
+            if ($data['Roles_Usuarios'] == 1) { // ciudadano
                 // Citizens don't need additional profile, just use the user table
                 $profileCreated = true;
                 $profileData = ['message' => 'Perfil de ciudadano creado exitosamente'];
-            } elseif ($data['tipo_usuario'] === 'institucion') {
+            } elseif ($data['Roles_Usuarios'] == 2) { // institucion
                 $institucionData = [
-                    'user_id' => $userId,
-                    'nombre_institucion' => $data['nombre_institucion'] ?? '',
-                    'tipo_institucion' => $data['tipo_institucion'] ?? '',
-                    'direccion' => $data['direccion'] ?? '',
-                    'codigo_postal' => $data['codigo_postal'] ?? '',
-                    'telefono_contacto' => $data['telefono_contacto'] ?? $data['telefono'],
-                    'email_contacto' => $data['email_contacto'] ?? $data['email'],
-                    'nombre_responsable' => $data['nombre_responsable'] ?? $data['nombre'] . ' ' . $data['apellido'],
-                    'descripcion_programas' => $data['descripcion_programas'] ?? ''
+                    'clientes_Institucion' => $userId,
+                    'NroLegajo_Institucion' => $data['NroLegajo_Institucion'] ?? 'LEG-' . $userId,
+                    'Tipo_Institucion' => $data['Tipo_Institucion'] ?? 1,
+                    'Contacto_Institucion' => $data['Contacto_Institucion'] ?? $data['Telefono_Usuarios'],
+                    'RegistroTitulo_Institucion' => $data['RegistroTitulo_Institucion'] ?? 'REG-' . $userId,
+                    'estados_Institucion' => 1 // Assuming 1 = active
                 ];
                 
                 $profileId = $this->institucionModel->insert($institucionData);
@@ -100,18 +99,11 @@ class AuthController extends ResourceController
                     $profileCreated = false;
                     $profileData = $this->institucionModel->errors();
                 }
-            } elseif ($data['tipo_usuario'] === 'tecnico') {
+            } elseif ($data['Roles_Usuarios'] == 3) { // tecnico
                 $tecnicoData = [
-                    'user_id' => $userId,
-                    'especialidad' => $data['especialidad'] ?? '',
-                    'experiencia_anos' => $data['experiencia_anos'] ?? 0,
-                    'certificaciones' => $data['certificaciones'] ?? '',
-                    'disponibilidad' => 'disponible',
-                    'zona_cobertura' => $data['zona_cobertura'] ?? $data['provincia'],
-                    'tarifa_hora' => $data['tarifa_hora'] ?? 0,
-                    'calificacion_promedio' => 0,
-                    'total_trabajos' => 0,
-                    'descripcion_servicios' => $data['descripcion_servicios'] ?? ''
+                    'clientes_Tecnico' => $userId,
+                    'Certificado_Tecnico' => $data['Certificado_Tecnico'] ?? 'CERT-' . $userId,
+                    'estados_Tecnico' => 1 // Assuming 1 = active
                 ];
                 
                 $profileId = $this->tecnicoModel->insert($tecnicoData);
@@ -123,7 +115,7 @@ class AuthController extends ResourceController
 
             // Get created user
             $user = $this->userModel->find($userId);
-            unset($user['password']); // Remove password from response
+            unset($user['Password_Usuarios']); // Remove password from response
 
             $response = [
                 'success' => true,
@@ -160,24 +152,24 @@ class AuthController extends ResourceController
             }
 
             // Validate required fields
-            if (empty($data['dni']) || empty($data['password'])) {
+            if (empty($data['DNI_Usuarios']) || empty($data['Password_Usuarios'])) {
                 return $this->fail('DNI y contraseña son obligatorios', 400);
             }
 
             // Find user by DNI
-            $user = $this->userModel->where('dni', $data['dni'])->first();
+            $user = $this->userModel->where('DNI_Usuarios', $data['DNI_Usuarios'])->first();
             
             if (!$user) {
                 return $this->fail('Credenciales inválidas', 401);
             }
 
             // Check if user is active
-            if (!$user['activo']) {
+            if (!$user['Activo_Usuarios']) {
                 return $this->fail('Usuario inactivo', 401);
             }
 
             // Verify password
-            if (!password_verify($data['password'], $user['password'])) {
+            if (!password_verify($data['Password_Usuarios'], $user['Password_Usuarios'])) {
                 return $this->fail('Credenciales inválidas', 401);
             }
 
@@ -185,14 +177,14 @@ class AuthController extends ResourceController
             $token = $this->generateJWT($user);
 
             // Remove password from response
-            unset($user['password']);
+            unset($user['Password_Usuarios']);
 
-            // Get profile data based on user type
+            // Get profile data based on user role
             $profile = null;
-            if ($user['tipo_usuario'] === 'institucion') {
-                $profile = $this->institucionModel->getByUserId($user['id']);
-            } elseif ($user['tipo_usuario'] === 'tecnico') {
-                $profile = $this->tecnicoModel->getByUserId($user['id']);
+            if ($user['Roles_Usuarios'] == 2) { // institucion
+                $profile = $this->institucionModel->getByUserId($user['idUsuarios']);
+            } elseif ($user['Roles_Usuarios'] == 3) { // tecnico
+                $profile = $this->tecnicoModel->getByUserId($user['idUsuarios']);
             }
 
             return $this->respond([
@@ -230,14 +222,14 @@ class AuthController extends ResourceController
             }
 
             // Remove password from response
-            unset($user['password']);
+            unset($user['Password_Usuarios']);
 
-            // Get profile data based on user type
+            // Get profile data based on user role
             $profile = null;
-            if ($user['tipo_usuario'] === 'institucion') {
-                $profile = $this->institucionModel->getByUserId($user['id']);
-            } elseif ($user['tipo_usuario'] === 'tecnico') {
-                $profile = $this->tecnicoModel->getByUserId($user['id']);
+            if ($user['Roles_Usuarios'] == 2) { // institucion
+                $profile = $this->institucionModel->getByUserId($user['idUsuarios']);
+            } elseif ($user['Roles_Usuarios'] == 3) { // tecnico
+                $profile = $this->tecnicoModel->getByUserId($user['idUsuarios']);
             }
 
             return $this->respond([
@@ -250,6 +242,40 @@ class AuthController extends ResourceController
 
         } catch (\Exception $e) {
             log_message('error', 'Error al obtener perfil: ' . $e->getMessage());
+            return $this->fail('Error interno del servidor', 500);
+        }
+    }
+
+    /**
+     * Get user points
+     */
+    public function getUserPoints()
+    {
+        try {
+            $userId = $this->getUserIdFromToken();
+            
+            if (!$userId) {
+                return $this->fail('Token inválido', 401);
+            }
+
+            $user = $this->userModel->find($userId);
+            
+            if (!$user) {
+                return $this->fail('Usuario no encontrado', 404);
+            }
+
+            return $this->respond([
+                'success' => true,
+                'data' => [
+                    'user_id' => $userId,
+                    'puntos' => $user['Puntos_Usuarios'] ?? 0,
+                    'nombres' => $user['Nombres_Usuarios'],
+                    'apellidos' => $user['Apellidos_Usuarios']
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error al obtener puntos del usuario: ' . $e->getMessage());
             return $this->fail('Error interno del servidor', 500);
         }
     }
@@ -282,7 +308,7 @@ class AuthController extends ResourceController
             $userData = [];
             $profileData = [];
 
-            $userFields = ['nombre', 'apellido', 'telefono', 'provincia', 'municipio'];
+            $userFields = ['Nombres_Usuarios', 'Apellidos_Usuarios', 'Telefono_Usuarios', 'Provincia_Usuarios', 'Municipios_Usuarios'];
             
             foreach ($data as $key => $value) {
                 if (in_array($key, $userFields)) {
@@ -304,21 +330,21 @@ class AuthController extends ResourceController
             // Update profile data
             $profileUpdated = true;
             if (!empty($profileData)) {
-                if ($user['tipo_usuario'] === 'institucion') {
+                if ($user['Roles_Usuarios'] == 2) { // institucion
                     $profileUpdated = $this->institucionModel->updateProfile($userId, $profileData);
-                } elseif ($user['tipo_usuario'] === 'tecnico') {
+                } elseif ($user['Roles_Usuarios'] == 3) { // tecnico
                     $profileUpdated = $this->tecnicoModel->updateProfile($userId, $profileData);
                 }
             }
 
             // Get updated user and profile
             $updatedUser = $this->userModel->find($userId);
-            unset($updatedUser['password']);
+            unset($updatedUser['Password_Usuarios']);
 
             $profile = null;
-            if ($user['tipo_usuario'] === 'institucion') {
+            if ($user['Roles_Usuarios'] == 2) { // institucion
                 $profile = $this->institucionModel->getByUserId($userId);
-            } elseif ($user['tipo_usuario'] === 'tecnico') {
+            } elseif ($user['Roles_Usuarios'] == 3) { // tecnico
                 $profile = $this->tecnicoModel->getByUserId($userId);
             }
 
@@ -368,7 +394,7 @@ class AuthController extends ResourceController
             }
 
             // Verify current password
-            if (!password_verify($data['current_password'], $user['password'])) {
+            if (!password_verify($data['current_password'], $user['Password_Usuarios'])) {
                 return $this->fail('Contraseña actual incorrecta', 400);
             }
 
@@ -381,7 +407,7 @@ class AuthController extends ResourceController
             $hashedPassword = password_hash($data['new_password'], PASSWORD_DEFAULT);
 
             // Update password
-            $updated = $this->userModel->update($userId, ['password' => $hashedPassword]);
+            $updated = $this->userModel->update($userId, ['Password_Usuarios' => $hashedPassword]);
             
             if (!$updated) {
                 return $this->fail('Error al actualizar contraseña', 500);
@@ -412,7 +438,7 @@ class AuthController extends ResourceController
 
             $user = $this->userModel->find($userId);
             
-            if (!$user || !$user['activo']) {
+            if (!$user || !$user['Activo_Usuarios']) {
                 return $this->fail('Usuario no válido', 401);
             }
 
@@ -456,9 +482,9 @@ class AuthController extends ResourceController
             'iat' => time(),
             'exp' => time() + (24 * 60 * 60), // 24 hours
             'data' => [
-                'user_id' => $user['id'],
-                'email' => $user['email'],
-                'tipo_usuario' => $user['tipo_usuario']
+                'idUsuarios' => $user['idUsuarios'],
+                'Email_Usuarios' => $user['Email_Usuarios'],
+                'Roles_Usuarios' => $user['Roles_Usuarios']
             ]
         ];
 
@@ -482,7 +508,7 @@ class AuthController extends ResourceController
             
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
             
-            return $decoded->data->user_id ?? null;
+            return $decoded->data->idUsuarios ?? null;
 
         } catch (\Exception $e) {
             log_message('error', 'Error al decodificar token: ' . $e->getMessage());
@@ -513,7 +539,7 @@ class AuthController extends ResourceController
             }
 
             // Check if email exists
-            $exists = $this->userModel->where('email', $email)->first();
+            $exists = $this->userModel->where('Email_Usuarios', $email)->first();
             
             return $this->respond([
                 'success' => true,
@@ -545,7 +571,7 @@ class AuthController extends ResourceController
             $dni = $data['dni'];
             
             // Check if DNI exists
-            $exists = $this->userModel->where('dni', $dni)->first();
+            $exists = $this->userModel->where('DNI_Usuarios', $dni)->first();
             
             return $this->respond([
                 'success' => true,

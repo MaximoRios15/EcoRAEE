@@ -17,15 +17,15 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function RegisterScreen({ navigation }) {
   const [formData, setFormData] = useState({
-    dni: '',
-    nombre: '',
-    apellido: '',
-    tipo_usuario: 'ciudadano',
-    email: '',
-    telefono: '',
-    provincia: 'Misiones',
-    municipio: '',
-    password: '',
+    DNI_Usuarios: '',
+    Nombres_Usuarios: '',
+    Apellidos_Usuarios: '',
+    Roles_Usuarios: 1, // 1=ciudadano, 2=institucion, 3=tecnico
+    Email_Usuarios: '',
+    Telefono_Usuarios: '',
+    Provincia_Usuarios: 'Misiones',
+    Municipios_Usuarios: '',
+    Password_Usuarios: '',
     confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -41,10 +41,10 @@ export default function RegisterScreen({ navigation }) {
     }));
 
     // Validación en tiempo real de contraseñas
-    if (field === 'password' || field === 'confirmPassword') {
+    if (field === 'Password_Usuarios' || field === 'confirmPassword') {
       const newFormData = { ...formData, [field]: value };
       
-      if (newFormData.confirmPassword && newFormData.password !== newFormData.confirmPassword) {
+      if (newFormData.confirmPassword && newFormData.Password_Usuarios !== newFormData.confirmPassword) {
         setPasswordError('Las contraseñas no coinciden');
       } else {
         setPasswordError('');
@@ -54,20 +54,20 @@ export default function RegisterScreen({ navigation }) {
 
   const handleRegister = async () => {
     // Validación básica
-    if (!formData.dni || !formData.nombre || !formData.apellido || !formData.email || 
-        !formData.telefono || !formData.provincia || !formData.municipio || !formData.password) {
+    if (!formData.DNI_Usuarios || !formData.Nombres_Usuarios || !formData.Apellidos_Usuarios || !formData.Email_Usuarios || 
+        !formData.Telefono_Usuarios || !formData.Provincia_Usuarios || !formData.Municipios_Usuarios || !formData.Password_Usuarios) {
       Alert.alert('Error', 'Por favor completa todos los campos obligatorios');
       return;
     }
 
     // Validar confirmación de contraseña
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.Password_Usuarios !== formData.confirmPassword) {
       Alert.alert('Error', 'Las contraseñas no coinciden');
       return;
     }
 
     // Validar longitud de contraseña
-    if (formData.password.length < 6) {
+    if (formData.Password_Usuarios.length < 6) {
       Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres');
       return;
     }
@@ -77,15 +77,15 @@ export default function RegisterScreen({ navigation }) {
     try {
       // Preparar datos para enviar al backend
       const registrationData = {
-        dni: formData.dni,
-        nombre: formData.nombre,
-        apellido: formData.apellido,
-        tipo_usuario: formData.tipo_usuario,
-        email: formData.email,
-        telefono: formData.telefono,
-        provincia: formData.provincia,
-        municipio: formData.municipio,
-        password: formData.password,
+        DNI_Usuarios: formData.DNI_Usuarios,
+        Nombres_Usuarios: formData.Nombres_Usuarios,
+        Apellidos_Usuarios: formData.Apellidos_Usuarios,
+        Roles_Usuarios: formData.Roles_Usuarios,
+        Email_Usuarios: formData.Email_Usuarios,
+        Telefono_Usuarios: formData.Telefono_Usuarios,
+        Provincia_Usuarios: formData.Provincia_Usuarios,
+        Municipios_Usuarios: formData.Municipios_Usuarios,
+        Password_Usuarios: formData.Password_Usuarios,
       };
 
       const result = await signUp(registrationData);
@@ -129,8 +129,8 @@ export default function RegisterScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="Ingresa tu DNI"
-            value={formData.dni}
-            onChangeText={(value) => handleInputChange('dni', value)}
+            value={formData.DNI_Usuarios}
+            onChangeText={(value) => handleInputChange('DNI_Usuarios', value)}
             onFocus={() => {
               const now = new Date();
               const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -145,8 +145,8 @@ export default function RegisterScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="Ingresa tu nombre"
-            value={formData.nombre}
-            onChangeText={(value) => handleInputChange('nombre', value)}
+            value={formData.Nombres_Usuarios}
+            onChangeText={(value) => handleInputChange('Nombres_Usuarios', value)}
             onFocus={() => {
               const now = new Date();
               const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -160,8 +160,8 @@ export default function RegisterScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="Ingresa tu apellido"
-            value={formData.apellido}
-            onChangeText={(value) => handleInputChange('apellido', value)}
+            value={formData.Apellidos_Usuarios}
+            onChangeText={(value) => handleInputChange('Apellidos_Usuarios', value)}
             onFocus={() => {
               const now = new Date();
               const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -174,14 +174,14 @@ export default function RegisterScreen({ navigation }) {
           <Text style={styles.label}>Tipos de Usuario *</Text>
           <View style={styles.pickerContainer}>
             <RNPickerSelect
-              onValueChange={(value) => handleInputChange('tipo_usuario', value)}
+              onValueChange={(value) => handleInputChange('Roles_Usuarios', value)}
               items={[
-                { label: 'Ciudadano', value: 'ciudadano' },
-                { label: 'Tecnico', value: 'tecnico' },
-                { label: 'Institucion', value: 'institucion' },
+                { label: 'Ciudadano', value: 1 },
+                { label: 'Tecnico', value: 3 },
+                { label: 'Institucion', value: 2 },
               ]}
               style={pickerSelectStyles}
-              value={formData.tipo_usuario}
+              value={formData.Roles_Usuarios}
               placeholder={{}}
             />
           </View>
@@ -191,8 +191,8 @@ export default function RegisterScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="ejemplo@correo.com"
-            value={formData.email}
-            onChangeText={(value) => handleInputChange('email', value)}
+            value={formData.Email_Usuarios}
+            onChangeText={(value) => handleInputChange('Email_Usuarios', value)}
             onFocus={() => {
               const now = new Date();
               const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -208,8 +208,8 @@ export default function RegisterScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="Ingresa tu teléfono"
-            value={formData.telefono}
-            onChangeText={(value) => handleInputChange('telefono', value)}
+            value={formData.Telefono_Usuarios}
+            onChangeText={(value) => handleInputChange('Telefono_Usuarios', value)}
             onFocus={() => {
               const now = new Date();
               const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -229,7 +229,7 @@ export default function RegisterScreen({ navigation }) {
           <Text style={styles.label}>Municipio *</Text>
           <View style={styles.pickerContainer}>
             <RNPickerSelect
-              onValueChange={(value) => handleInputChange('municipio', value)}
+              onValueChange={(value) => handleInputChange('Municipios_Usuarios', value)}
               items={[
                 { label: '25 de Mayo', value: '25 de Mayo' },
                 { label: 'Alba Posse', value: 'Alba Posse' },
@@ -310,7 +310,7 @@ export default function RegisterScreen({ navigation }) {
                 label: 'Selecciona tu municipio...',
                 value: null,
               }}
-              value={formData.municipio}
+              value={formData.Municipios_Usuarios}
             />
           </View>
 
@@ -320,8 +320,8 @@ export default function RegisterScreen({ navigation }) {
             <TextInput
               style={styles.passwordInput}
               placeholder="Mínimo 6 caracteres"
-              value={formData.password}
-              onChangeText={(value) => handleInputChange('password', value)}
+              value={formData.Password_Usuarios}
+              onChangeText={(value) => handleInputChange('Password_Usuarios', value)}
               onFocus={() => {
                 const now = new Date();
                 const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });

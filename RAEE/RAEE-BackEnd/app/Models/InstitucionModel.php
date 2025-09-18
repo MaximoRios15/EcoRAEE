@@ -6,75 +6,66 @@ use CodeIgniter\Model;
 
 class InstitucionModel extends Model
 {
-    protected $table = 'institucions';
-    protected $primaryKey = 'id';
+    protected $table = 'credenciales_institucion';
+    protected $primaryKey = 'id_Institucion';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     
     protected $allowedFields = [
-        'user_id',
-        'nombre_institucion',
-        'tipo_institucion',
-        'direccion',
-        'codigo_postal',
-        'telefono_contacto',
-        'email_contacto',
-        'nombre_responsable',
-        'descripcion_programas'
+        'clientes_Institucion',
+        'NroLegajo_Institucion',
+        'Tipo_Institucion',
+        'Contacto_Institucion',
+        'RegistroTitulo_Institucion',
+        'estados_Institucion'
     ];
 
     // Dates
-    protected $useTimestamps = true;
+    protected $useTimestamps = false;
     protected $dateFormat = 'datetime';
-    protected $createdField = 'created_at';
-    protected $updatedField = 'updated_at';
 
     // Validation
     protected $validationRules = [
-        'user_id' => 'required|integer|is_not_unique[users.id]|is_unique[institucions.user_id,id,{id}]',
-        'nombre_institucion' => 'required|min_length[3]|max_length[200]',
-        'tipo_institucion' => 'permit_empty|max_length[100]',
-        'direccion' => 'permit_empty|max_length[255]',
-        'codigo_postal' => 'permit_empty|max_length[10]',
-        'telefono_contacto' => 'permit_empty|min_length[7]|max_length[20]',
-        'email_contacto' => 'permit_empty|valid_email|max_length[150]',
-        'nombre_responsable' => 'permit_empty|max_length[150]',
-        'descripcion_programas' => 'permit_empty'
+        'clientes_Institucion' => 'required|integer|is_not_unique[usuarios.idUsuarios]',
+        'NroLegajo_Institucion' => 'required|min_length[3]|max_length[45]',
+        'Tipo_Institucion' => 'required|integer|in_list[1,2]',
+        'Contacto_Institucion' => 'required|min_length[7]|max_length[45]',
+        'RegistroTitulo_Institucion' => 'required|min_length[3]|max_length[45]',
+        'estados_Institucion' => 'required|integer|is_not_unique[estados.idEstados]'
     ];
 
     protected $validationMessages = [
-        'user_id' => [
+        'clientes_Institucion' => [
             'required' => 'El ID del usuario es obligatorio',
             'integer' => 'El ID del usuario debe ser un número entero',
-            'is_not_unique' => 'El usuario especificado no existe',
-            'is_unique' => 'Este usuario ya tiene una institución registrada'
+            'is_not_unique' => 'El usuario especificado no existe'
         ],
-        'nombre_institucion' => [
-            'required' => 'El nombre de la institución es obligatorio',
-            'min_length' => 'El nombre de la institución debe tener al menos 3 caracteres',
-            'max_length' => 'El nombre de la institución no puede tener más de 200 caracteres'
+        'NroLegajo_Institucion' => [
+            'required' => 'El número de legajo es obligatorio',
+            'min_length' => 'El número de legajo debe tener al menos 3 caracteres',
+            'max_length' => 'El número de legajo no puede tener más de 45 caracteres'
         ],
-        'tipo_institucion' => [
-            'max_length' => 'El tipo de institución no puede tener más de 100 caracteres'
+        'Tipo_Institucion' => [
+            'required' => 'El tipo de institución es obligatorio',
+            'integer' => 'El tipo de institución debe ser un número entero',
+            'in_list' => 'El tipo de institución debe ser 1 (Educativa) o 2 (Gubernamental)'
         ],
-        'direccion' => [
-            'max_length' => 'La dirección no puede tener más de 255 caracteres'
+        'Contacto_Institucion' => [
+            'required' => 'El contacto es obligatorio',
+            'min_length' => 'El contacto debe tener al menos 7 caracteres',
+            'max_length' => 'El contacto no puede tener más de 45 caracteres'
         ],
-        'codigo_postal' => [
-            'max_length' => 'El código postal no puede tener más de 10 caracteres'
+        'RegistroTitulo_Institucion' => [
+            'required' => 'El registro/título es obligatorio',
+            'min_length' => 'El registro/título debe tener al menos 3 caracteres',
+            'max_length' => 'El registro/título no puede tener más de 45 caracteres'
         ],
-        'telefono_contacto' => [
-            'min_length' => 'El teléfono debe tener al menos 7 caracteres',
-            'max_length' => 'El teléfono no puede tener más de 20 caracteres'
-        ],
-        'email_contacto' => [
-            'valid_email' => 'Debe proporcionar un email válido',
-            'max_length' => 'El email no puede tener más de 150 caracteres'
-        ],
-        'nombre_responsable' => [
-            'max_length' => 'El nombre del responsable no puede tener más de 150 caracteres'
+        'estados_Institucion' => [
+            'required' => 'El estado es obligatorio',
+            'integer' => 'El estado debe ser un número entero',
+            'is_not_unique' => 'El estado especificado no existe'
         ]
     ];
 
@@ -89,7 +80,7 @@ class InstitucionModel extends Model
      */
     public function getByUserId(int $userId): ?array
     {
-        return $this->where('user_id', $userId)->first();
+        return $this->where('clientes_Institucion', $userId)->first();
     }
 
     /**
@@ -100,9 +91,9 @@ class InstitucionModel extends Model
         $db = \Config\Database::connect();
         $builder = $db->table($this->table . ' i');
         
-        $builder->select('i.*, u.nombre, u.apellido, u.email, u.telefono, u.provincia, u.municipio, u.puntos, u.created_at as user_created_at')
-                ->join('users u', 'i.user_id = u.id')
-                ->where('i.id', $institutionId);
+        $builder->select('i.*, u.Nombres_Usuarios, u.Apellidos_Usuarios, u.Email_Usuarios, u.Telefono_Usuarios, u.Provincia_Usuarios, u.Municipios_Usuarios, u.Puntos_Usuarios, u.FechaRegistro_Usuarios as user_created_at')
+                ->join('usuarios u', 'i.clientes_Institucion = u.idUsuarios')
+                ->where('i.id_Institucion', $institutionId);
         
         return $builder->get()->getRowArray() ?? [];
     }
@@ -115,9 +106,9 @@ class InstitucionModel extends Model
         $db = \Config\Database::connect();
         $builder = $db->table($this->table . ' i');
         
-        $builder->select('i.*, u.nombre, u.apellido, u.email, u.telefono, u.provincia, u.municipio, u.puntos, u.created_at as user_created_at')
-                ->join('users u', 'i.user_id = u.id')
-                ->where('i.user_id', $userId);
+        $builder->select('i.*, u.Nombres_Usuarios, u.Apellidos_Usuarios, u.Email_Usuarios, u.Telefono_Usuarios, u.Provincia_Usuarios, u.Municipios_Usuarios, u.Puntos_Usuarios, u.FechaRegistro_Usuarios as user_created_at')
+                ->join('usuarios u', 'i.clientes_Institucion = u.idUsuarios')
+                ->where('i.clientes_Institucion', $userId);
         
         return $builder->get()->getRowArray() ?? [];
     }
@@ -130,24 +121,24 @@ class InstitucionModel extends Model
         $db = \Config\Database::connect();
         $builder = $db->table($this->table . ' i');
         
-        $builder->select('i.*, u.nombre, u.apellido, u.email, u.telefono, u.provincia, u.municipio, u.puntos')
-                ->join('users u', 'i.user_id = u.id');
+        $builder->select('i.*, u.Nombres_Usuarios, u.Apellidos_Usuarios, u.Email_Usuarios, u.Telefono_Usuarios, u.Provincia_Usuarios, u.Municipios_Usuarios, u.Puntos_Usuarios')
+                ->join('usuarios u', 'i.clientes_Institucion = u.idUsuarios');
         
         // Apply filters
         if (!empty($filters['tipo_institucion'])) {
-            $builder->where('i.tipo_institucion', $filters['tipo_institucion']);
+            $builder->where('i.Tipo_Institucion', $filters['tipo_institucion']);
         }
         
         if (!empty($filters['provincia'])) {
-            $builder->where('u.provincia', $filters['provincia']);
+            $builder->where('u.Provincia_Usuarios', $filters['provincia']);
         }
         
         if (!empty($filters['search'])) {
             $builder->groupStart()
-                    ->like('i.nombre_institucion', $filters['search'])
-                    ->orLike('u.nombre', $filters['search'])
-                    ->orLike('u.apellido', $filters['search'])
-                    ->orLike('i.nombre_responsable', $filters['search'])
+                    ->like('i.NroLegajo_Institucion', $filters['search'])
+                    ->orLike('u.Nombres_Usuarios', $filters['search'])
+                    ->orLike('u.Apellidos_Usuarios', $filters['search'])
+                    ->orLike('i.Contacto_Institucion', $filters['search'])
                     ->groupEnd();
         }
         
@@ -157,7 +148,7 @@ class InstitucionModel extends Model
         // Get paginated results
         $offset = ($page - 1) * $perPage;
         $institutions = $builder->limit($perPage, $offset)
-                              ->orderBy('i.created_at', 'DESC')
+                              ->orderBy('i.id_Institucion', 'DESC')
                               ->get()
                               ->getResultArray();
         

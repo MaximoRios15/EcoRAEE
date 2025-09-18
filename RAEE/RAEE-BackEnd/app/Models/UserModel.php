@@ -6,84 +6,92 @@ use CodeIgniter\Model;
 
 class UserModel extends Model
 {
-    protected $table = 'users';
-    protected $primaryKey = 'id';
+    protected $table = 'usuarios';
+    protected $primaryKey = 'idUsuarios';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     
     protected $allowedFields = [
-        'dni',
-        'nombre',
-        'apellido',
-        'email',
-        'password',
-        'telefono',
-        'provincia',
-        'municipio',
-        'tipo_usuario',
-        'puntos',
-        'activo'
+        'DNI_Usuarios',
+        'Nombres_Usuarios',
+        'Apellidos_Usuarios',
+        'Password_Usuarios',
+        'Telefono_Usuarios',
+        'Email_Usuarios',
+        'Provincia_Usuarios',
+        'Municipios_Usuarios',
+        'Roles_Usuarios',
+        'Puntos_Usuarios',
+        'FechaRegistro_Usuarios',
+        'Activo_Usuarios'
     ];
 
     // Dates
-    protected $useTimestamps = true;
+    protected $useTimestamps = false; // La tabla usa FechaRegistro_Usuarios
     protected $dateFormat = 'datetime';
-    protected $createdField = 'created_at';
-    protected $updatedField = 'updated_at';
-    protected $deletedField = 'deleted_at';
 
     // Validation
     protected $validationRules = [
-        'dni' => 'required|min_length[7]|max_length[20]|is_unique[users.dni,id,{id}]',
-        'nombre' => 'required|min_length[2]|max_length[100]',
-        'apellido' => 'required|min_length[2]|max_length[100]',
-        'email' => 'required|valid_email|is_unique[users.email,id,{id}]',
-        'password' => 'required|min_length[6]',
-        'telefono' => 'permit_empty|min_length[7]|max_length[20]',
-        'provincia' => 'permit_empty|max_length[100]',
-        'municipio' => 'permit_empty|max_length[100]',
-        'tipo_usuario' => 'required|in_list[ciudadano,institucion,tecnico]',
-        'puntos' => 'permit_empty|integer|greater_than_equal_to[0]',
-        'activo' => 'permit_empty|in_list[0,1]'
+        'DNI_Usuarios' => 'required|min_length[7]|max_length[10]|is_unique[usuarios.DNI_Usuarios,idUsuarios,{idUsuarios}]',
+        'Nombres_Usuarios' => 'required|min_length[2]|max_length[50]',
+        'Apellidos_Usuarios' => 'required|min_length[2]|max_length[50]',
+        'Email_Usuarios' => 'required|valid_email|is_unique[usuarios.Email_Usuarios,idUsuarios,{idUsuarios}]',
+        'Password_Usuarios' => 'required|min_length[6]|max_length[255]',
+        'Telefono_Usuarios' => 'required|min_length[7]|max_length[14]',
+        'Provincia_Usuarios' => 'required|max_length[45]',
+        'Municipios_Usuarios' => 'required|max_length[45]',
+        'Roles_Usuarios' => 'required|integer',
+        'Puntos_Usuarios' => 'permit_empty|integer|greater_than_equal_to[0]',
+        'Activo_Usuarios' => 'permit_empty|in_list[0,1]'
     ];
 
     protected $validationMessages = [
-        'dni' => [
+        'DNI_Usuarios' => [
             'required' => 'El DNI es obligatorio',
             'min_length' => 'El DNI debe tener al menos 7 caracteres',
-            'max_length' => 'El DNI no puede tener más de 20 caracteres',
+            'max_length' => 'El DNI no puede tener más de 10 caracteres',
             'is_unique' => 'Este DNI ya está registrado en el sistema'
         ],
-        'nombre' => [
+        'Nombres_Usuarios' => [
             'required' => 'El nombre es obligatorio',
             'min_length' => 'El nombre debe tener al menos 2 caracteres',
-            'max_length' => 'El nombre no puede tener más de 100 caracteres'
+            'max_length' => 'El nombre no puede tener más de 50 caracteres'
         ],
-        'apellido' => [
+        'Apellidos_Usuarios' => [
             'required' => 'El apellido es obligatorio',
             'min_length' => 'El apellido debe tener al menos 2 caracteres',
-            'max_length' => 'El apellido no puede tener más de 100 caracteres'
+            'max_length' => 'El apellido no puede tener más de 50 caracteres'
         ],
-        'email' => [
+        'Email_Usuarios' => [
             'required' => 'El email es obligatorio',
             'valid_email' => 'Debe proporcionar un email válido',
             'is_unique' => 'Este email ya está registrado en el sistema'
         ],
-        'password' => [
+        'Password_Usuarios' => [
             'required' => 'La contraseña es obligatoria',
-            'min_length' => 'La contraseña debe tener al menos 6 caracteres'
+            'min_length' => 'La contraseña debe tener al menos 6 caracteres',
+            'max_length' => 'La contraseña no puede tener más de 25 caracteres'
         ],
-        'telefono' => [
+        'Telefono_Usuarios' => [
+            'required' => 'El teléfono es obligatorio',
             'min_length' => 'El teléfono debe tener al menos 7 caracteres',
-            'max_length' => 'El teléfono no puede tener más de 20 caracteres'
+            'max_length' => 'El teléfono no puede tener más de 14 caracteres'
         ],
-        'tipo_usuario' => [
-            'required' => 'El tipo de usuario es obligatorio',
-            'in_list' => 'El tipo de usuario debe ser: ciudadano, institucion o tecnico'
+        'Provincia_Usuarios' => [
+            'required' => 'La provincia es obligatoria',
+            'max_length' => 'La provincia no puede tener más de 45 caracteres'
         ],
-        'puntos' => [
+        'Municipios_Usuarios' => [
+            'required' => 'El municipio es obligatorio',
+            'max_length' => 'El municipio no puede tener más de 45 caracteres'
+        ],
+        'Roles_Usuarios' => [
+            'required' => 'El rol es obligatorio',
+            'integer' => 'El rol debe ser un número entero'
+        ],
+        'Puntos_Usuarios' => [
             'integer' => 'Los puntos deben ser un número entero',
             'greater_than_equal_to' => 'Los puntos no pueden ser negativos'
         ]
@@ -103,8 +111,8 @@ class UserModel extends Model
     protected function hashPassword(array $data)
     {
         // CodeIgniter 4 callbacks receive data in $data['data']
-        if (isset($data['data']['password']) && !empty($data['data']['password'])) {
-            $data['data']['password'] = password_hash($data['data']['password'], PASSWORD_DEFAULT);
+        if (isset($data['data']['Password_Usuarios']) && !empty($data['data']['Password_Usuarios'])) {
+            $data['data']['Password_Usuarios'] = password_hash($data['data']['Password_Usuarios'], PASSWORD_DEFAULT);
         }
         return $data;
     }
@@ -114,7 +122,7 @@ class UserModel extends Model
      */
     public function findByEmail(string $email)
     {
-        return $this->where('email', $email)->first();
+        return $this->where('Email_Usuarios', $email)->first();
     }
 
     /**
@@ -122,7 +130,7 @@ class UserModel extends Model
      */
     public function findByDni(string $dni)
     {
-        return $this->where('dni', $dni)->first();
+        return $this->where('DNI_Usuarios', $dni)->first();
     }
 
     /**
@@ -134,11 +142,11 @@ class UserModel extends Model
     }
 
     /**
-     * Get users by type
+     * Get users by role
      */
-    public function getUsersByType(string $type)
+    public function getUsersByRole(int $roleId)
     {
-        return $this->where('tipo_usuario', $type)->findAll();
+        return $this->where('Roles_Usuarios', $roleId)->findAll();
     }
 
     /**
@@ -146,7 +154,7 @@ class UserModel extends Model
      */
     public function updatePoints(int $userId, int $points): bool
     {
-        return $this->update($userId, ['puntos' => $points]);
+        return $this->update($userId, ['Puntos_Usuarios' => $points]);
     }
 
     /**
@@ -156,11 +164,23 @@ class UserModel extends Model
     {
         $user = $this->find($userId);
         if (!$user) {
+            log_message('error', 'User not found for addPoints: ' . $userId);
             return false;
         }
         
-        $newPoints = $user['puntos'] + $pointsToAdd;
-        return $this->update($userId, ['puntos' => $newPoints]);
+        // Handle NULL points (treat as 0)
+        $currentPoints = $user['Puntos_Usuarios'] ?? 0;
+        $newPoints = $currentPoints + $pointsToAdd;
+        
+        log_message('debug', 'Adding points - User: ' . $userId . ', Current: ' . $currentPoints . ', Adding: ' . $pointsToAdd . ', New: ' . $newPoints);
+        
+        $result = $this->update($userId, ['Puntos_Usuarios' => $newPoints]);
+        
+        if (!$result) {
+            log_message('error', 'Failed to update points for user: ' . $userId . ', Error: ' . json_encode($this->errors()));
+        }
+        
+        return $result;
     }
 
     /**
@@ -176,19 +196,19 @@ class UserModel extends Model
     /**
      * Search users
      */
-    public function searchUsers(string $search, string $type = null, int $limit = 20, int $offset = 0): array
+    public function searchUsers(string $search, int $roleId = null, int $limit = 20, int $offset = 0): array
     {
         $builder = $this->builder();
         
         $builder->groupStart()
-                ->like('nombre', $search)
-                ->orLike('apellido', $search)
-                ->orLike('email', $search)
-                ->orLike('dni', $search)
+                ->like('Nombres_Usuarios', $search)
+                ->orLike('Apellidos_Usuarios', $search)
+                ->orLike('Email_Usuarios', $search)
+                ->orLike('DNI_Usuarios', $search)
                 ->groupEnd();
         
-        if ($type) {
-            $builder->where('tipo_usuario', $type);
+        if ($roleId) {
+            $builder->where('Roles_Usuarios', $roleId);
         }
         
         return $builder->limit($limit, $offset)->get()->getResultArray();
@@ -206,17 +226,18 @@ class UserModel extends Model
 
         $db = \Config\Database::connect();
         
-        // Get additional data based on user type
-        switch ($user['tipo_usuario']) {
-            case 'institucion':
-                $institutionBuilder = $db->table('institucions');
-                $institution = $institutionBuilder->where('user_id', $userId)->get()->getRowArray();
+        // Get additional data based on user role
+        // Assuming role 2 = institucion, role 3 = tecnico (you may need to adjust these)
+        switch ($user['Roles_Usuarios']) {
+            case 2: // institucion
+                $institutionBuilder = $db->table('credenciales_institucion');
+                $institution = $institutionBuilder->where('clientes_Institucion', $userId)->get()->getRowArray();
                 $user['institucion_data'] = $institution;
                 break;
                 
-            case 'tecnico':
-                $technicianBuilder = $db->table('tecnicos');
-                $technician = $technicianBuilder->where('user_id', $userId)->get()->getRowArray();
+            case 3: // tecnico
+                $technicianBuilder = $db->table('credenciales_tecnico');
+                $technician = $technicianBuilder->where('clientes_Tecnico', $userId)->get()->getRowArray();
                 $user['tecnico_data'] = $technician;
                 break;
         }
@@ -225,7 +246,7 @@ class UserModel extends Model
         $user['estadisticas'] = $this->getUserStats($userId);
         
         // Remove password from response
-        unset($user['password']);
+        unset($user['Password_Usuarios']);
         
         return $user;
     }
@@ -236,10 +257,10 @@ class UserModel extends Model
     public function emailExists(string $email, int $excludeId = null): bool
     {
         $builder = $this->builder();
-        $builder->where('email', $email);
+        $builder->where('Email_Usuarios', $email);
         
         if ($excludeId) {
-            $builder->where('id !=', $excludeId);
+            $builder->where('idUsuarios !=', $excludeId);
         }
         
         return $builder->countAllResults() > 0;
@@ -251,10 +272,10 @@ class UserModel extends Model
     public function dniExists(string $dni, int $excludeId = null): bool
     {
         $builder = $this->builder();
-        $builder->where('dni', $dni);
+        $builder->where('DNI_Usuarios', $dni);
         
         if ($excludeId) {
-            $builder->where('id !=', $excludeId);
+            $builder->where('idUsuarios !=', $excludeId);
         }
         
         return $builder->countAllResults() > 0;
@@ -268,19 +289,19 @@ class UserModel extends Model
         $builder = $this->builder();
         
         // Apply filters
-        if (!empty($filters['tipo_usuario'])) {
-            $builder->where('tipo_usuario', $filters['tipo_usuario']);
+        if (!empty($filters['Roles_Usuarios'])) {
+            $builder->where('Roles_Usuarios', $filters['Roles_Usuarios']);
         }
         
-        if (!empty($filters['provincia'])) {
-            $builder->where('provincia', $filters['provincia']);
+        if (!empty($filters['Provincia_Usuarios'])) {
+            $builder->where('Provincia_Usuarios', $filters['Provincia_Usuarios']);
         }
         
         if (!empty($filters['search'])) {
             $builder->groupStart()
-                    ->like('nombre', $filters['search'])
-                    ->orLike('apellido', $filters['search'])
-                    ->orLike('email', $filters['search'])
+                    ->like('Nombres_Usuarios', $filters['search'])
+                    ->orLike('Apellidos_Usuarios', $filters['search'])
+                    ->orLike('Email_Usuarios', $filters['search'])
                     ->groupEnd();
         }
         
@@ -290,13 +311,13 @@ class UserModel extends Model
         // Get paginated results
         $offset = ($page - 1) * $perPage;
         $users = $builder->limit($perPage, $offset)
-                        ->orderBy('created_at', 'DESC')
+                        ->orderBy('FechaRegistro_Usuarios', 'DESC')
                         ->get()
                         ->getResultArray();
         
         // Remove passwords from results
         foreach ($users as &$user) {
-            unset($user['password']);
+            unset($user['Password_Usuarios']);
         }
         
         return [

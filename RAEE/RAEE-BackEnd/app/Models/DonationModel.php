@@ -6,45 +6,26 @@ use CodeIgniter\Model;
 
 class DonationModel extends Model
 {
-    protected $table = 'raee';
-    protected $primaryKey = 'id';
+    protected $table = 'equipos';
+    protected $primaryKey = 'idEquipos';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     
     protected $allowedFields = [
-        'usuario_id',
-        'tipo_usuario',
-        'tipo_dispositivo',
-        'marca',
-        'modelo',
-        'estado_dispositivo',
-        'descripcion',
-        'descripcion_adicional',
-        'ubicacion_donacion',
-        'fecha_estimada_donacion',
-        'estado_donacion',
-        'fecha_donacion',
-        'fecha_compra',
-        'preferencias',
-        'informacion_dispositivo',
-        'procesado_por_id',
-        'procesado_por_tipo',
-        'fecha_procesamiento',
-        'notas_procesamiento',
-        'direccion_entrega',
-        'ciudad_entrega',
-        'codigo_postal_entrega',
-        'telefono_entrega',
-        'fecha_entrega_solicitada',
-        'hora_entrega_solicitada',
-        'instrucciones_entrega',
-        'estado_entrega',
-        'tipo_solicitud',
-        'notas_entrega',
-        'tecnico_asignado_id',
-        'fecha_entrega_real'
+        'idClientes_Equipos',
+        'idCategorias_Equipos',
+        'Marca_Equipos',
+        'Modelo_Equipos',
+        'idEstados_Equipos',
+        'Cantidad_Equipos',
+        'Descripcion_Equipos',
+        'Fotos_Equipos',
+        'PesoKG_Equipos',
+        'DimencionesCM_Equipos',
+        'FechaIngreso_Equipos',
+        'Accesorios_Equipos'
     ];
 
     // Dates
@@ -53,34 +34,58 @@ class DonationModel extends Model
 
     // Validation
     protected $validationRules = [
-        'usuario_id' => 'required|integer|is_not_unique[users.id]',
-        'tipo_dispositivo' => 'required|min_length[2]|max_length[100]',
-        'estado_dispositivo' => 'permit_empty|max_length[50]',
-        'descripcion' => 'permit_empty',
-        'ubicacion_donacion' => 'permit_empty|max_length[255]',
-        'fecha_estimada_donacion' => 'permit_empty|valid_date',
-        'estado_donacion' => 'permit_empty|in_list[pendiente,procesada,en_transito,completada,cancelada]',
-        'direccion_entrega' => 'permit_empty|max_length[255]',
-        'ciudad_entrega' => 'permit_empty|max_length[100]',
-        'telefono_entrega' => 'permit_empty|max_length[20]'
+        'idClientes_Equipos' => 'required|integer|is_not_unique[usuarios.idUsuarios]',
+        'idCategorias_Equipos' => 'required|integer|is_not_unique[categorias_equipos.idCategorias]',
+        'Marca_Equipos' => 'required|min_length[2]|max_length[50]',
+        'Modelo_Equipos' => 'required|min_length[2]|max_length[100]',
+        'idEstados_Equipos' => 'required|integer|is_not_unique[estados.idEstados]',
+        'Cantidad_Equipos' => 'required|integer|greater_than[0]',
+        'Descripcion_Equipos' => 'permit_empty|max_length[255]',
+        'Fotos_Equipos' => 'permit_empty|max_length[255]',
+        'PesoKG_Equipos' => 'required|decimal|greater_than[0]',
+        'DimencionesCM_Equipos' => 'required|max_length[20]',
+        'Accesorios_Equipos' => 'permit_empty|max_length[100]'
     ];
 
     protected $validationMessages = [
-        'usuario_id' => [
-            'required' => 'El ID del usuario es obligatorio',
-            'integer' => 'El ID del usuario debe ser un número entero',
-            'is_not_unique' => 'El usuario especificado no existe'
+        'idClientes_Equipos' => [
+            'required' => 'El ID del cliente es obligatorio',
+            'integer' => 'El ID del cliente debe ser un número entero',
+            'is_not_unique' => 'El cliente especificado no existe'
         ],
-        'tipo_dispositivo' => [
-            'required' => 'El tipo de dispositivo es obligatorio',
-            'min_length' => 'El tipo de dispositivo debe tener al menos 2 caracteres',
-            'max_length' => 'El tipo de dispositivo no puede tener más de 100 caracteres'
+        'idCategorias_Equipos' => [
+            'required' => 'La categoría del equipo es obligatoria',
+            'integer' => 'La categoría debe ser un número entero',
+            'is_not_unique' => 'La categoría especificada no existe'
         ],
-        'estado_donacion' => [
-            'in_list' => 'El estado de donación debe ser: pendiente, procesada, en_transito, completada o cancelada'
+        'Marca_Equipos' => [
+            'required' => 'La marca del equipo es obligatoria',
+            'min_length' => 'La marca debe tener al menos 2 caracteres',
+            'max_length' => 'La marca no puede tener más de 50 caracteres'
         ],
-        'fecha_estimada_donacion' => [
-            'valid_date' => 'La fecha estimada debe ser una fecha válida'
+        'Modelo_Equipos' => [
+            'required' => 'El modelo del equipo es obligatorio',
+            'min_length' => 'El modelo debe tener al menos 2 caracteres',
+            'max_length' => 'El modelo no puede tener más de 100 caracteres'
+        ],
+        'idEstados_Equipos' => [
+            'required' => 'El estado del equipo es obligatorio',
+            'integer' => 'El estado debe ser un número entero',
+            'is_not_unique' => 'El estado especificado no existe'
+        ],
+        'Cantidad_Equipos' => [
+            'required' => 'La cantidad es obligatoria',
+            'integer' => 'La cantidad debe ser un número entero',
+            'greater_than' => 'La cantidad debe ser mayor a 0'
+        ],
+        'PesoKG_Equipos' => [
+            'required' => 'El peso es obligatorio',
+            'decimal' => 'El peso debe ser un número decimal',
+            'greater_than' => 'El peso debe ser mayor a 0'
+        ],
+        'DimencionesCM_Equipos' => [
+            'required' => 'Las dimensiones son obligatorias',
+            'max_length' => 'Las dimensiones no pueden tener más de 20 caracteres'
         ]
     ];
 
@@ -97,12 +102,8 @@ class DonationModel extends Model
      */
     protected function setDefaultValues(array $data)
     {
-        if (!isset($data['data']['estado_donacion'])) {
-            $data['data']['estado_donacion'] = 'pendiente';
-        }
-        
-        if (!isset($data['data']['fecha_solicitud'])) {
-            $data['data']['fecha_solicitud'] = date('Y-m-d H:i:s');
+        if (!isset($data['data']['FechaIngreso_Equipos'])) {
+            $data['data']['FechaIngreso_Equipos'] = date('Y-m-d H:i:s');
         }
         
         return $data;
@@ -122,27 +123,33 @@ class DonationModel extends Model
      */
     public function getDonationsByUser(int $userId, array $filters = []): array
     {
-        $builder = $this->builder();
-        $builder->where('usuario_id', $userId);
+        $db = \Config\Database::connect();
+        $builder = $db->table('equipos e');
+        
+        $builder->select('e.*, c.Nombres_Categorias, est.Descripcion_Estados, p.id_Publicacion, p.Descripcion_Publicacion, p.Puntos_Publicacion, p.Fecha_Publicacion, p.estados_idEstados as estado_publicacion')
+                ->join('categorias_equipos c', 'e.idCategorias_Equipos = c.idCategorias', 'left')
+                ->join('estados est', 'e.idEstados_Equipos = est.idEstados', 'left')
+                ->join('publicacion p', 'e.idEquipos = p.equipos_idEquipos', 'left')
+                ->where('e.idClientes_Equipos', $userId);
         
         // Apply filters
-        if (!empty($filters['estado_donacion'])) {
-            $builder->where('estado_donacion', $filters['estado_donacion']);
+        if (!empty($filters['categoria'])) {
+            $builder->where('e.idCategorias_Equipos', $filters['categoria']);
         }
         
-        if (!empty($filters['tipo_dispositivo'])) {
-            $builder->where('tipo_dispositivo', $filters['tipo_dispositivo']);
+        if (!empty($filters['estado'])) {
+            $builder->where('e.idEstados_Equipos', $filters['estado']);
         }
         
         if (!empty($filters['fecha_desde'])) {
-            $builder->where('fecha_solicitud >=', $filters['fecha_desde']);
+            $builder->where('e.FechaIngreso_Equipos >=', $filters['fecha_desde']);
         }
         
         if (!empty($filters['fecha_hasta'])) {
-            $builder->where('fecha_solicitud <=', $filters['fecha_hasta']);
+            $builder->where('e.FechaIngreso_Equipos <=', $filters['fecha_hasta']);
         }
         
-        return $builder->orderBy('fecha_solicitud', 'DESC')->get()->getResultArray();
+        return $builder->orderBy('e.FechaIngreso_Equipos', 'DESC')->get()->getResultArray();
     }
 
     /**
@@ -151,8 +158,16 @@ class DonationModel extends Model
     public function getDonationWithUser(int $donationId): array
     {
         $db = \Config\Database::connect();
-        $builder = $db->table('vista_donaciones_completa');
-        return $builder->where('id', $donationId)->get()->getRowArray() ?? [];
+        $builder = $db->table('equipos e');
+        
+        $builder->select('e.*, c.Nombres_Categorias, est.Descripcion_Estados, u.Nombres_Usuarios, u.Apellidos_Usuarios, u.Email_Usuarios, u.Telefono_Usuarios, p.id_Publicacion, p.Descripcion_Publicacion, p.Puntos_Publicacion, p.Fecha_Publicacion, p.estados_idEstados as estado_publicacion')
+                ->join('categorias_equipos c', 'e.idCategorias_Equipos = c.idCategorias', 'left')
+                ->join('estados est', 'e.idEstados_Equipos = est.idEstados', 'left')
+                ->join('usuarios u', 'e.idClientes_Equipos = u.idUsuarios', 'left')
+                ->join('publicacion p', 'e.idEquipos = p.equipos_idEquipos', 'left')
+                ->where('e.idEquipos', $donationId);
+        
+        return $builder->get()->getRowArray() ?? [];
     }
 
     /**
@@ -161,36 +176,42 @@ class DonationModel extends Model
     public function getDonationsPaginated(int $page = 1, int $perPage = 20, array $filters = []): array
     {
         $db = \Config\Database::connect();
-        $builder = $db->table('vista_donaciones_completa');
+        $builder = $db->table('equipos e');
+        
+        $builder->select('e.*, c.Nombres_Categorias, est.Descripcion_Estados, u.Nombres_Usuarios, u.Apellidos_Usuarios, u.Email_Usuarios, p.id_Publicacion, p.Descripcion_Publicacion, p.Puntos_Publicacion, p.Fecha_Publicacion, p.estados_idEstados as estado_publicacion')
+                ->join('categorias_equipos c', 'e.idCategorias_Equipos = c.idCategorias', 'left')
+                ->join('estados est', 'e.idEstados_Equipos = est.idEstados', 'left')
+                ->join('usuarios u', 'e.idClientes_Equipos = u.idUsuarios', 'left')
+                ->join('publicacion p', 'e.idEquipos = p.equipos_idEquipos', 'left');
         
         // Apply filters
-        if (!empty($filters['estado_donacion'])) {
-            $builder->where('estado_donacion', $filters['estado_donacion']);
+        if (!empty($filters['categoria'])) {
+            $builder->where('e.idCategorias_Equipos', $filters['categoria']);
         }
         
-        if (!empty($filters['tipo_dispositivo'])) {
-            $builder->where('tipo_dispositivo', $filters['tipo_dispositivo']);
+        if (!empty($filters['estado'])) {
+            $builder->where('e.idEstados_Equipos', $filters['estado']);
         }
         
-        if (!empty($filters['tipo_usuario'])) {
-            $builder->where('tipo_usuario', $filters['tipo_usuario']);
+        if (!empty($filters['estado_publicacion'])) {
+            $builder->where('p.estados_idEstados', $filters['estado_publicacion']);
         }
         
         if (!empty($filters['search'])) {
             $builder->groupStart()
-                    ->like('marca', $filters['search'])
-                    ->orLike('modelo', $filters['search'])
-                    ->orLike('nombre', $filters['search'])
-                    ->orLike('apellido', $filters['search'])
+                    ->like('e.Modelo_Equipos', $filters['search'])
+                    ->orLike('e.Descripcion_Equipos', $filters['search'])
+                    ->orLike('u.Nombres_Usuarios', $filters['search'])
+                    ->orLike('u.Apellidos_Usuarios', $filters['search'])
                     ->groupEnd();
         }
         
         if (!empty($filters['fecha_desde'])) {
-            $builder->where('fecha_solicitud >=', $filters['fecha_desde']);
+            $builder->where('e.FechaIngreso_Equipos >=', $filters['fecha_desde']);
         }
         
         if (!empty($filters['fecha_hasta'])) {
-            $builder->where('fecha_solicitud <=', $filters['fecha_hasta']);
+            $builder->where('e.FechaIngreso_Equipos <=', $filters['fecha_hasta']);
         }
         
         // Get total count
@@ -199,7 +220,7 @@ class DonationModel extends Model
         // Get paginated results
         $offset = ($page - 1) * $perPage;
         $donations = $builder->limit($perPage, $offset)
-                           ->orderBy('fecha_solicitud', 'DESC')
+                           ->orderBy('e.FechaIngreso_Equipos', 'DESC')
                            ->get()
                            ->getResultArray();
         
@@ -215,153 +236,137 @@ class DonationModel extends Model
     }
 
     /**
-     * Update donation status
+     * Update equipment status
      */
-    public function updateDonationStatus(int $donationId, string $newStatus, int $processedBy = null, string $notes = null): bool
+    public function updateEquipmentStatus(int $equipmentId, int $newStatusId): bool
     {
-        $updateData = [
-            'estado_donacion' => $newStatus
-        ];
-        
-        if ($processedBy) {
-            $updateData['procesado_por_id'] = $processedBy;
-            $updateData['fecha_procesamiento'] = date('Y-m-d H:i:s');
-        }
-        
-        if ($notes) {
-            $updateData['notas_procesamiento'] = $notes;
-        }
-        
-        // Set completion date if status is completed
-        if ($newStatus === 'completada') {
-            $updateData['fecha_donacion'] = date('Y-m-d H:i:s');
-        }
-        
-        return $this->update($donationId, $updateData);
-    }
-
-    /**
-     * Assign technician to donation
-     */
-    public function assignTechnician(int $donationId, int $technicianId): bool
-    {
-        return $this->update($donationId, [
-            'tecnico_asignado_id' => $technicianId,
-            'estado_donacion' => 'procesada'
+        return $this->update($equipmentId, [
+            'idEstados_Equipos' => $newStatusId
         ]);
     }
 
     /**
-     * Get donations by technician
+     * Create publication for equipment
      */
-    public function getDonationsByTechnician(int $technicianId, array $filters = []): array
+    public function createPublication(int $equipmentId, int $userId, string $description, int $points): bool
     {
-        $builder = $this->builder();
-        $builder->where('tecnico_asignado_id', $technicianId);
+        $db = \Config\Database::connect();
+        $builder = $db->table('publicacion');
         
-        // Apply filters
-        if (!empty($filters['estado_donacion'])) {
-            $builder->where('estado_donacion', $filters['estado_donacion']);
-        }
+        $data = [
+            'Descripcion_Publicacion' => $description,
+            'Puntos_Publicacion' => $points,
+            'Fecha_Publicacion' => date('Y-m-d H:i:s'),
+            'clientes_idClientes' => $userId,
+            'estados_idEstados' => 1, // Assuming 1 = active/pending
+            'equipos_idEquipos' => $equipmentId
+        ];
         
-        return $builder->orderBy('fecha_solicitud', 'DESC')->get()->getResultArray();
+        return $builder->insert($data);
     }
 
     /**
-     * Get donation statistics
+     * Get equipment by technician (through reservations)
      */
-    public function getDonationStats(array $filters = []): array
+    public function getEquipmentByTechnician(int $technicianId, array $filters = []): array
+    {
+        $db = \Config\Database::connect();
+        $builder = $db->table('reserva_producto r');
+        
+        $builder->select('r.*, e.*, c.Nombres_Categorias, est.Descripcion_Estados, u.Nombres_Usuarios, u.Apellidos_Usuarios')
+                ->join('equipos e', 'r.equipos_idEquipos = e.idEquipos')
+                ->join('categorias_equipos c', 'e.idCategorias_Equipos = c.idCategorias', 'left')
+                ->join('estados est', 'e.idEstados_Equipos = est.idEstados', 'left')
+                ->join('usuarios u', 'e.idClientes_Equipos = u.idUsuarios', 'left')
+                ->where('r.clientes_idClientes', $technicianId);
+        
+        // Apply filters
+        if (!empty($filters['estado'])) {
+            $builder->where('r.estados_idEstados', $filters['estado']);
+        }
+        
+        return $builder->orderBy('r.Fecha_Reserva', 'DESC')->get()->getResultArray();
+    }
+
+    /**
+     * Get equipment statistics
+     */
+    public function getEquipmentStats(array $filters = []): array
     {
         $db = \Config\Database::connect();
         $builder = $db->table($this->table);
         
         // Apply date filters if provided
         if (!empty($filters['fecha_desde'])) {
-            $builder->where('fecha_solicitud >=', $filters['fecha_desde']);
+            $builder->where('FechaIngreso_Equipos >=', $filters['fecha_desde']);
         }
         
         if (!empty($filters['fecha_hasta'])) {
-            $builder->where('fecha_solicitud <=', $filters['fecha_hasta']);
+            $builder->where('FechaIngreso_Equipos <=', $filters['fecha_hasta']);
         }
         
         // Get basic stats
         $stats = [
-            'total_donaciones' => $builder->countAllResults(false),
-            'pendientes' => $builder->where('estado_donacion', 'pendiente')->countAllResults(false),
-            'procesadas' => $builder->where('estado_donacion', 'procesada')->countAllResults(false),
-            'completadas' => $builder->where('estado_donacion', 'completada')->countAllResults(false),
-            'canceladas' => $builder->where('estado_donacion', 'cancelada')->countAllResults(false)
+            'total_equipos' => $builder->countAllResults(false),
+            'total_cantidad' => $builder->selectSum('Cantidad_Equipos')->get()->getRow()->Cantidad_Equipos ?? 0
         ];
         
-        // Get stats by device type
+        // Get stats by category
         $builder = $db->table($this->table);
         if (!empty($filters['fecha_desde'])) {
-            $builder->where('fecha_solicitud >=', $filters['fecha_desde']);
+            $builder->where('FechaIngreso_Equipos >=', $filters['fecha_desde']);
         }
         if (!empty($filters['fecha_hasta'])) {
-            $builder->where('fecha_solicitud <=', $filters['fecha_hasta']);
+            $builder->where('FechaIngreso_Equipos <=', $filters['fecha_hasta']);
         }
         
-        $deviceStats = $builder->select('tipo_dispositivo, COUNT(*) as total')
-                              ->groupBy('tipo_dispositivo')
-                              ->orderBy('total', 'DESC')
-                              ->get()
-                              ->getResultArray();
+        $categoryStats = $builder->select('idCategorias_Equipos, COUNT(*) as total, SUM(Cantidad_Equipos) as cantidad_total')
+                                ->groupBy('idCategorias_Equipos')
+                                ->orderBy('total', 'DESC')
+                                ->get()
+                                ->getResultArray();
         
-        $stats['por_tipo_dispositivo'] = $deviceStats;
+        $stats['por_categoria'] = $categoryStats;
         
         return $stats;
     }
 
     /**
-     * Get donations requiring attention (pending or overdue)
+     * Search equipment
      */
-    public function getDonationsRequiringAttention(): array
-    {
-        $builder = $this->builder();
-        
-        $builder->groupStart()
-                ->where('estado_donacion', 'pendiente')
-                ->orWhere('fecha_estimada_donacion <', date('Y-m-d'))
-                ->groupEnd();
-        
-        return $builder->orderBy('fecha_solicitud', 'ASC')->get()->getResultArray();
-    }
-
-    /**
-     * Search donations
-     */
-    public function searchDonations(string $search, array $filters = []): array
+    public function searchEquipment(string $search, array $filters = []): array
     {
         $db = \Config\Database::connect();
-        $builder = $db->table('vista_donaciones_completa');
+        $builder = $db->table('equipos e');
         
-        $builder->groupStart()
-                ->like('tipo_dispositivo', $search)
-                ->orLike('marca', $search)
-                ->orLike('modelo', $search)
-                ->orLike('nombre', $search)
-                ->orLike('apellido', $search)
-                ->orLike('email', $search)
+        $builder->select('e.*, c.Nombres_Categorias, est.Descripcion_Estados, u.Nombres_Usuarios, u.Apellidos_Usuarios')
+                ->join('categorias_equipos c', 'e.idCategorias_Equipos = c.idCategorias', 'left')
+                ->join('estados est', 'e.idEstados_Equipos = est.idEstados', 'left')
+                ->join('usuarios u', 'e.idClientes_Equipos = u.idUsuarios', 'left')
+                ->groupStart()
+                ->like('e.Modelo_Equipos', $search)
+                ->orLike('e.Descripcion_Equipos', $search)
+                ->orLike('u.Nombres_Usuarios', $search)
+                ->orLike('u.Apellidos_Usuarios', $search)
                 ->groupEnd();
         
         // Apply additional filters
-        if (!empty($filters['estado_donacion'])) {
-            $builder->where('estado_donacion', $filters['estado_donacion']);
+        if (!empty($filters['categoria'])) {
+            $builder->where('e.idCategorias_Equipos', $filters['categoria']);
         }
         
-        if (!empty($filters['tipo_usuario'])) {
-            $builder->where('tipo_usuario', $filters['tipo_usuario']);
+        if (!empty($filters['estado'])) {
+            $builder->where('e.idEstados_Equipos', $filters['estado']);
         }
         
-        return $builder->orderBy('fecha_solicitud', 'DESC')
+        return $builder->orderBy('e.FechaIngreso_Equipos', 'DESC')
                       ->limit(50)
                       ->get()
                       ->getResultArray();
     }
 
     /**
-     * Get monthly donation trends
+     * Get monthly equipment trends
      */
     public function getMonthlyTrends(int $months = 12): array
     {
@@ -370,29 +375,13 @@ class DonationModel extends Model
         
         $startDate = date('Y-m-d', strtotime("-{$months} months"));
         
-        $trends = $builder->select("DATE_FORMAT(fecha_solicitud, '%Y-%m') as mes, COUNT(*) as total")
-                         ->where('fecha_solicitud >=', $startDate)
-                         ->groupBy("DATE_FORMAT(fecha_solicitud, '%Y-%m')")
+        $trends = $builder->select("DATE_FORMAT(FechaIngreso_Equipos, '%Y-%m') as mes, COUNT(*) as total, SUM(Cantidad_Equipos) as cantidad")
+                         ->where('FechaIngreso_Equipos >=', $startDate)
+                         ->groupBy("DATE_FORMAT(FechaIngreso_Equipos, '%Y-%m')")
                          ->orderBy('mes', 'ASC')
                          ->get()
                          ->getResultArray();
         
         return $trends;
-    }
-
-    /**
-     * Get donation history for a specific donation
-     */
-    public function getDonationHistory(int $donationId): array
-    {
-        $db = \Config\Database::connect();
-        $builder = $db->table('donacion_historial h');
-        
-        $builder->select('h.*, u.nombre, u.apellido')
-                ->join('users u', 'h.usuario_cambio_id = u.id', 'left')
-                ->where('h.donacion_id', $donationId)
-                ->orderBy('h.fecha_cambio', 'DESC');
-        
-        return $builder->get()->getResultArray();
     }
 }

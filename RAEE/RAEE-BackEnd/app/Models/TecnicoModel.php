@@ -6,79 +6,45 @@ use CodeIgniter\Model;
 
 class TecnicoModel extends Model
 {
-    protected $table = 'tecnicos';
-    protected $primaryKey = 'id';
+    protected $table = 'credenciales_tecnico';
+    protected $primaryKey = 'id_Credenciales';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     
     protected $allowedFields = [
-        'user_id',
-        'especialidad',
-        'experiencia_anos',
-        'certificaciones',
-        'disponibilidad',
-        'zona_cobertura',
-        'tarifa_hora',
-        'calificacion_promedio',
-        'total_trabajos',
-        'descripcion_servicios'
+        'clientes_Tecnico',
+        'Certificado_Tecnico',
+        'estados_Tecnico'
     ];
 
     // Dates
-    protected $useTimestamps = true;
+    protected $useTimestamps = false;
     protected $dateFormat = 'datetime';
-    protected $createdField = 'created_at';
-    protected $updatedField = 'updated_at';
 
     // Validation
     protected $validationRules = [
-        'user_id' => 'required|integer|is_not_unique[users.id]|is_unique[tecnicos.user_id,id,{id}]',
-        'especialidad' => 'required|max_length[100]',
-        'experiencia_anos' => 'permit_empty|integer|greater_than_equal_to[0]',
-        'certificaciones' => 'permit_empty',
-        'disponibilidad' => 'permit_empty|in_list[disponible,ocupado,no_disponible]',
-        'zona_cobertura' => 'permit_empty|max_length[255]',
-        'tarifa_hora' => 'permit_empty|decimal|greater_than_equal_to[0]',
-        'calificacion_promedio' => 'permit_empty|decimal|greater_than_equal_to[0]|less_than_equal_to[5]',
-        'total_trabajos' => 'permit_empty|integer|greater_than_equal_to[0]',
-        'descripcion_servicios' => 'permit_empty'
+        'clientes_Tecnico' => 'required|integer|is_not_unique[usuarios.idUsuarios]',
+        'Certificado_Tecnico' => 'required|min_length[3]|max_length[255]',
+        'estados_Tecnico' => 'required|integer|is_not_unique[estados.idEstados]'
     ];
 
     protected $validationMessages = [
-        'user_id' => [
+        'clientes_Tecnico' => [
             'required' => 'El ID del usuario es obligatorio',
             'integer' => 'El ID del usuario debe ser un número entero',
-            'is_not_unique' => 'El usuario especificado no existe',
-            'is_unique' => 'Este usuario ya tiene un perfil de técnico registrado'
+            'is_not_unique' => 'El usuario especificado no existe'
         ],
-        'especialidad' => [
-            'required' => 'La especialidad es obligatoria',
-            'max_length' => 'La especialidad no puede tener más de 100 caracteres'
+        'Certificado_Tecnico' => [
+            'required' => 'El certificado técnico es obligatorio',
+            'min_length' => 'El certificado debe tener al menos 3 caracteres',
+            'max_length' => 'El certificado no puede tener más de 255 caracteres'
         ],
-        'experiencia_anos' => [
-            'integer' => 'Los años de experiencia deben ser un número entero',
-            'greater_than_equal_to' => 'Los años de experiencia no pueden ser negativos'
-        ],
-        'disponibilidad' => [
-            'in_list' => 'La disponibilidad debe ser: disponible, ocupado o no_disponible'
-        ],
-        'zona_cobertura' => [
-            'max_length' => 'La zona de cobertura no puede tener más de 255 caracteres'
-        ],
-        'tarifa_hora' => [
-            'decimal' => 'La tarifa por hora debe ser un número decimal',
-            'greater_than_equal_to' => 'La tarifa por hora no puede ser negativa'
-        ],
-        'calificacion_promedio' => [
-            'decimal' => 'La calificación promedio debe ser un número decimal',
-            'greater_than_equal_to' => 'La calificación promedio no puede ser negativa',
-            'less_than_equal_to' => 'La calificación promedio no puede ser mayor a 5'
-        ],
-        'total_trabajos' => [
-            'integer' => 'El total de trabajos debe ser un número entero',
-            'greater_than_equal_to' => 'El total de trabajos no puede ser negativo'
+        'estados_Tecnico' => [
+            'required' => 'El estado es obligatorio',
+            'integer' => 'El estado debe ser un número entero',
+            'is_not_unique' => 'El estado especificado no existe'
         ]
     ];
 
@@ -93,7 +59,7 @@ class TecnicoModel extends Model
      */
     public function getByUserId(int $userId): ?array
     {
-        return $this->where('user_id', $userId)->first();
+        return $this->where('clientes_Tecnico', $userId)->first();
     }
 
     /**
@@ -104,9 +70,9 @@ class TecnicoModel extends Model
         $db = \Config\Database::connect();
         $builder = $db->table($this->table . ' t');
         
-        $builder->select('t.*, u.nombre, u.apellido, u.email, u.telefono, u.provincia, u.municipio, u.puntos, u.created_at as user_created_at')
-                ->join('users u', 't.user_id = u.id')
-                ->where('t.id', $technicianId);
+        $builder->select('t.*, u.Nombres_Usuarios, u.Apellidos_Usuarios, u.Email_Usuarios, u.Telefono_Usuarios, u.Provincia_Usuarios, u.Municipios_Usuarios, u.Puntos_Usuarios, u.FechaRegistro_Usuarios as user_created_at')
+                ->join('usuarios u', 't.clientes_Tecnico = u.idUsuarios')
+                ->where('t.id_Credenciales', $technicianId);
         
         return $builder->get()->getRowArray() ?? [];
     }
@@ -119,9 +85,9 @@ class TecnicoModel extends Model
         $db = \Config\Database::connect();
         $builder = $db->table($this->table . ' t');
         
-        $builder->select('t.*, u.nombre, u.apellido, u.email, u.telefono, u.provincia, u.municipio, u.puntos, u.created_at as user_created_at')
-                ->join('users u', 't.user_id = u.id')
-                ->where('t.user_id', $userId);
+        $builder->select('t.*, u.Nombres_Usuarios, u.Apellidos_Usuarios, u.Email_Usuarios, u.Telefono_Usuarios, u.Provincia_Usuarios, u.Municipios_Usuarios, u.Puntos_Usuarios, u.FechaRegistro_Usuarios as user_created_at')
+                ->join('usuarios u', 't.clientes_Tecnico = u.idUsuarios')
+                ->where('t.clientes_Tecnico', $userId);
         
         return $builder->get()->getRowArray() ?? [];
     }

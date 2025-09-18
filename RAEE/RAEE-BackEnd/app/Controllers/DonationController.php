@@ -26,13 +26,13 @@ class DonationController extends ResourceController
     }
 
     /**
-     * Get all donations with pagination and filters
+     * Get all equipment with pagination and filters
      */
     public function index()
     {
         try {
             $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            $userRole = $this->getUserRoleFromToken();
             
             if (!$userId) {
                 return $this->fail('Token inválido', 401);
@@ -42,19 +42,18 @@ class DonationController extends ResourceController
             $perPage = $this->request->getGet('per_page') ?? 20;
             
             $filters = [
+                'categoria' => $this->request->getGet('categoria'),
                 'estado' => $this->request->getGet('estado'),
-                'tipo_dispositivo' => $this->request->getGet('tipo_dispositivo'),
-                'provincia' => $this->request->getGet('provincia'),
-                'municipio' => $this->request->getGet('municipio'),
+                'estado_publicacion' => $this->request->getGet('estado_publicacion'),
                 'fecha_desde' => $this->request->getGet('fecha_desde'),
                 'fecha_hasta' => $this->request->getGet('fecha_hasta'),
                 'search' => $this->request->getGet('search')
             ];
 
-            // Filter by user type
-            if ($userType === 'donante' || $userType === 'institucion') {
+            // Filter by user role
+            if ($userRole == 1 || $userRole == 2) { // ciudadano or institucion
                 $filters['usuario_id'] = $userId;
-            } elseif ($userType === 'tecnico') {
+            } elseif ($userRole == 3) { // tecnico
                 $filters['tecnico_id'] = $userId;
             }
 
@@ -67,70 +66,70 @@ class DonationController extends ResourceController
             ]);
 
         } catch (\Exception $e) {
-            log_message('error', 'Error al obtener donaciones: ' . $e->getMessage());
+            log_message('error', 'Error al obtener equipos: ' . $e->getMessage());
             return $this->fail('Error interno del servidor', 500);
         }
     }
 
     /**
-     * Get a specific donation
+     * Get a specific equipment
      */
     public function show($id = null)
     {
         try {
             $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            $userRole = $this->getUserRoleFromToken();
             
             if (!$userId) {
                 return $this->fail('Token inválido', 401);
             }
 
             if (!$id) {
-                return $this->fail('ID de donación requerido', 400);
+                return $this->fail('ID de equipo requerido', 400);
             }
 
-            $donation = $this->donationModel->getDonationWithDetails($id);
+            $equipment = $this->donationModel->getDonationWithUser($id);
             
-            if (!$donation) {
-                return $this->fail('Donación no encontrada', 404);
+            if (!$equipment) {
+                return $this->fail('Equipo no encontrado', 404);
             }
 
             // Check permissions
-            if ($userType !== 'admin') {
-                if ($userType === 'tecnico' && $donation['tecnico_asignado_id'] != $userId) {
-                    return $this->fail('No tienes permisos para ver esta donación', 403);
-                } elseif (($userType === 'donante' || $userType === 'institucion') && $donation['usuario_id'] != $userId) {
-                    return $this->fail('No tienes permisos para ver esta donación', 403);
+            if ($userRole != 4) { // Assuming 4 = admin
+                if ($userRole == 3 && $equipment['idClientes_Equipos'] != $userId) { // tecnico
+                    return $this->fail('No tienes permisos para ver este equipo', 403);
+                } elseif (($userRole == 1 || $userRole == 2) && $equipment['idClientes_Equipos'] != $userId) { // ciudadano or institucion
+                    return $this->fail('No tienes permisos para ver este equipo', 403);
                 }
             }
 
             return $this->respond([
                 'success' => true,
-                'data' => $donation
+                'data' => $equipment
             ]);
 
         } catch (\Exception $e) {
-            log_message('error', 'Error al obtener donación: ' . $e->getMessage());
+            log_message('error', 'Error al obtener equipo: ' . $e->getMessage());
             return $this->fail('Error interno del servidor', 500);
         }
     }
 
     /**
-     * Create a new donation
+     * Create a new equipment
      */
     public function create()
     {
         try {
             $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            $userRole = $this->getUserRoleFromToken();
             
             if (!$userId) {
                 return $this->fail('Token inválido', 401);
             }
 
-            // Only donantes and instituciones can create donations
-            if (!in_array($userType, ['donante', 'institucion'])) {
-                return $this->fail('No tienes permisos para crear donaciones', 403);
+            // Only ciudadanos and instituciones can create equipment
+            if (!in_array($userRole, [1, 2])) { // ciudadano or institucion
+                return $this->fail('No tienes permisos para crear equipos', 403);
             }
 
             $data = $this->request->getJSON(true);
@@ -140,37 +139,79 @@ class DonationController extends ResourceController
             }
 
             // Validate required fields
-            $requiredFields = ['tipo_dispositivo', 'marca', 'modelo', 'descripcion_estado', 'direccion_recogida'];
+            $requiredFields = ['idCategorias_Equipos', 'Marca_Equipos', 'Modelo_Equipos', 'idEstados_Equipos', 'Cantidad_Equipos', 'PesoKG_Equipos', 'DimencionesCM_Equipos'];
             foreach ($requiredFields as $field) {
                 if (empty($data[$field])) {
                     return $this->fail("El campo {$field} es obligatorio", 400);
                 }
             }
 
-            // Set user ID and default values
-            $data['usuario_id'] = $userId;
-            $data['estado_donacion'] = 'pendiente';
-            $data['fecha_solicitud'] = date('Y-m-d H:i:s');
-
-            // Create donation
-            $donationId = $this->donationModel->insert($data);
+            // Clean and prepare data
+            $data['idClientes_Equipos'] = $userId;
+            $data['FechaIngreso_Equipos'] = date('Y-m-d H:i:s');
             
-            if (!$donationId) {
-                $errors = $this->donationModel->errors();
-                return $this->fail('Error al crear donación: ' . implode(', ', $errors), 400);
+            // Convert string IDs to integers
+            $data['idCategorias_Equipos'] = (int)$data['idCategorias_Equipos'];
+            $data['idEstados_Equipos'] = (int)$data['idEstados_Equipos'];
+            $data['Cantidad_Equipos'] = (int)$data['Cantidad_Equipos'];
+            
+            // Fix decimal format (replace comma with dot)
+            $data['PesoKG_Equipos'] = str_replace(',', '.', $data['PesoKG_Equipos']);
+            $data['PesoKG_Equipos'] = (float)$data['PesoKG_Equipos'];
+            
+            // Ensure arrays are properly formatted
+            if (isset($data['Fotos_Equipos']) && is_array($data['Fotos_Equipos'])) {
+                $data['Fotos_Equipos'] = json_encode($data['Fotos_Equipos']);
             }
 
-            // Get created donation with details
-            $donation = $this->donationModel->getDonationWithDetails($donationId);
+            // Log the data being inserted for debugging
+            log_message('debug', 'Data to insert: ' . json_encode($data));
+            
+            // Create equipment
+            $equipmentId = $this->donationModel->insert($data);
+            
+            if (!$equipmentId) {
+                $errors = $this->donationModel->errors();
+                log_message('error', 'Validation errors: ' . json_encode($errors));
+                log_message('error', 'Data that failed: ' . json_encode($data));
+                return $this->fail('Error al crear equipo: ' . implode(', ', $errors), 400);
+            }
+
+            // Create publication if points are provided
+            log_message('debug', 'Checking points condition - puntos: ' . ($data['puntos'] ?? 'null') . ', descripcion: ' . ($data['descripcion_publicacion'] ?? 'null'));
+            
+            if (!empty($data['puntos']) && !empty($data['descripcion_publicacion'])) {
+                log_message('debug', 'Creating publication and adding points for user: ' . $userId . ' with points: ' . $data['puntos']);
+                
+                $this->donationModel->createPublication(
+                    $equipmentId, 
+                    $userId, 
+                    $data['descripcion_publicacion'], 
+                    $data['puntos']
+                );
+                
+                // Add points to user
+                $pointsResult = $this->userModel->addPoints($userId, (int)$data['puntos']);
+                log_message('debug', 'Points added result: ' . ($pointsResult ? 'true' : 'false'));
+                
+                // Verify points were added
+                $user = $this->userModel->find($userId);
+                log_message('debug', 'User points after adding: ' . ($user['Puntos_Usuarios'] ?? 'null'));
+            } else {
+                log_message('debug', 'Points condition not met - puntos empty: ' . (empty($data['puntos']) ? 'true' : 'false') . ', descripcion empty: ' . (empty($data['descripcion_publicacion']) ? 'true' : 'false'));
+            }
+
+            // Get created equipment with details
+            $equipment = $this->donationModel->getDonationWithUser($equipmentId);
 
             return $this->respond([
                 'success' => true,
-                'message' => 'Donación creada exitosamente',
-                'data' => $donation
+                'message' => 'Equipo creado exitosamente',
+                'data' => $equipment
             ], 201);
 
         } catch (\Exception $e) {
-            log_message('error', 'Error al crear donación: ' . $e->getMessage());
+            log_message('error', 'Error al crear equipo: ' . $e->getMessage());
             return $this->fail('Error interno del servidor', 500);
         }
     }
@@ -630,7 +671,7 @@ class DonationController extends ResourceController
             
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
             
-            return $decoded->data->user_id ?? null;
+            return $decoded->data->idUsuarios ?? null;
 
         } catch (\Exception $e) {
             log_message('error', 'Error al decodificar token: ' . $e->getMessage());
@@ -639,9 +680,9 @@ class DonationController extends ResourceController
     }
 
     /**
-     * Get user type from JWT token
+     * Get user role from JWT token
      */
-    private function getUserTypeFromToken(): ?string
+    private function getUserRoleFromToken(): ?int
     {
         try {
             $authHeader = $this->request->getHeaderLine('Authorization');
@@ -655,7 +696,7 @@ class DonationController extends ResourceController
             
             $decoded = JWT::decode($token, new Key($key, 'HS256'));
             
-            return $decoded->data->tipo_usuario ?? null;
+            return $decoded->data->Roles_Usuarios ?? null;
 
         } catch (\Exception $e) {
             log_message('error', 'Error al decodificar token: ' . $e->getMessage());

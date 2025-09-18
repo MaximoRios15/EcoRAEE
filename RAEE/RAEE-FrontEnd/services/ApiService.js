@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 class ApiService {
   constructor() {
     // URL base del backend CodeIgniter 4
-    this.baseURL = 'http://192.168.0.9/RAEE/RAEE-BackEnd/public/api';
+    this.baseURL = 'http://192.168.1.2/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
     this.token = null;
   }
 
@@ -86,6 +86,12 @@ class ApiService {
       }
     } catch (error) {
       console.error(`API Error (${method} ${endpoint}):`, error);
+      
+      // Manejar errores de conexión de manera más específica
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('No se pudo conectar con el servidor. Verifica que el servidor esté ejecutándose.');
+      }
+      
       throw error;
     }
   }
@@ -113,37 +119,47 @@ class ApiService {
     return await this.makeRequest('profile', 'GET');
   }
 
+  // Obtener puntos del usuario
+  async getUserPoints() {
+    return await this.makeRequest('user/points', 'GET');
+  }
+
   // Cerrar sesión
   async logout() {
     await this.removeToken();
     return { success: true, message: 'Sesión cerrada correctamente' };
   }
 
-  // ==================== DONACIONES ====================
+  // ==================== EQUIPOS ====================
 
-  // Crear nueva donación
-  async createDonation(donationData) {
-    return await this.makeRequest('donations', 'POST', donationData);
+  // Crear nuevo equipo
+  async createEquipment(equipmentData) {
+    return await this.makeRequest('donations', 'POST', equipmentData);
   }
 
-  // Obtener todas las donaciones
-  async getAllDonations() {
+  // Obtener todos los equipos
+  async getAllEquipment() {
     return await this.makeRequest('donations', 'GET');
   }
 
-  // Obtener donaciones del usuario
-  async getUserDonations() {
-    return await this.makeRequest('donations/user', 'GET');
+  // Obtener equipos del usuario
+  async getUserEquipment() {
+    return await this.makeRequest('donations', 'GET');
   }
 
-  // Obtener donación específica
-  async getDonation(donationId) {
-    return await this.makeRequest(`donations/${donationId}`, 'GET');
+  // Obtener equipo específico
+  async getEquipment(equipmentId) {
+    return await this.makeRequest(`donations/${equipmentId}`, 'GET');
   }
 
-  // Actualizar estado de donación
-  async updateDonationStatus(donationId, status) {
-    return await this.makeRequest(`donations/${donationId}/status`, 'PUT', { status });
+  // Actualizar estado de equipo
+  async updateEquipmentStatus(equipmentId, status) {
+    return await this.makeRequest(`donations/${equipmentId}/status`, 'PUT', { estado: status });
+  }
+
+  // Crear publicación para equipo
+  async createPublication(equipmentId, publicationData) {
+    return await this.makeRequest(`donations/${equipmentId}/publication`, 'POST', publicationData);
   }
 
   // ==================== ENTREGAS ====================
@@ -215,6 +231,18 @@ class ApiService {
   // Actualizar perfil de institución
   async updateInstitutionProfile(profileData) {
     return await this.makeRequest('institution/profile', 'PUT', profileData);
+  }
+
+  // ==================== CATEGORÍAS Y ESTADOS ====================
+
+  // Obtener todas las categorías de equipos
+  async getCategories() {
+    return await this.makeRequest('categories', 'GET', null, false);
+  }
+
+  // Obtener todos los estados de equipos
+  async getStates() {
+    return await this.makeRequest('states', 'GET', null, false);
   }
 }
 
