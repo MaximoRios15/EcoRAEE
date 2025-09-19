@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 class ApiService {
   constructor() {
     // URL base del backend CodeIgniter 4
-    this.baseURL = 'http://192.168.1.2/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
+    this.baseURL = 'http://172.16.2.187/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
     this.token = null;
   }
 
@@ -117,6 +117,11 @@ class ApiService {
   // Obtener perfil del usuario
   async getProfile() {
     return await this.makeRequest('profile', 'GET');
+  }
+
+  // Actualizar perfil del usuario
+  async updateUserProfile(profileData) {
+    return await this.makeRequest('usuarios/update-profile', 'PUT', profileData);
   }
 
   // Obtener puntos del usuario

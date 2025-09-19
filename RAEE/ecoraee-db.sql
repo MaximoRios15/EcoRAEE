@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-09-2025 a las 04:02:59
+-- Tiempo de generación: 19-09-2025 a las 00:43:45
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -111,13 +111,13 @@ CREATE TABLE `equipos` (
   `idClientes_Equipos` int(11) NOT NULL,
   `idCategorias_Equipos` int(11) NOT NULL,
   `Marca_Equipos` varchar(50) NOT NULL,
-  `Modelo_Equipos` varchar(100) NOT NULL,
+  `Modelo_Equipos` varchar(100) DEFAULT NULL,
   `idEstados_Equipos` int(11) NOT NULL,
   `Cantidad_Equipos` int(11) NOT NULL,
   `Descripcion_Equipos` varchar(255) DEFAULT NULL,
   `Fotos_Equipos` varchar(255) DEFAULT NULL,
   `PesoKG_Equipos` double NOT NULL,
-  `DimencionesCM_Equipos` varchar(20) NOT NULL,
+  `DimencionesCM_Equipos` varchar(20) DEFAULT NULL,
   `FechaIngreso_Equipos` datetime DEFAULT NULL,
   `Accesorios_Equipos` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
@@ -127,7 +127,9 @@ CREATE TABLE `equipos` (
 --
 
 INSERT INTO `equipos` (`idEquipos`, `idClientes_Equipos`, `idCategorias_Equipos`, `Marca_Equipos`, `Modelo_Equipos`, `idEstados_Equipos`, `Cantidad_Equipos`, `Descripcion_Equipos`, `Fotos_Equipos`, `PesoKG_Equipos`, `DimencionesCM_Equipos`, `FechaIngreso_Equipos`, `Accesorios_Equipos`) VALUES
-(1, 3, 21, 'Dell', 'G15 5525', 1, 1, 'Laptop Dell g15 5525 ryzen 5 6600h - rtx 3050', '[]', 2.52, '27x370x260', '2025-09-18 01:43:09', 'Cargador');
+(1, 3, 21, 'Dell', 'G15 5525', 1, 1, 'Laptop Dell g15 5525 ryzen 5 6600h - rtx 3050', '[]', 2.52, '27x370x260', '2025-09-18 01:43:09', 'Cargador'),
+(3, 4, 29, 'Kodak', '', 2, 1, '', '[]', 6, '', '2025-09-18 05:07:32', ''),
+(4, 3, 30, 'JBL', '', 4, 1, '', '[]', 0.7, '', '2025-09-18 21:58:55', '');
 
 -- --------------------------------------------------------
 
@@ -185,7 +187,9 @@ CREATE TABLE `publicacion` (
 --
 
 INSERT INTO `publicacion` (`id_Publicacion`, `Descripcion_Publicacion`, `Puntos_Publicacion`, `Fecha_Publicacion`, `clientes_idClientes`, `estados_idEstados`, `equipos_idEquipos`) VALUES
-(1, 'Laptop Dell g15 5525 ryzen 5 6600h - rtx 3050', 190, '2025-09-18 01:43:09', 3, 1, 1);
+(1, 'Laptop Dell g15 5525 ryzen 5 6600h - rtx 3050', 190, '2025-09-18 01:43:09', 3, 1, 1),
+(2, '', 95, '2025-09-18 05:07:32', 4, 1, 3),
+(3, '', 30, '2025-09-18 21:58:55', 3, 1, 4);
 
 -- --------------------------------------------------------
 
@@ -262,8 +266,8 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`idUsuarios`, `DNI_Usuarios`, `Nombres_Usuarios`, `Apellidos_Usuarios`, `Password_Usuarios`, `Telefono_Usuarios`, `Email_Usuarios`, `Provincia_Usuarios`, `Municipios_Usuarios`, `Roles_Usuarios`, `Puntos_Usuarios`, `FechaRegistro_Usuarios`, `Activo_Usuarios`) VALUES
-(2, '87654321', 'Maria', 'Garcia', '$2y$10$fyhIGWdx1XWSp1AGwe1VpezPYzIHsC7W2pzu4NV/8RlkUMDyMa49S', '0987654321', 'maria.garcia@test.com', 'Misiones', 'Posadas', 1, 0, '2025-09-17 19:35:39', 1),
-(3, '45026308', 'Maximo Jesus', 'Rios', '$2y$10$58zloM57FHLVmhu/SrXdku4Yn/9KAeIKsA2I8KSXOfjqk0vYSuJcS', '3765102868', 'maximuz_ty@hotmail.com', 'Misiones', 'Posadas', 1, 190, '2025-09-17 19:56:08', 1);
+(3, '45026308', 'Maximo Jesus', 'Rios', '$2y$10$58zloM57FHLVmhu/SrXdku4Yn/9KAeIKsA2I8KSXOfjqk0vYSuJcS', '3765102868', 'maximuz_ty@hotmail.com', 'Misiones', 'Posadas', 1, 220, '2025-09-17 19:56:08', 1),
+(4, '45053541', 'Uruga ', 'Azul', '$2y$10$Atr0OEnRw2rXHZENeaVdvupO2OVlPHpWFyIYL6sGxNrsd3ChXu0z2', '3764367492', 'themagichest@gmail.com', 'Misiones', 'Posadas', 1, 95, '2025-09-18 01:48:39', 1);
 
 --
 -- Índices para tablas volcadas
@@ -383,7 +387,7 @@ ALTER TABLE `credenciales_tecnico`
 -- AUTO_INCREMENT de la tabla `equipos`
 --
 ALTER TABLE `equipos`
-  MODIFY `idEquipos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `idEquipos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `estados`
@@ -401,7 +405,7 @@ ALTER TABLE `movimiento_recoleccion`
 -- AUTO_INCREMENT de la tabla `publicacion`
 --
 ALTER TABLE `publicacion`
-  MODIFY `id_Publicacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_Publicacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `punto_recoleccion`
@@ -425,7 +429,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `idUsuarios` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `idUsuarios` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Restricciones para tablas volcadas

@@ -187,6 +187,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         const response = await ApiService.getProfile();
+        
         if (response.success) {
           dispatch({ type: 'UPDATE_USER', userData: response.data.user });
           return response.data.user;

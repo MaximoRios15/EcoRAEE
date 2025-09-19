@@ -14,6 +14,7 @@ $routes->group('api', function($routes) {
     $routes->post('login', 'AuthController::login');
     $routes->get('profile', 'AuthController::profile');
     $routes->get('user/points', 'AuthController::getUserPoints');
+    $routes->put('usuarios/update-profile', 'AuthController::updateProfile');
     $routes->post('logout', 'AuthController::logout');
     
     // Donation routes

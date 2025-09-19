@@ -14,6 +14,7 @@ import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
 import DonationScreen from './screens/DonationScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
+import ProfileScreen from './screens/ProfileScreen';
 
 const Stack = createStackNavigator();
 
@@ -58,6 +59,7 @@ function AppNavigator() {
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Donation" component={DonationScreen} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
             {/* Aquí se agregarán más pantallas autenticadas */}
           </>
         )}

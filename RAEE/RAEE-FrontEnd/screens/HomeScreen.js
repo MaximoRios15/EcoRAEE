@@ -57,7 +57,7 @@ export default function HomeScreen({ navigation }) {
         Alert.alert('Próximamente', 'Esta función estará disponible pronto');
         break;
       case 'profile':
-        Alert.alert('Próximamente', 'Esta función estará disponible pronto');
+        navigation.navigate('Profile');
         break;
       case 'stats':
         Alert.alert('Próximamente', 'Esta función estará disponible pronto');

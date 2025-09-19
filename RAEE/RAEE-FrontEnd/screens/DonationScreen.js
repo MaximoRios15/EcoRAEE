@@ -89,7 +89,7 @@ const calcularPuntosPorPeso = (peso) => {
 };
 
 export default function DonationScreen({ navigation }) {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [states, setStates] = useState([]);
@@ -335,16 +335,8 @@ export default function DonationScreen({ navigation }) {
       Alert.alert('Error', 'Por favor selecciona el estado del RAEE');
       return false;
     }
-    if (!formData.Descripcion_Equipos.trim()) {
-      Alert.alert('Error', 'Por favor ingresa una descripción');
-      return false;
-    }
     if (!formData.PesoKG_Equipos.trim()) {
       Alert.alert('Error', 'Por favor ingresa el peso del equipo');
-      return false;
-    }
-    if (!formData.DimencionesCM_Equipos.trim()) {
-      Alert.alert('Error', 'Por favor ingresa las dimensiones del equipo');
       return false;
     }
     // Temporalmente deshabilitado - validación de fotos
@@ -392,6 +384,13 @@ export default function DonationScreen({ navigation }) {
       const response = await ApiService.createEquipment(equipmentData);
       
       if (response.success) {
+        // Actualizar el perfil del usuario para reflejar los nuevos puntos
+        try {
+          await refreshProfile();
+        } catch (error) {
+          console.error('Error al actualizar perfil:', error);
+        }
+
         Alert.alert(
           'Éxito',
           'Tu donación de RAEE ha sido registrada exitosamente',
@@ -478,51 +477,6 @@ export default function DonationScreen({ navigation }) {
             </Text>
           </View>
 
-          {/* Mostrar puntos que generará la donación */}
-          {desglosePuntos && (
-            <View style={styles.pointsContainer}>
-              <Text style={styles.pointsTitle}>
-                🎯 Puntos que obtendrás por esta donación
-              </Text>
-              
-              <View style={styles.pointsBreakdown}>
-                <View style={styles.pointsRow}>
-                  <Text style={styles.pointsLabel}>Puntos base ({desglosePuntos.categoria}):</Text>
-                  <Text style={styles.pointsValue}>{desglosePuntos.puntosBase} pts</Text>
-                </View>
-                
-                <View style={styles.pointsRow}>
-                  <Text style={styles.pointsLabel}>Estado ({desglosePuntos.estado}):</Text>
-                  <Text style={styles.pointsValue}>x{desglosePuntos.multiplicador}</Text>
-                </View>
-                
-                <View style={styles.pointsRow}>
-                  <Text style={styles.pointsLabel}>Después del estado:</Text>
-                  <Text style={styles.pointsValue}>{desglosePuntos.puntosConEstado} pts</Text>
-                </View>
-                
-                <View style={styles.pointsRow}>
-                  <Text style={styles.pointsLabel}>Bonus por peso ({desglosePuntos.peso}kg):</Text>
-                  <Text style={styles.pointsValue}>+{desglosePuntos.bonusPeso} pts</Text>
-                </View>
-                
-                <View style={styles.pointsRow}>
-                  <Text style={styles.pointsLabel}>Por unidad:</Text>
-                  <Text style={styles.pointsValue}>{desglosePuntos.puntosPorUnidad} pts</Text>
-                </View>
-                
-                <View style={styles.pointsRow}>
-                  <Text style={styles.pointsLabel}>Cantidad:</Text>
-                  <Text style={styles.pointsValue}>x{desglosePuntos.cantidad}</Text>
-                </View>
-                
-                <View style={[styles.pointsRow, styles.pointsTotal]}>
-                  <Text style={styles.pointsTotalLabel}>TOTAL:</Text>
-                  <Text style={styles.pointsTotalValue}>{desglosePuntos.puntosFinales} puntos</Text>
-                </View>
-              </View>
-            </View>
-          )}
         </View>
 
         <View style={styles.form}>
@@ -605,7 +559,7 @@ export default function DonationScreen({ navigation }) {
 
           {/* Descripción */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Descripción *</Text>
+            <Text style={styles.label}>Descripción</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               value={formData.Descripcion_Equipos}
@@ -620,8 +574,8 @@ export default function DonationScreen({ navigation }) {
 
           {/* Fotos del dispositivo */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Fotos del dispositivo *</Text>
-            <Text style={styles.photoSubtext}>Máximo 3 fotos (mínimo 1 requerida)</Text>
+            <Text style={styles.label}>Fotos del dispositivo</Text>
+            <Text style={styles.photoSubtext}>Máximo 3 fotos (opcional)</Text>
             
             {/* Botones para agregar fotos */}
             <View style={styles.photoButtons}>
@@ -653,7 +607,7 @@ export default function DonationScreen({ navigation }) {
 
           {/* Peso */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Peso (kg)</Text>
+            <Text style={styles.label}>Peso (kg) *</Text>
             <TextInput
               style={styles.input}
               value={formData.PesoKG_Equipos}
@@ -724,6 +678,56 @@ export default function DonationScreen({ navigation }) {
               />
             )}
           </View>
+
+          {/* Mostrar puntos que generará la donación */}
+          {desglosePuntos && (
+            <View style={styles.pointsContainer}>
+              <Text style={styles.pointsTitle}>
+                🎯 Puntos que obtendrás por esta donación
+              </Text>
+              
+              <View style={styles.pointsBreakdown}>
+                <View style={styles.pointsRow}>
+                  <Text style={styles.pointsLabel}>Puntos base ({desglosePuntos.categoria}):</Text>
+                  <Text style={styles.pointsValue}>+{desglosePuntos.puntosBase} pts</Text>
+                </View>
+                
+                <View style={styles.pointsRow}>
+                  <Text style={styles.pointsLabel}>Estado ({desglosePuntos.estado}):</Text>
+                  <Text style={styles.pointsValue}>
+                    {desglosePuntos.multiplicador < 1 ? '-' : '+'}
+                    {Math.round((1 - desglosePuntos.multiplicador) * 100)}% 
+                    ({desglosePuntos.puntosBase - desglosePuntos.puntosConEstado} pts)
+                  </Text>
+                </View>
+                
+                <View style={styles.pointsRow}>
+                  <Text style={styles.pointsLabel}>Después del estado:</Text>
+                  <Text style={styles.pointsValue}>{desglosePuntos.puntosConEstado} pts</Text>
+                </View>
+                
+                <View style={styles.pointsRow}>
+                  <Text style={styles.pointsLabel}>Bonus por peso ({desglosePuntos.peso}kg):</Text>
+                  <Text style={styles.pointsValue}>+{desglosePuntos.bonusPeso} pts</Text>
+                </View>
+                
+                <View style={styles.pointsRow}>
+                  <Text style={styles.pointsLabel}>Por unidad:</Text>
+                  <Text style={styles.pointsValue}>{desglosePuntos.puntosPorUnidad} pts</Text>
+                </View>
+                
+                <View style={styles.pointsRow}>
+                  <Text style={styles.pointsLabel}>Cantidad:</Text>
+                  <Text style={styles.pointsValue}>x{desglosePuntos.cantidad}</Text>
+                </View>
+                
+                <View style={[styles.pointsRow, styles.pointsTotal]}>
+                  <Text style={styles.pointsTotalLabel}>TOTAL:</Text>
+                  <Text style={styles.pointsTotalValue}>{desglosePuntos.puntosFinales} puntos</Text>
+                </View>
+              </View>
+            </View>
+          )}
 
           {/* Botones */}
           <View style={styles.buttonContainer}>

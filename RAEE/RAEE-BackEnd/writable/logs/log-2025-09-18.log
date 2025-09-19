@@ -1,0 +1,15 @@
+DEBUG - 2025-09-18 05:04:38 --> Data to insert: {"idCategorias_Equipos":29,"Marca_Equipos":"Kodak","Modelo_Equipos":"","idEstados_Equipos":2,"Descripcion_Equipos":"","Cantidad_Equipos":1,"PesoKG_Equipos":6,"DimencionesCM_Equipos":"","Accesorios_Equipos":"","ubicacion":"este_universidad","ubicacionTipo":"este_universidad","Fotos_Equipos":"[]","puntos":95,"descripcion_publicacion":"","idClientes_Equipos":4,"FechaIngreso_Equipos":"2025-09-18 05:04:38"}
+DEBUG - 2025-09-18 05:04:38 --> Checking points condition - puntos: 95, descripcion: 
+DEBUG - 2025-09-18 05:04:38 --> Points condition not met - puntos empty: false, descripcion empty: true
+DEBUG - 2025-09-18 05:07:32 --> Data to insert: {"idCategorias_Equipos":29,"Marca_Equipos":"Kodak","Modelo_Equipos":"","idEstados_Equipos":2,"Descripcion_Equipos":"","Cantidad_Equipos":1,"PesoKG_Equipos":6,"DimencionesCM_Equipos":"","Accesorios_Equipos":"","ubicacion":"este_universidad","ubicacionTipo":"este_universidad","Fotos_Equipos":"[]","puntos":95,"descripcion_publicacion":"","idClientes_Equipos":4,"FechaIngreso_Equipos":"2025-09-18 05:07:32"}
+DEBUG - 2025-09-18 05:07:32 --> Checking points condition - puntos: 95, descripcion: 
+DEBUG - 2025-09-18 05:07:32 --> Creating publication and adding points for user: 4 with points: 95
+DEBUG - 2025-09-18 05:07:32 --> Adding points - User: 4, Current: 0, Adding: 95, New: 95
+DEBUG - 2025-09-18 05:07:32 --> Points added result: true
+DEBUG - 2025-09-18 05:07:32 --> User points after adding: 95
+DEBUG - 2025-09-18 21:58:55 --> Data to insert: {"idCategorias_Equipos":30,"Marca_Equipos":"JBL","Modelo_Equipos":"","idEstados_Equipos":4,"Descripcion_Equipos":"","Cantidad_Equipos":1,"PesoKG_Equipos":0.7,"DimencionesCM_Equipos":"","Accesorios_Equipos":"","ubicacion":"oeste_hospital","ubicacionTipo":"oeste_hospital","Fotos_Equipos":"[]","puntos":30,"descripcion_publicacion":"","idClientes_Equipos":3,"FechaIngreso_Equipos":"2025-09-18 21:58:55"}
+DEBUG - 2025-09-18 21:58:55 --> Checking points condition - puntos: 30, descripcion: 
+DEBUG - 2025-09-18 21:58:55 --> Creating publication and adding points for user: 3 with points: 30
+DEBUG - 2025-09-18 21:58:55 --> Adding points - User: 3, Current: 190, Adding: 30, New: 220
+DEBUG - 2025-09-18 21:58:55 --> Points added result: true
+DEBUG - 2025-09-18 21:58:55 --> User points after adding: 220

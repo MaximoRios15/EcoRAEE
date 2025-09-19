@@ -138,8 +138,8 @@ class DonationController extends ResourceController
                 return $this->fail('No se recibieron datos válidos', 400);
             }
 
-            // Validate required fields
-            $requiredFields = ['idCategorias_Equipos', 'Marca_Equipos', 'Modelo_Equipos', 'idEstados_Equipos', 'Cantidad_Equipos', 'PesoKG_Equipos', 'DimencionesCM_Equipos'];
+            // Validate required fields (only those that are NOT NULL in database)
+            $requiredFields = ['idCategorias_Equipos', 'Marca_Equipos', 'idEstados_Equipos', 'Cantidad_Equipos', 'PesoKG_Equipos'];
             foreach ($requiredFields as $field) {
                 if (empty($data[$field])) {
                     return $this->fail("El campo {$field} es obligatorio", 400);
@@ -180,13 +180,18 @@ class DonationController extends ResourceController
             // Create publication if points are provided
             log_message('debug', 'Checking points condition - puntos: ' . ($data['puntos'] ?? 'null') . ', descripcion: ' . ($data['descripcion_publicacion'] ?? 'null'));
             
-            if (!empty($data['puntos']) && !empty($data['descripcion_publicacion'])) {
+            if (!empty($data['puntos'])) {
+                // Use custom description or fallback to equipment description
+                $publicationDescription = !empty($data['descripcion_publicacion']) 
+                    ? $data['descripcion_publicacion'] 
+                    : ($data['Descripcion_Equipos'] ?? 'Donación de equipo electrónico');
+                
                 log_message('debug', 'Creating publication and adding points for user: ' . $userId . ' with points: ' . $data['puntos']);
                 
                 $this->donationModel->createPublication(
                     $equipmentId, 
                     $userId, 
-                    $data['descripcion_publicacion'], 
+                    $publicationDescription, 
                     $data['puntos']
                 );
                 
@@ -198,7 +203,7 @@ class DonationController extends ResourceController
                 $user = $this->userModel->find($userId);
                 log_message('debug', 'User points after adding: ' . ($user['Puntos_Usuarios'] ?? 'null'));
             } else {
-                log_message('debug', 'Points condition not met - puntos empty: ' . (empty($data['puntos']) ? 'true' : 'false') . ', descripcion empty: ' . (empty($data['descripcion_publicacion']) ? 'true' : 'false'));
+                log_message('debug', 'Points condition not met - puntos empty: ' . (empty($data['puntos']) ? 'true' : 'false'));
             }
 
             // Get created equipment with details

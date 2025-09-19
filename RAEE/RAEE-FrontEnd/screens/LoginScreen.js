@@ -123,7 +123,7 @@ export default function LoginScreen({ navigation }) {
               }}
             >
               <Ionicons
-                name={showPassword ? 'eye-off' : 'eye'}
+                name={showPassword ? 'eye' : 'eye-off'}
                 size={24}
                 color="#666"
               />

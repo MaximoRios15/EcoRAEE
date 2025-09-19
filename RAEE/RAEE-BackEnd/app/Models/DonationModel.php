@@ -37,13 +37,13 @@ class DonationModel extends Model
         'idClientes_Equipos' => 'required|integer|is_not_unique[usuarios.idUsuarios]',
         'idCategorias_Equipos' => 'required|integer|is_not_unique[categorias_equipos.idCategorias]',
         'Marca_Equipos' => 'required|min_length[2]|max_length[50]',
-        'Modelo_Equipos' => 'required|min_length[2]|max_length[100]',
+        'Modelo_Equipos' => 'permit_empty|min_length[2]|max_length[100]',
         'idEstados_Equipos' => 'required|integer|is_not_unique[estados.idEstados]',
         'Cantidad_Equipos' => 'required|integer|greater_than[0]',
         'Descripcion_Equipos' => 'permit_empty|max_length[255]',
         'Fotos_Equipos' => 'permit_empty|max_length[255]',
         'PesoKG_Equipos' => 'required|decimal|greater_than[0]',
-        'DimencionesCM_Equipos' => 'required|max_length[20]',
+        'DimencionesCM_Equipos' => 'permit_empty|max_length[20]',
         'Accesorios_Equipos' => 'permit_empty|max_length[100]'
     ];
 
@@ -64,7 +64,6 @@ class DonationModel extends Model
             'max_length' => 'La marca no puede tener más de 50 caracteres'
         ],
         'Modelo_Equipos' => [
-            'required' => 'El modelo del equipo es obligatorio',
             'min_length' => 'El modelo debe tener al menos 2 caracteres',
             'max_length' => 'El modelo no puede tener más de 100 caracteres'
         ],
@@ -84,7 +83,6 @@ class DonationModel extends Model
             'greater_than' => 'El peso debe ser mayor a 0'
         ],
         'DimencionesCM_Equipos' => [
-            'required' => 'Las dimensiones son obligatorias',
             'max_length' => 'Las dimensiones no pueden tener más de 20 caracteres'
         ]
     ];
