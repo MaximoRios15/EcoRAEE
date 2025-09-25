@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 class ApiService {
   constructor() {
     // URL base del backend CodeIgniter 4
-    this.baseURL = 'http://172.16.2.187/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
+    this.baseURL = 'http://172.16.2.182/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
     this.token = null;
   }
 

@@ -31,11 +31,16 @@ RAEE-FrontEnd/
 ├── services/              # Servicios de comunicación con API
 │   └── ApiService.js      # Servicio principal de API
 ├── img/                   # Imágenes de perfil predefinidas
-│   ├── perfil1.png        # Avatar 1
-│   ├── perfil2.png        # Avatar 2
-│   ├── perfil3.png        # Avatar 3
-│   ├── perfil4.png        # Avatar 4
-│   └── ...                # Más avatares disponibles
+│   ├── perfil1animal.png  # Avatar 1 - Tema animal
+│   ├── perfil1flores.png  # Avatar 1 - Tema flores
+│   ├── perfil2animal.png  # Avatar 2 - Tema animal
+│   ├── perfil2flores.png  # Avatar 2 - Tema flores
+│   ├── perfil3animal.png  # Avatar 3 - Tema animal
+│   ├── perfil3flores.png  # Avatar 3 - Tema flores
+│   ├── perfil4animal.png  # Avatar 4 - Tema animal
+│   ├── perfil4flores.png  # Avatar 4 - Tema flores
+│   ├── perfil5animal.png  # Avatar 5 - Tema animal
+│   └── perfil5flores.png  # Avatar 5 - Tema flores
 ├── App.js                 # Componente principal de la aplicación
 ├── app.json              # Configuración de Expo
 ├── package.json          # Dependencias y scripts
@@ -127,7 +132,7 @@ RAEE-FrontEnd/
   - **Validación de formularios**: Validación en tiempo real
   - **Integración con API**: Sincronización automática con backend
 - **Funcionalidades Avanzadas**:
-  - **Galería de imágenes**: 10+ opciones de avatares predefinidos
+  - **Galería de imágenes**: 10 opciones de avatares predefinidos (5 personajes × 2 temas: animal y flores)
   - **Edición inline**: Modales responsivos con manejo de teclado
   - **Feedback visual**: Alertas de confirmación y error
   - **Navegación intuitiva**: Botones de cancelar/guardar
@@ -458,10 +463,23 @@ Base de Datos (MySQL)
 
 ### 🎨 **Sistema de Gestión de Perfil**
 - **Edición de Datos Personales**: Modal responsivo para editar nombre y apellido
-- **Selector de Avatar**: Galería con 10+ imágenes de perfil predefinidas
+- **Selector de Avatar**: Galería con 10 imágenes de perfil predefinidas (5 personajes con 2 variantes temáticas cada uno)
 - **Persistencia Local**: AsyncStorage para mantener preferencias del usuario
 - **Sincronización Backend**: Actualización automática en base de datos
 - **UI/UX Optimizada**: Modales con manejo inteligente de teclado
+
+#### **Galería de Avatares Disponibles:**
+- **Perfil 1**: `perfil1animal.png` (tema animal) | `perfil1flores.png` (tema flores)
+- **Perfil 2**: `perfil2animal.png` (tema animal) | `perfil2flores.png` (tema flores)
+- **Perfil 3**: `perfil3animal.png` (tema animal) | `perfil3flores.png` (tema flores)
+- **Perfil 4**: `perfil4animal.png` (tema animal) | `perfil4flores.png` (tema flores)
+- **Perfil 5**: `perfil5animal.png` (tema animal) | `perfil5flores.png` (tema flores)
+
+**Características de la galería:**
+- **Temas variados**: Cada personaje tiene 2 versiones (animal y flores)
+- **Selección intuitiva**: Modal con grid de imágenes
+- **Persistencia**: La selección se guarda automáticamente
+- **Sin filtros**: Imágenes se muestran en su estado original
 
 ### 🎯 **Sistema de Puntos Dinámico**
 - **Cálculo Automático**: Puntos basados en categoría, estado y peso del dispositivo

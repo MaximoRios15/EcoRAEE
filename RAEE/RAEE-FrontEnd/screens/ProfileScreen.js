@@ -36,6 +36,10 @@ export default function ProfileScreen({ navigation }) {
     { id: 4, name: 'perfil2flores.png', source: require('../img/perfil2flores.png') },
     { id: 5, name: 'perfil3animal.png', source: require('../img/perfil3animal.png') },
     { id: 6, name: 'perfil3flores.png', source: require('../img/perfil3flores.png') },
+    { id: 7, name: 'perfil4animal.png', source: require('../img/perfil4animal.png') },
+    { id: 8, name: 'perfil4flores.png', source: require('../img/perfil4flores.png') },
+    { id: 9, name: 'perfil5animal.png', source: require('../img/perfil5animal.png') },
+    { id: 10, name: 'perfil5flores.png', source: require('../img/perfil5flores.png') },
   ];
 
   useEffect(() => {
