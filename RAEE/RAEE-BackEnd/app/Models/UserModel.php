@@ -20,12 +20,14 @@ class UserModel extends Model
         'Password_Usuarios',
         'Telefono_Usuarios',
         'Email_Usuarios',
-        'Provincia_Usuarios',
-        'Municipios_Usuarios',
         'Roles_Usuarios',
-        'Puntos_Usuarios',
         'FechaRegistro_Usuarios',
-        'Activo_Usuarios'
+        'Activo_Usuarios',
+        'ubicaciones_Usuarios',
+        'ImagenPerfil_Usuarios',
+        'Puntos_Usuarios',
+        'Provincia_Usuarios',
+        'Municipios_Usuarios'
     ];
 
     // Dates
@@ -40,11 +42,12 @@ class UserModel extends Model
         'Email_Usuarios' => 'required|valid_email|is_unique[usuarios.Email_Usuarios,idUsuarios,{idUsuarios}]',
         'Password_Usuarios' => 'required|min_length[6]|max_length[255]',
         'Telefono_Usuarios' => 'required|min_length[7]|max_length[14]',
-        'Provincia_Usuarios' => 'required|max_length[45]',
-        'Municipios_Usuarios' => 'required|max_length[45]',
         'Roles_Usuarios' => 'required|integer',
-        'Puntos_Usuarios' => 'permit_empty|integer|greater_than_equal_to[0]',
-        'Activo_Usuarios' => 'permit_empty|in_list[0,1]'
+        'Activo_Usuarios' => 'permit_empty|in_list[0,1]',
+        'ubicaciones_Usuarios' => 'permit_empty|integer',
+        'ImagenPerfil_Usuarios' => 'permit_empty|max_length[255]',
+        'Provincia_Usuarios' => 'permit_empty|max_length[100]',
+        'Municipios_Usuarios' => 'permit_empty|max_length[100]'
     ];
 
     protected $validationMessages = [
@@ -79,22 +82,10 @@ class UserModel extends Model
             'min_length' => 'El teléfono debe tener al menos 7 caracteres',
             'max_length' => 'El teléfono no puede tener más de 14 caracteres'
         ],
-        'Provincia_Usuarios' => [
-            'required' => 'La provincia es obligatoria',
-            'max_length' => 'La provincia no puede tener más de 45 caracteres'
-        ],
-        'Municipios_Usuarios' => [
-            'required' => 'El municipio es obligatorio',
-            'max_length' => 'El municipio no puede tener más de 45 caracteres'
-        ],
         'Roles_Usuarios' => [
             'required' => 'El rol es obligatorio',
             'integer' => 'El rol debe ser un número entero'
         ],
-        'Puntos_Usuarios' => [
-            'integer' => 'Los puntos deben ser un número entero',
-            'greater_than_equal_to' => 'Los puntos no pueden ser negativos'
-        ]
     ];
 
     protected $skipValidation = false;

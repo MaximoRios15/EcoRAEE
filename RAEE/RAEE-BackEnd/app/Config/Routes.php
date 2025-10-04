@@ -14,8 +14,22 @@ $routes->group('api', function($routes) {
     $routes->post('login', 'AuthController::login');
     $routes->get('profile', 'AuthController::profile');
     $routes->get('user/points', 'AuthController::getUserPoints');
+    $routes->get('user/statistics', 'AuthController::getUserStatistics');
+    $routes->get('user/points/history', 'AuthController::getUserPointsHistory');
     $routes->put('usuarios/update-profile', 'AuthController::updateProfile');
     $routes->post('logout', 'AuthController::logout');
+    
+    // Public routes
+    $routes->get('locations', 'UbicacionController::index');
+    $routes->get('locations/(:num)', 'UbicacionController::show/$1');
+    $routes->get('locations/municipality/(:segment)', 'UbicacionController::getByMunicipality/$1');
+    $routes->get('categories', 'CategoryController::index');
+    $routes->get('states', 'StateController::index');
+    
+    // Validation routes
+$routes->post('validate-email', 'AuthController::validateEmail');
+$routes->post('validate-dni', 'AuthController::validateDni');
+$routes->post('validate-telefono', 'AuthController::validateTelefono');
     
     // Donation routes
     $routes->post('donations', 'DonationController::create');
@@ -35,7 +49,27 @@ $routes->group('api', function($routes) {
     $routes->put('technician/profile', 'TechnicianController::updateProfile');
     $routes->get('technicians', 'TechnicianController::index');
     
+    // Cart routes
+    $routes->get('cart', 'CartController::index');
+    $routes->post('cart', 'CartController::add');
+    $routes->put('cart/(:num)', 'CartController::update/$1');
+    $routes->delete('cart/(:num)', 'CartController::remove/$1');
+    $routes->delete('cart/clear', 'CartController::clear');
+    
     // Category and State routes (public endpoints)
     $routes->get('categories', 'CategoryController::index');
     $routes->get('states', 'StateController::index');
+    
+    // Image routes
+    $routes->post('images/upload', 'ImageController::uploadEquipmentImages');
+    $routes->get('images/(:segment)', 'ImageController::getImage/$1');
+    $routes->delete('images/(:segment)', 'ImageController::deleteImage/$1');
+    
+    // Publication routes
+    $routes->get('publications', 'PublicacionController::getAllPublications');
+    $routes->get('publications/user', 'PublicacionController::getUserPublications');
+    $routes->get('publications/(:num)', 'PublicacionController::show/$1');
+    
+    // User equipos routes
+    $routes->get('user-equipos', 'UserEquiposController::index');
 });

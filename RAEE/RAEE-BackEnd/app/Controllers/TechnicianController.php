@@ -6,8 +6,6 @@ use App\Models\TecnicoModel;
 use App\Models\UserModel;
 use App\Models\DonationModel;
 use CodeIgniter\RESTful\ResourceController;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 
 class TechnicianController extends ResourceController
 {
@@ -31,11 +29,12 @@ class TechnicianController extends ResourceController
     public function index()
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $page = $this->request->getGet('page') ?? 1;
@@ -68,10 +67,11 @@ class TechnicianController extends ResourceController
     public function show($id = null)
     {
         try {
-            $userId = $this->getUserIdFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if (!$id) {
@@ -107,11 +107,12 @@ class TechnicianController extends ResourceController
     public function create()
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             // Only admin can create technician profiles for other users
@@ -178,11 +179,12 @@ class TechnicianController extends ResourceController
     public function update($id = null)
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if (!$id) {
@@ -241,11 +243,12 @@ class TechnicianController extends ResourceController
     public function delete($id = null)
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if (!$id) {
@@ -296,11 +299,12 @@ class TechnicianController extends ResourceController
     public function myProfile()
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if ($userType !== 'tecnico') {
@@ -336,11 +340,12 @@ class TechnicianController extends ResourceController
     public function updateMyProfile()
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if ($userType !== 'tecnico') {
@@ -393,10 +398,11 @@ class TechnicianController extends ResourceController
     public function search()
     {
         try {
-            $userId = $this->getUserIdFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $search = $this->request->getGet('q');
@@ -425,10 +431,11 @@ class TechnicianController extends ResourceController
     public function getBySpecialty($specialty = null)
     {
         try {
-            $userId = $this->getUserIdFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if (!$specialty) {
@@ -454,10 +461,11 @@ class TechnicianController extends ResourceController
     public function getAvailable()
     {
         try {
-            $userId = $this->getUserIdFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $technicians = $this->tecnicoModel->getAvailableTechnicians();
@@ -479,10 +487,11 @@ class TechnicianController extends ResourceController
     public function getSpecialties()
     {
         try {
-            $userId = $this->getUserIdFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $specialties = $this->tecnicoModel->getSpecialtiesSummary();
@@ -504,10 +513,11 @@ class TechnicianController extends ResourceController
     public function getTopByCompletedDonations()
     {
         try {
-            $userId = $this->getUserIdFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $limit = $this->request->getGet('limit') ?? 10;
@@ -530,10 +540,11 @@ class TechnicianController extends ResourceController
     public function getWithRecentActivity()
     {
         try {
-            $userId = $this->getUserIdFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $days = $this->request->getGet('days') ?? 30;
@@ -556,11 +567,12 @@ class TechnicianController extends ResourceController
     public function getAssignments($id = null)
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if (!$id) {
@@ -609,11 +621,12 @@ class TechnicianController extends ResourceController
     public function getMyAssignments()
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if ($userType !== 'tecnico') {
@@ -657,11 +670,12 @@ class TechnicianController extends ResourceController
     public function updateAvailability()
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if ($userType !== 'tecnico') {
@@ -695,53 +709,4 @@ class TechnicianController extends ResourceController
         }
     }
 
-    /**
-     * Get user ID from JWT token
-     */
-    private function getUserIdFromToken(): ?int
-    {
-        try {
-            $authHeader = $this->request->getHeaderLine('Authorization');
-            
-            if (!$authHeader) {
-                return null;
-            }
-
-            $token = str_replace('Bearer ', '', $authHeader);
-            $key = getenv('JWT_SECRET');
-            
-            $decoded = JWT::decode($token, new Key($key, 'HS256'));
-            
-            return $decoded->data->user_id ?? null;
-
-        } catch (\Exception $e) {
-            log_message('error', 'Error al decodificar token: ' . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Get user type from JWT token
-     */
-    private function getUserTypeFromToken(): ?string
-    {
-        try {
-            $authHeader = $this->request->getHeaderLine('Authorization');
-            
-            if (!$authHeader) {
-                return null;
-            }
-
-            $token = str_replace('Bearer ', '', $authHeader);
-            $key = getenv('JWT_SECRET');
-            
-            $decoded = JWT::decode($token, new Key($key, 'HS256'));
-            
-            return $decoded->data->tipo_usuario ?? null;
-
-        } catch (\Exception $e) {
-            log_message('error', 'Error al decodificar token: ' . $e->getMessage());
-            return null;
-        }
-    }
 }

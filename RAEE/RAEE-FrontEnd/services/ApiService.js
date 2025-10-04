@@ -3,64 +3,42 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 class ApiService {
   constructor() {
     // URL base del backend CodeIgniter 4
-    this.baseURL = 'http://172.16.2.182/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
-    this.token = null;
+    this.baseURL = 'http://192.168.1.2/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
   }
 
   // Configurar headers por defecto
-  getHeaders(includeAuth = true) {
+  getHeaders() {
     const headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
 
-    if (includeAuth && this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-
     return headers;
   }
 
-  // Cargar token desde AsyncStorage
-  async loadToken() {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (token) {
-        this.token = token;
-      }
-    } catch (error) {
-      console.error('Error loading token:', error);
-    }
-  }
 
-  // Guardar token en AsyncStorage
-  async saveToken(token) {
+  // Verificar conectividad con el servidor
+  async checkServerConnection() {
     try {
-      await AsyncStorage.setItem('userToken', token);
-      this.token = token;
+      const response = await fetch(`${this.baseURL}/health`, {
+        method: 'GET',
+        headers: this.getHeaders(false),
+        timeout: 5000 // 5 segundos de timeout
+      });
+      
+      return response.ok;
     } catch (error) {
-      console.error('Error saving token:', error);
-    }
-  }
-
-  // Eliminar token
-  async removeToken() {
-    try {
-      await AsyncStorage.removeItem('userToken');
-      this.token = null;
-    } catch (error) {
-      console.error('Error removing token:', error);
+      console.error('Server connection check failed:', error);
+      return false;
     }
   }
 
   // Método genérico para hacer peticiones HTTP
-  async makeRequest(endpoint, method = 'GET', data = null, includeAuth = true) {
+  async makeRequest(endpoint, method = 'GET', data = null) {
     try {
-      await this.loadToken();
-
       const config = {
         method,
-        headers: this.getHeaders(includeAuth),
+        headers: this.getHeaders(),
       };
 
       if (data && (method === 'POST' || method === 'PUT')) {
@@ -75,6 +53,15 @@ class ApiService {
         const result = await response.json();
         
         if (!response.ok) {
+          // Manejar errores específicos por código de estado
+          if (response.status === 403) {
+            throw new Error('No tienes permisos para realizar esta acción.');
+          } else if (response.status === 404) {
+            throw new Error('El recurso solicitado no fue encontrado.');
+          } else if (response.status >= 500) {
+            throw new Error('Error del servidor. Intenta nuevamente más tarde.');
+          }
+          
           throw new Error(result.message || `HTTP error! status: ${response.status}`);
         }
         
@@ -92,6 +79,16 @@ class ApiService {
         throw new Error('No se pudo conectar con el servidor. Verifica que el servidor esté ejecutándose.');
       }
       
+      // Manejar errores de red específicos
+      if (error.message.includes('Network request failed')) {
+        throw new Error('Error de red: Verifica tu conexión a internet.');
+      }
+      
+      // Manejar errores de timeout
+      if (error.message.includes('timeout')) {
+        throw new Error('La petición tardó demasiado. Intenta nuevamente.');
+      }
+      
       throw error;
     }
   }
@@ -105,18 +102,25 @@ class ApiService {
 
   // Inicio de sesión
   async login(credentials) {
-    const response = await this.makeRequest('login', 'POST', credentials, false);
-    
-    if (response.success && response.data && response.data.token) {
-      await this.saveToken(response.data.token);
+    // Validar que se proporcionen las credenciales necesarias
+    if (!credentials || !credentials.DNI_Usuarios || !credentials.Password_Usuarios) {
+      throw new Error('DNI y contraseña son requeridos.');
     }
+    
+    // El backend espera exactamente estos nombres de campos
+    const loginData = {
+      DNI_Usuarios: credentials.DNI_Usuarios,
+      Password_Usuarios: credentials.Password_Usuarios
+    };
+    
+    const response = await this.makeRequest('login', 'POST', loginData);
     
     return response;
   }
 
   // Obtener perfil del usuario
-  async getProfile() {
-    return await this.makeRequest('profile', 'GET');
+  async getProfile(userId) {
+    return await this.makeRequest(`profile?user_id=${userId}`, 'GET');
   }
 
   // Actualizar perfil del usuario
@@ -125,31 +129,125 @@ class ApiService {
   }
 
   // Obtener puntos del usuario
-  async getUserPoints() {
-    return await this.makeRequest('user/points', 'GET');
+  async getUserPoints(userId) {
+    return await this.makeRequest(`user/points?user_id=${userId}`, 'GET');
+  }
+
+  // Obtener estadísticas del usuario
+  async getUserStatistics(userId) {
+    return await this.makeRequest(`user/statistics?user_id=${userId}`, 'GET');
+  }
+
+  // Obtener ubicaciones de recolección
+  async getCollectionLocations() {
+    return await this.makeRequest('locations', 'GET');
+  }
+
+  // ==================== PUBLICACIONES/DONACIONES ====================
+  async getUserPublications(userId, page = 1, perPage = 10) {
+    return await this.makeRequest(`publications/user?user_id=${userId}&page=${page}&per_page=${perPage}`, 'GET');
+  }
+
+  // Obtener carrito del usuario
+  async getCart() {
+    return await this.makeRequest('cart', 'GET');
+  }
+
+  // Agregar item al carrito
+  async addToCart(itemData) {
+    return await this.makeRequest('cart', 'POST', itemData);
+  }
+
+  // Remover item del carrito
+  async removeFromCart(itemId) {
+    return await this.makeRequest(`cart/${itemId}`, 'DELETE');
+  }
+
+  // Limpiar carrito
+  async clearCart() {
+    return await this.makeRequest('cart/clear', 'DELETE');
+  }
+
+  // Validar DNI
+  async validateDni(dni) {
+    return await this.makeRequest('validate-dni', 'POST', { dni }, false);
+  }
+
+  // Validar Email
+  async validateEmail(email) {
+    return await this.makeRequest('validate-email', 'POST', { email }, false);
+  }
+
+  // Validar Teléfono
+  async validateTelefono(telefono) {
+    return await this.makeRequest('validate-telefono', 'POST', { telefono }, false);
+  }
+
+  // Actualizar perfil de usuario
+  async updateProfile(profileData, userId = null) {
+    // Obtener user_id del AsyncStorage si no se proporciona
+    if (!userId) {
+      try {
+        const userData = await AsyncStorage.getItem('userData');
+        if (userData) {
+          const user = JSON.parse(userData);
+          userId = user.idUsuarios;
+        }
+      } catch (error) {
+        console.error('Error getting user ID from storage:', error);
+      }
+    }
+    
+    if (!userId) {
+      throw new Error('ID de usuario requerido para actualizar perfil');
+    }
+    
+    return await this.makeRequest(`usuarios/update-profile?user_id=${userId}`, 'PUT', profileData);
   }
 
   // Cerrar sesión
   async logout() {
-    await this.removeToken();
     return { success: true, message: 'Sesión cerrada correctamente' };
   }
 
   // ==================== EQUIPOS ====================
 
   // Crear nuevo equipo
-  async createEquipment(equipmentData) {
-    return await this.makeRequest('donations', 'POST', equipmentData);
+  async createEquipment(equipmentData, userId = null, userRole = null) {
+    // Obtener user_id y user_role del AsyncStorage si no se proporcionan
+    if (!userId || !userRole) {
+      try {
+        const userData = await AsyncStorage.getItem('userData');
+        if (userData) {
+          const user = JSON.parse(userData);
+          userId = user.idUsuarios;
+          userRole = user.Roles_Usuarios;
+        }
+      } catch (error) {
+        console.error('Error getting user data from storage:', error);
+      }
+    }
+    
+    if (!userId || !userRole) {
+      throw new Error('ID de usuario y rol requeridos para crear equipo');
+    }
+    
+    return await this.makeRequest(`donations?user_id=${userId}&user_role=${userRole}`, 'POST', equipmentData);
   }
 
-  // Obtener todos los equipos
+  // Obtener todas las publicaciones para la tienda de canjes
   async getAllEquipment() {
-    return await this.makeRequest('donations', 'GET');
+    return await this.makeRequest('publications', 'GET');
   }
 
   // Obtener equipos del usuario
   async getUserEquipment() {
     return await this.makeRequest('donations', 'GET');
+  }
+
+  // Obtener equipos del usuario desde la tabla equipos
+  async getUserEquipos(userId) {
+    return await this.makeRequest(`user-equipos?user_id=${userId}`, 'GET');
   }
 
   // Obtener equipo específico
@@ -236,6 +334,70 @@ class ApiService {
   // Actualizar perfil de institución
   async updateInstitutionProfile(profileData) {
     return await this.makeRequest('institution/profile', 'PUT', profileData);
+  }
+
+  // ==================== PUNTOS ====================
+
+  // Obtener puntos del usuario
+  async getUserPoints(userId) {
+    return await this.makeRequest(`user/points?user_id=${userId}`, 'GET');
+  }
+
+  // Obtener estadísticas del usuario
+  async getUserStatistics(userId) {
+    return await this.makeRequest(`user/statistics?user_id=${userId}`, 'GET');
+  }
+
+  // Obtener historial de puntos del usuario
+  async getUserPointsHistory(userId) {
+    return await this.makeRequest(`user/points/history?user_id=${userId}`, 'GET');
+  }
+
+  // ==================== IMÁGENES ====================
+
+  // Subir imágenes de equipos
+  async uploadEquipmentImages(images) {
+    try {
+      const formData = new FormData();
+      
+      // Agregar cada imagen al FormData
+      images.forEach((imageUri, index) => {
+        formData.append('images[]', {
+          uri: imageUri,
+          type: 'image/jpeg',
+          name: `equipment_${index}.jpg`
+        });
+      });
+
+      const response = await fetch(`${this.baseURL}/images/upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      throw error;
+    }
+  }
+
+  // Obtener URL de imagen
+  getImageUrl(filename) {
+    return `${this.baseURL.replace('/api', '')}/images/${filename}`;
+  }
+
+  // Eliminar imagen
+  async deleteImage(filename) {
+    return await this.makeRequest(`images/${filename}`, 'DELETE');
   }
 
   // ==================== CATEGORÍAS Y ESTADOS ====================

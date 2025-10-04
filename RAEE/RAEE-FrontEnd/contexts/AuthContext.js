@@ -8,10 +8,9 @@ const AuthContext = createContext();
 // Reducer para manejar el estado de autenticación
 const authReducer = (state, action) => {
   switch (action.type) {
-    case 'RESTORE_TOKEN':
+    case 'RESTORE_USER':
       return {
         ...state,
-        userToken: action.token,
         user: action.user,
         isLoading: false,
         isSignout: false,
@@ -20,7 +19,6 @@ const authReducer = (state, action) => {
       return {
         ...state,
         isSignout: false,
-        userToken: action.token,
         user: action.user,
         isLoading: false,
       };
@@ -28,7 +26,6 @@ const authReducer = (state, action) => {
       return {
         ...state,
         isSignout: true,
-        userToken: null,
         user: null,
         isLoading: false,
       };
@@ -51,7 +48,6 @@ const authReducer = (state, action) => {
 const initialState = {
   isLoading: true,
   isSignout: false,
-  userToken: null,
   user: null,
 };
 
@@ -59,45 +55,26 @@ const initialState = {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Efectos para cargar el token al iniciar la app
+  // Efectos para cargar el usuario al iniciar la app
   useEffect(() => {
     const bootstrapAsync = async () => {
-      let userToken;
-      let userData;
+      let userData = null;
 
       try {
-        // TEMPORAL: Limpiar storage para debug
-        // await AsyncStorage.clear();
+        // Solo restaurar usuario si hay datos válidos
+        const savedUserData = await AsyncStorage.getItem('userData');
         
-        // Intentar obtener el token guardado
-        userToken = await AsyncStorage.getItem('userToken');
-        
-        if (userToken) {
-          // Si hay token, intentar obtener los datos del usuario
-          try {
-            const response = await ApiService.getProfile();
-            if (response.success) {
-              userData = response.data.user;
-            } else {
-              // Si el token no es válido, eliminarlo
-              userToken = null;
-              await AsyncStorage.removeItem('userToken');
-            }
-          } catch (error) {
-            console.error('Error getting user profile:', error);
-            // Token inválido, eliminarlo
-            userToken = null;
-            await AsyncStorage.removeItem('userToken');
-          }
+        if (savedUserData) {
+          userData = JSON.parse(savedUserData);
         }
       } catch (e) {
-        console.error('Error restoring token:', e);
+        console.error('Error restoring user data:', e);
+        userData = null;
       }
 
       // Restaurar el estado de autenticación
       dispatch({ 
-        type: 'RESTORE_TOKEN', 
-        token: userToken,
+        type: 'RESTORE_USER', 
         user: userData 
       });
     };
@@ -114,14 +91,15 @@ export const AuthProvider = ({ children }) => {
       try {
         const response = await ApiService.login(credentials);
         
-        if (response.success) {
-          // Obtener datos del usuario después del login
-          const profileResponse = await ApiService.getProfile();
+        if (response.success && response.data && response.data.user) {
+          const userData = response.data.user;
+          
+          // Guardar los datos del usuario en AsyncStorage
+          await AsyncStorage.setItem('userData', JSON.stringify(userData));
           
           dispatch({
             type: 'SIGN_IN',
-            token: response.data.token,
-            user: profileResponse.success ? profileResponse.data.user : null,
+            user: userData,
           });
           
           return { success: true, message: response.message };
@@ -164,7 +142,18 @@ export const AuthProvider = ({ children }) => {
     // Cerrar sesión
     signOut: async () => {
       try {
-        await ApiService.logout();
+        // Limpiar todos los datos de usuario inmediatamente
+        await AsyncStorage.removeItem('userData');
+        await AsyncStorage.removeItem('profileImage');
+        await AsyncStorage.removeItem('profileImageUserId');
+        
+        // Limpiar cooldown específico del usuario
+        const currentUserId = state.user?.idUsuarios;
+        if (currentUserId) {
+          await AsyncStorage.removeItem(`lastImageChange_${currentUserId}`);
+        }
+        
+        // Despachar el logout inmediatamente
         dispatch({ type: 'SIGN_OUT' });
       } catch (error) {
         console.error('Error signing out:', error);
@@ -181,22 +170,105 @@ export const AuthProvider = ({ children }) => {
     // Obtener perfil actualizado
     refreshProfile: async () => {
       try {
-        const token = await AsyncStorage.getItem('userToken');
-        if (!token) {
-          throw new Error('No token found');
+        if (!state.user?.idUsuarios) {
+          return null;
         }
 
-        const response = await ApiService.getProfile();
+        const response = await ApiService.getProfile(state.user.idUsuarios);
         
-        if (response.success) {
-          dispatch({ type: 'UPDATE_USER', userData: response.data.user });
-          return response.data.user;
-        } else {
-          throw new Error(response.message || 'Error al cargar perfil');
+        if (response.success && response.data.user) {
+          const updatedUser = response.data.user;
+          
+          // Actualizar AsyncStorage con los nuevos datos
+          await AsyncStorage.setItem('userData', JSON.stringify(updatedUser));
+          
+          // Actualizar el estado
+          dispatch({ type: 'UPDATE_USER', userData: updatedUser });
+          return updatedUser;
         }
+        
+        return null;
       } catch (error) {
         console.error('Error refreshing profile:', error);
-        throw error;
+        return null;
+      }
+    },
+
+    // Obtener estadísticas del usuario
+    getUserStatistics: async () => {
+      try {
+        const response = await ApiService.getUserStatistics();
+        return response;
+      } catch (error) {
+        return { 
+          success: false, 
+          message: error.message || 'Error al obtener estadísticas' 
+        };
+      }
+    },
+
+    // Obtener ubicaciones de recolección
+    getCollectionLocations: async () => {
+      try {
+        const response = await ApiService.getCollectionLocations();
+        return response;
+      } catch (error) {
+        return { 
+          success: false, 
+          message: error.message || 'Error al obtener ubicaciones' 
+        };
+      }
+    },
+
+    // Obtener carrito del usuario
+    getCart: async () => {
+      try {
+        const response = await ApiService.getCart();
+        return response;
+      } catch (error) {
+        return { 
+          success: false, 
+          message: error.message || 'Error al obtener carrito' 
+        };
+      }
+    },
+
+    // Agregar item al carrito
+    addToCart: async (itemData) => {
+      try {
+        const response = await ApiService.addToCart(itemData);
+        return response;
+      } catch (error) {
+        return { 
+          success: false, 
+          message: error.message || 'Error al agregar al carrito' 
+        };
+      }
+    },
+
+    // Remover item del carrito
+    removeFromCart: async (itemId) => {
+      try {
+        const response = await ApiService.removeFromCart(itemId);
+        return response;
+      } catch (error) {
+        return { 
+          success: false, 
+          message: error.message || 'Error al remover del carrito' 
+        };
+      }
+    },
+
+    // Limpiar carrito
+    clearCart: async () => {
+      try {
+        const response = await ApiService.clearCart();
+        return response;
+      } catch (error) {
+        return { 
+          success: false, 
+          message: error.message || 'Error al limpiar carrito' 
+        };
       }
     },
 

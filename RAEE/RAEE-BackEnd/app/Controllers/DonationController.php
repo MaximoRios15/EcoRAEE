@@ -5,9 +5,8 @@ namespace App\Controllers;
 use App\Models\DonationModel;
 use App\Models\UserModel;
 use App\Models\TecnicoModel;
+use App\Models\HistorialPuntosModel;
 use CodeIgniter\RESTful\ResourceController;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 
 class DonationController extends ResourceController
 {
@@ -17,12 +16,14 @@ class DonationController extends ResourceController
     protected $donationModel;
     protected $userModel;
     protected $tecnicoModel;
+    protected $historialPuntosModel;
     
     public function __construct()
     {
         $this->donationModel = new DonationModel();
         $this->userModel = new UserModel();
         $this->tecnicoModel = new TecnicoModel();
+        $this->historialPuntosModel = new HistorialPuntosModel();
     }
 
     /**
@@ -31,11 +32,12 @@ class DonationController extends ResourceController
     public function index()
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userRole = $this->getUserRoleFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userRole = $this->request->getGet('user_role');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $page = $this->request->getGet('page') ?? 1;
@@ -77,11 +79,12 @@ class DonationController extends ResourceController
     public function show($id = null)
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userRole = $this->getUserRoleFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userRole = $this->request->getGet('user_role');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if (!$id) {
@@ -120,11 +123,12 @@ class DonationController extends ResourceController
     public function create()
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userRole = $this->getUserRoleFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userRole = $this->request->getGet('user_role');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             // Only ciudadanos and instituciones can create equipment
@@ -186,33 +190,64 @@ class DonationController extends ResourceController
                     ? $data['descripcion_publicacion'] 
                     : ($data['Descripcion_Equipos'] ?? 'Donación de equipo electrónico');
                 
+                // Use marca as title
+                $publicationTitle = $data['Marca_Equipos'] ?? 'Equipo electrónico';
+                
                 log_message('debug', 'Creating publication and adding points for user: ' . $userId . ' with points: ' . $data['puntos']);
                 
-                $this->donationModel->createPublication(
+                $publicacionId = $this->donationModel->createPublication(
                     $equipmentId, 
                     $userId, 
+                    $publicationTitle,
                     $publicationDescription, 
-                    $data['puntos']
+                    (int)$data['puntos'],
+                    (int)$data['idEstados_Equipos'] // Use the selected state
                 );
                 
-                // Add points to user
-                $pointsResult = $this->userModel->addPoints($userId, (int)$data['puntos']);
-                log_message('debug', 'Points added result: ' . ($pointsResult ? 'true' : 'false'));
-                
-                // Verify points were added
-                $user = $this->userModel->find($userId);
-                log_message('debug', 'User points after adding: ' . ($user['Puntos_Usuarios'] ?? 'null'));
+                if ($publicacionId) {
+                    log_message('debug', 'Publication created with ID: ' . $publicacionId);
+                    
+                    // Create collection location if provided
+                    if (!empty($data['ubicacion'])) {
+                        $ubicacionResult = $this->donationModel->createCollectionLocation(
+                            $publicacionId,
+                            (int)$data['ubicacion']
+                        );
+                        log_message('debug', 'Collection location created: ' . ($ubicacionResult ? 'true' : 'false'));
+                    }
+                    
+                    // Add points to user using HistorialPuntosModel
+                    $pointsResult = $this->historialPuntosModel->addPointsToUser(
+                        $userId, 
+                        $equipmentId, 
+                        (int)$data['puntos'], 
+                        'Donación de equipo: ' . $publicationTitle
+                    );
+                    log_message('debug', 'Points added to historial result: ' . ($pointsResult ? 'true' : 'false'));
+                    
+                    // Verify points were added
+                    $user = $this->userModel->find($userId);
+                    log_message('debug', 'User points after adding: ' . ($user['Puntos_Usuarios'] ?? 'null'));
+                } else {
+                    log_message('error', 'Failed to create publication');
+                }
             } else {
                 log_message('debug', 'Points condition not met - puntos empty: ' . (empty($data['puntos']) ? 'true' : 'false'));
             }
 
-            // Get created equipment with details
-            $equipment = $this->donationModel->getDonationWithUser($equipmentId);
+            // Get basic equipment data
+            $equipment = $this->donationModel->find($equipmentId);
 
             return $this->respond([
                 'success' => true,
-                'message' => 'Equipo creado exitosamente',
-                'data' => $equipment
+                'message' => 'Donación registrada exitosamente',
+                'data' => [
+                    'equipment_id' => $equipmentId,
+                    'equipment' => $equipment,
+                    'points_added' => !empty($data['puntos']) ? (int)$data['puntos'] : 0,
+                    'publication_created' => !empty($data['puntos']) ? true : false,
+                    'location_saved' => !empty($data['ubicacion']) ? true : false
+                ]
             ], 201);
 
         } catch (\Exception $e) {
@@ -227,11 +262,12 @@ class DonationController extends ResourceController
     public function update($id = null)
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if (!$id) {
@@ -301,11 +337,12 @@ class DonationController extends ResourceController
     public function delete($id = null)
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if (!$id) {
@@ -351,11 +388,12 @@ class DonationController extends ResourceController
     public function assignTechnician($id = null)
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if (!$id) {
@@ -427,11 +465,12 @@ class DonationController extends ResourceController
     public function updateStatus($id = null)
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if (!$id) {
@@ -513,11 +552,12 @@ class DonationController extends ResourceController
     public function statistics()
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $stats = [];
@@ -547,10 +587,11 @@ class DonationController extends ResourceController
     public function getAvailableTechnicians($id = null)
     {
         try {
-            $userId = $this->getUserIdFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             if (!$id) {
@@ -605,11 +646,12 @@ class DonationController extends ResourceController
     public function getMonthlyTrends()
     {
         try {
-            $userId = $this->getUserIdFromToken();
-            $userType = $this->getUserTypeFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            $userType = $this->request->getGet('user_type');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $months = $this->request->getGet('months') ?? 12;
@@ -659,53 +701,4 @@ class DonationController extends ResourceController
         }
     }
 
-    /**
-     * Get user ID from JWT token
-     */
-    private function getUserIdFromToken(): ?int
-    {
-        try {
-            $authHeader = $this->request->getHeaderLine('Authorization');
-            
-            if (!$authHeader) {
-                return null;
-            }
-
-            $token = str_replace('Bearer ', '', $authHeader);
-            $key = getenv('JWT_SECRET');
-            
-            $decoded = JWT::decode($token, new Key($key, 'HS256'));
-            
-            return $decoded->data->idUsuarios ?? null;
-
-        } catch (\Exception $e) {
-            log_message('error', 'Error al decodificar token: ' . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Get user role from JWT token
-     */
-    private function getUserRoleFromToken(): ?int
-    {
-        try {
-            $authHeader = $this->request->getHeaderLine('Authorization');
-            
-            if (!$authHeader) {
-                return null;
-            }
-
-            $token = str_replace('Bearer ', '', $authHeader);
-            $key = getenv('JWT_SECRET');
-            
-            $decoded = JWT::decode($token, new Key($key, 'HS256'));
-            
-            return $decoded->data->Roles_Usuarios ?? null;
-
-        } catch (\Exception $e) {
-            log_message('error', 'Error al decodificar token: ' . $e->getMessage());
-            return null;
-        }
-    }
 }

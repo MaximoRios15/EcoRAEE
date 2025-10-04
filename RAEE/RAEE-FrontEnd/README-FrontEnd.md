@@ -19,12 +19,14 @@ EcoRAEE es una aplicación móvil desarrollada con React Native y Expo que conec
 
 ```
 RAEE-FrontEnd/
-├── screens/                 # Pantallas de la aplicación
+├── citizen-screens/        # Pantallas de la aplicación para ciudadanos
 │   ├── LoginScreen.js      # Pantalla de inicio de sesión
 │   ├── RegisterScreen.js   # Pantalla de registro
 │   ├── HomeScreen.js       # Pantalla principal/dashboard
 │   ├── DonationScreen.js   # Pantalla de donación de RAEE
 │   ├── ProfileScreen.js    # Pantalla de gestión de perfil
+│   ├── ExchangeShopScreen.js # Pantalla de tienda de canjes
+│   ├── StatisticsScreen.js # Pantalla de estadísticas
 │   └── ForgotPasswordScreen.js # Pantalla de recuperación de contraseña
 ├── contexts/               # Contextos de React para estado global
 │   └── AuthContext.js     # Contexto de autenticación

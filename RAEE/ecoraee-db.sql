@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 19-09-2025 a las 00:43:45
+-- Tiempo de generación: 01-10-2025 a las 20:24:20
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -24,12 +24,29 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `carrito_compras`
+--
+
+CREATE TABLE `carrito_compras` (
+  `idCarrito_Compras` int(11) NOT NULL,
+  `usuarios_Carrito` int(11) NOT NULL,
+  `equipos_Carrito` int(11) NOT NULL,
+  `publicacion_Carrito` int(11) NOT NULL,
+  `Cantidad_Carrito` int(11) DEFAULT NULL,
+  `FechaAgregado_Carrito` datetime DEFAULT current_timestamp(),
+  `Activo_Carrito` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `categorias_equipos`
 --
 
 CREATE TABLE `categorias_equipos` (
   `idCategorias` int(11) NOT NULL,
   `Nombres_Categorias` varchar(50) NOT NULL,
+  `PuntosBase_Categorias` int(11) NOT NULL DEFAULT 50,
   `Activo_Categorias` tinyint(4) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
@@ -37,39 +54,39 @@ CREATE TABLE `categorias_equipos` (
 -- Volcado de datos para la tabla `categorias_equipos`
 --
 
-INSERT INTO `categorias_equipos` (`idCategorias`, `Nombres_Categorias`, `Activo_Categorias`) VALUES
-(1, 'Microondas', 1),
-(2, 'Licuadoras', 1),
-(3, 'Batidoras', 1),
-(4, 'Procesadoras de alimentos', 1),
-(5, 'Cafeteras', 1),
-(6, 'Tostadoras', 1),
-(7, 'Sandwicheras', 1),
-(8, 'Hornitos electricos', 1),
-(9, 'Pavas electricas', 1),
-(10, 'Extractores de jugo', 1),
-(11, 'Calefactores y estufas', 1),
-(12, 'Televisores', 1),
-(13, 'Parlantes y barras de sonido', 1),
-(14, 'Reproductores de video', 1),
-(15, 'Consolas de videojuegos', 1),
-(16, 'Secadores de pelo', 1),
-(17, 'Planchitas', 1),
-(18, 'Rizadores', 1),
-(19, 'Computadoras de escritorio', 1),
-(20, 'Notebooks', 1),
-(21, 'Laptops', 1),
-(22, 'Tablets', 1),
-(23, 'Teclados', 1),
-(24, 'Mouse', 1),
-(25, 'Scanners', 1),
-(26, 'Microfonos', 1),
-(27, 'Camaras web', 1),
-(28, 'Monitores', 1),
-(29, 'Impresoras', 1),
-(30, 'Auriculares', 1),
-(31, 'Estabilizadores y UPS', 1),
-(32, 'Joysticks y mandos', 1);
+INSERT INTO `categorias_equipos` (`idCategorias`, `Nombres_Categorias`, `PuntosBase_Categorias`, `Activo_Categorias`) VALUES
+(1, 'Microondas', 80, 1),
+(2, 'Licuadoras', 60, 1),
+(3, 'Batidoras', 50, 1),
+(4, 'Procesadoras de alimentos', 70, 1),
+(5, 'Cafeteras', 40, 1),
+(6, 'Tostadoras', 35, 1),
+(7, 'Sandwicheras', 30, 1),
+(8, 'Hornitos electricos', 45, 1),
+(9, 'Pavas electricas', 35, 1),
+(10, 'Extractores de jugo', 55, 1),
+(11, 'Calefactores y estufas', 120, 1),
+(12, 'Televisores', 200, 1),
+(13, 'Parlantes y barras de sonido', 100, 1),
+(14, 'Reproductores de video', 80, 1),
+(15, 'Consolas de videojuegos', 150, 1),
+(16, 'Secadores de pelo', 40, 1),
+(17, 'Planchitas', 30, 1),
+(18, 'Rizadores', 25, 1),
+(19, 'Computadoras de escritorio', 250, 1),
+(20, 'Notebooks', 200, 1),
+(21, 'Laptops', 180, 1),
+(22, 'Tablets', 120, 1),
+(23, 'Teclados', 30, 1),
+(24, 'Mouse', 20, 1),
+(25, 'Scanners', 60, 1),
+(26, 'Microfonos', 50, 1),
+(27, 'Camaras web', 40, 1),
+(28, 'Monitores', 150, 1),
+(29, 'Impresoras', 100, 1),
+(30, 'Auriculares', 60, 1),
+(31, 'Estabilizadores y UPS', 80, 1),
+(32, 'Joysticks y mandos', 40, 1);
 
 -- --------------------------------------------------------
 
@@ -115,21 +132,23 @@ CREATE TABLE `equipos` (
   `idEstados_Equipos` int(11) NOT NULL,
   `Cantidad_Equipos` int(11) NOT NULL,
   `Descripcion_Equipos` varchar(255) DEFAULT NULL,
-  `Fotos_Equipos` varchar(255) DEFAULT NULL,
+  `Fotos_Equipos` text DEFAULT NULL,
   `PesoKG_Equipos` double NOT NULL,
   `DimencionesCM_Equipos` varchar(20) DEFAULT NULL,
+  `Accesorios_Equipos` varchar(100) DEFAULT NULL,
   `FechaIngreso_Equipos` datetime DEFAULT NULL,
-  `Accesorios_Equipos` varchar(100) DEFAULT NULL
+  `ImagenPrincipal_Equipos` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
 -- Volcado de datos para la tabla `equipos`
 --
 
-INSERT INTO `equipos` (`idEquipos`, `idClientes_Equipos`, `idCategorias_Equipos`, `Marca_Equipos`, `Modelo_Equipos`, `idEstados_Equipos`, `Cantidad_Equipos`, `Descripcion_Equipos`, `Fotos_Equipos`, `PesoKG_Equipos`, `DimencionesCM_Equipos`, `FechaIngreso_Equipos`, `Accesorios_Equipos`) VALUES
-(1, 3, 21, 'Dell', 'G15 5525', 1, 1, 'Laptop Dell g15 5525 ryzen 5 6600h - rtx 3050', '[]', 2.52, '27x370x260', '2025-09-18 01:43:09', 'Cargador'),
-(3, 4, 29, 'Kodak', '', 2, 1, '', '[]', 6, '', '2025-09-18 05:07:32', ''),
-(4, 3, 30, 'JBL', '', 4, 1, '', '[]', 0.7, '', '2025-09-18 21:58:55', '');
+INSERT INTO `equipos` (`idEquipos`, `idClientes_Equipos`, `idCategorias_Equipos`, `Marca_Equipos`, `Modelo_Equipos`, `idEstados_Equipos`, `Cantidad_Equipos`, `Descripcion_Equipos`, `Fotos_Equipos`, `PesoKG_Equipos`, `DimencionesCM_Equipos`, `Accesorios_Equipos`, `FechaIngreso_Equipos`, `ImagenPrincipal_Equipos`) VALUES
+(1, 1, 21, 'Dell', 'G15 5525', 1, 1, 'Laptop Dell g15 5525 ryzen 5 6600h - rtx 3050', '[]', 2.52, '27x370x260', 'Cargador', '2025-09-18 01:43:09', NULL),
+(3, 2, 29, 'Kodak', '', 2, 1, '', '[]', 6, '', '', '2025-09-18 05:07:32', NULL),
+(4, 1, 30, 'JBL', '', 4, 1, '', '[]', 0.7, '', '', '2025-09-18 21:58:55', NULL),
+(5, 1, 31, 'Forza', 'Xa 02', 2, 1, '', '[]', 10, '', '', '2025-09-24 01:03:26', NULL);
 
 -- --------------------------------------------------------
 
@@ -139,7 +158,8 @@ INSERT INTO `equipos` (`idEquipos`, `idClientes_Equipos`, `idCategorias_Equipos`
 
 CREATE TABLE `estados` (
   `idEstados` int(11) NOT NULL,
-  `Descripcion_Estados` varchar(50) NOT NULL,
+  `Nombres_Estados` varchar(50) NOT NULL,
+  `MultiplicadorPuntos_Estados` decimal(3,2) DEFAULT 1.00,
   `Activo_Estados` tinyint(4) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
@@ -147,24 +167,38 @@ CREATE TABLE `estados` (
 -- Volcado de datos para la tabla `estados`
 --
 
-INSERT INTO `estados` (`idEstados`, `Descripcion_Estados`, `Activo_Estados`) VALUES
-(1, 'Funcional', 1),
-(2, 'Parcialmente funcional', 1),
-(3, 'No funcional', 1),
-(4, 'Para repuestos', 1);
+INSERT INTO `estados` (`idEstados`, `Nombres_Estados`, `MultiplicadorPuntos_Estados`, `Activo_Estados`) VALUES
+(1, 'Funcional', 1.00, 1),
+(2, 'Parcialmente funcional', 0.70, 1),
+(3, 'No funcional', 0.30, 1),
+(4, 'Para repuestos', 0.50, 1);
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `movimiento_recoleccion`
+-- Estructura de tabla para la tabla `historial_puntos`
 --
 
-CREATE TABLE `movimiento_recoleccion` (
-  `id_Movimiento_Recoleccion` int(11) NOT NULL,
-  `Fecha_Asignacion_Datetime` datetime NOT NULL,
-  `Fecha_Retiro_Movimiento` datetime NOT NULL,
-  `Publicacion_id_Publicacion` int(11) NOT NULL
+CREATE TABLE `historial_puntos` (
+  `idHistorialPuntos` int(11) NOT NULL,
+  `PuntosInicial_Puntos` int(11) DEFAULT NULL,
+  `PuntosCambiados_Puntos` int(11) DEFAULT NULL,
+  `PuntosTotales_Puntos` int(11) DEFAULT NULL,
+  `equipos_idEquipos` int(11) NOT NULL,
+  `usuarios_idUsuarios` int(11) NOT NULL,
+  `Estado_Puntos` tinyint(4) DEFAULT NULL,
+  `FechaMovimiento_Puntos` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Volcado de datos para la tabla `historial_puntos`
+--
+
+INSERT INTO `historial_puntos` (`idHistorialPuntos`, `PuntosInicial_Puntos`, `PuntosCambiados_Puntos`, `PuntosTotales_Puntos`, `equipos_idEquipos`, `usuarios_idUsuarios`, `Estado_Puntos`, `FechaMovimiento_Puntos`) VALUES
+(1, 0, 190, 190, 1, 1, 1, '2025-09-18 01:43:09'),
+(2, 0, 95, 95, 3, 2, 1, '2025-09-18 05:07:32'),
+(3, 190, 30, 220, 4, 1, 1, '2025-09-18 21:58:55'),
+(4, 220, 81, 301, 5, 1, 1, '2025-09-24 01:03:26');
 
 -- --------------------------------------------------------
 
@@ -173,51 +207,25 @@ CREATE TABLE `movimiento_recoleccion` (
 --
 
 CREATE TABLE `publicacion` (
-  `id_Publicacion` int(11) NOT NULL,
+  `idPublicacion` int(11) NOT NULL,
+  `Titulo_Publicacion` varchar(100) DEFAULT NULL,
   `Descripcion_Publicacion` varchar(255) NOT NULL,
   `Puntos_Publicacion` int(11) NOT NULL,
   `Fecha_Publicacion` datetime NOT NULL,
-  `clientes_idClientes` int(11) NOT NULL,
-  `estados_idEstados` int(11) NOT NULL,
-  `equipos_idEquipos` int(11) NOT NULL
+  `clientes_Publicacion` int(11) NOT NULL,
+  `estados_Publicacion` int(11) NOT NULL,
+  `equipos_Publicacion` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
 -- Volcado de datos para la tabla `publicacion`
 --
 
-INSERT INTO `publicacion` (`id_Publicacion`, `Descripcion_Publicacion`, `Puntos_Publicacion`, `Fecha_Publicacion`, `clientes_idClientes`, `estados_idEstados`, `equipos_idEquipos`) VALUES
-(1, 'Laptop Dell g15 5525 ryzen 5 6600h - rtx 3050', 190, '2025-09-18 01:43:09', 3, 1, 1),
-(2, '', 95, '2025-09-18 05:07:32', 4, 1, 3),
-(3, '', 30, '2025-09-18 21:58:55', 3, 1, 4);
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `punto_recoleccion`
---
-
-CREATE TABLE `punto_recoleccion` (
-  `id_Punto_Recoleccion` int(11) NOT NULL,
-  `Direccion_Punto` varchar(150) NOT NULL,
-  `Nombre_Recoleccion` varchar(45) NOT NULL,
-  `Movimiento_Recoleccion_id_Movimiento_Recoleccion` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `reserva_producto`
---
-
-CREATE TABLE `reserva_producto` (
-  `idReserva_producto` int(11) NOT NULL,
-  `Fecha_Reserva` datetime DEFAULT NULL,
-  `clientes_idClientes` int(11) NOT NULL,
-  `equipos_idEquipos` int(11) NOT NULL,
-  `estados_idEstados` int(11) NOT NULL,
-  `Publicacion_id_Publicacion` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+INSERT INTO `publicacion` (`idPublicacion`, `Titulo_Publicacion`, `Descripcion_Publicacion`, `Puntos_Publicacion`, `Fecha_Publicacion`, `clientes_Publicacion`, `estados_Publicacion`, `equipos_Publicacion`) VALUES
+(1, NULL, 'Laptop Dell g15 5525 ryzen 5 6600h - rtx 3050', 190, '2025-09-18 01:43:09', 1, 1, 1),
+(2, NULL, '', 95, '2025-09-18 05:07:32', 2, 1, 3),
+(3, NULL, '', 30, '2025-09-18 21:58:55', 1, 1, 4),
+(4, NULL, '', 81, '2025-09-24 01:03:26', 1, 1, 5);
 
 -- --------------------------------------------------------
 
@@ -242,6 +250,62 @@ INSERT INTO `roles` (`idRoles`, `Descripcion_Roles`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `ubicaciones`
+--
+
+CREATE TABLE `ubicaciones` (
+  `idUbicaciones` int(11) NOT NULL,
+  `Direccion_Ubicaciones` varchar(255) DEFAULT NULL,
+  `NroCalle_Ubicaciones` varchar(10) DEFAULT NULL,
+  `Provincia_Ubicaciones` varchar(50) DEFAULT NULL,
+  `Municipios_Ubicaciones` varchar(50) DEFAULT NULL,
+  `Latitud_Ubicaciones` decimal(10,8) DEFAULT NULL,
+  `Longitud_Ubicaciones` decimal(10,8) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Volcado de datos para la tabla `ubicaciones`
+--
+
+INSERT INTO `ubicaciones` (`idUbicaciones`, `Direccion_Ubicaciones`, `NroCalle_Ubicaciones`, `Provincia_Ubicaciones`, `Municipios_Ubicaciones`, `Latitud_Ubicaciones`, `Longitud_Ubicaciones`) VALUES
+(1, 'Capital Posadas', NULL, 'Misiones', 'Posadas', -27.36666700, -55.89694400),
+(2, 'EcoPunto Itaembé Guazú', NULL, 'Misiones', 'Posadas', -27.40819600, -55.98441700),
+(3, 'EcoPunto Itaembé Miní, Posadas', NULL, 'Misiones', 'Posadas', -27.41457000, -55.95591100),
+(4, 'EcoPunto Barrio Los Álamos, Posadas', NULL, 'Misiones', 'Posadas', -27.41469100, -55.93046200),
+(5, 'EcoPunto Dolores Sur', NULL, 'Misiones', 'Posadas', -27.43339000, -55.91475500),
+(6, 'EcoPunto Av. Martín Fierro & Av. Aguado', NULL, 'Misiones', 'Posadas', -27.38124300, -55.92630900),
+(7, 'EcoPunto Parque Sarmiento', NULL, 'Misiones', 'Posadas', -27.36610100, -55.94511700),
+(8, 'EcoPunto Av. Urquiza', NULL, 'Misiones', 'Posadas', -27.36018800, -55.91542800),
+(9, 'EcoPunto Feria Puente Chacabuco', NULL, 'Misiones', 'Posadas', -27.37031600, -55.88513200),
+(10, 'EcoPunto Cascada Artificial', NULL, 'Misiones', 'Posadas', -27.38262500, -55.88797600),
+(11, 'EcoPunto Avenida Juan Domingo Perón & América Latina', NULL, 'Misiones', 'Posadas', -27.43065400, -55.88328100);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `ubicaciones_recoleccion`
+--
+
+CREATE TABLE `ubicaciones_recoleccion` (
+  `idUbicaciones_Recoleccion` int(11) NOT NULL,
+  `ubicaciones_Recoleccion` int(11) NOT NULL,
+  `publicacion_Recoleccion` int(11) NOT NULL,
+  `FechaMovimiento_Recoleccion` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Volcado de datos para la tabla `ubicaciones_recoleccion`
+--
+
+INSERT INTO `ubicaciones_recoleccion` (`idUbicaciones_Recoleccion`, `ubicaciones_Recoleccion`, `publicacion_Recoleccion`, `FechaMovimiento_Recoleccion`) VALUES
+(1, 2, 1, '2025-09-18 01:43:09'),
+(2, 3, 2, '2025-09-18 05:07:32'),
+(3, 4, 3, '2025-09-18 21:58:55'),
+(4, 5, 4, '2025-09-24 01:03:26');
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `usuarios`
 --
 
@@ -253,32 +317,44 @@ CREATE TABLE `usuarios` (
   `Password_Usuarios` varchar(255) NOT NULL,
   `Telefono_Usuarios` varchar(14) NOT NULL,
   `Email_Usuarios` varchar(100) NOT NULL,
-  `Provincia_Usuarios` varchar(45) NOT NULL,
-  `Municipios_Usuarios` varchar(45) NOT NULL,
   `Roles_Usuarios` int(11) NOT NULL,
-  `Puntos_Usuarios` int(11) DEFAULT NULL,
+  `ImagenPerfil_Usuarios` varchar(255) DEFAULT NULL,
   `FechaRegistro_Usuarios` datetime DEFAULT current_timestamp(),
-  `Activo_Usuarios` tinyint(4) DEFAULT 1
+  `Activo_Usuarios` tinyint(4) DEFAULT 1,
+  `ubicaciones_Usuarios` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
 -- Volcado de datos para la tabla `usuarios`
 --
 
-INSERT INTO `usuarios` (`idUsuarios`, `DNI_Usuarios`, `Nombres_Usuarios`, `Apellidos_Usuarios`, `Password_Usuarios`, `Telefono_Usuarios`, `Email_Usuarios`, `Provincia_Usuarios`, `Municipios_Usuarios`, `Roles_Usuarios`, `Puntos_Usuarios`, `FechaRegistro_Usuarios`, `Activo_Usuarios`) VALUES
-(3, '45026308', 'Maximo Jesus', 'Rios', '$2y$10$58zloM57FHLVmhu/SrXdku4Yn/9KAeIKsA2I8KSXOfjqk0vYSuJcS', '3765102868', 'maximuz_ty@hotmail.com', 'Misiones', 'Posadas', 1, 220, '2025-09-17 19:56:08', 1),
-(4, '45053541', 'Uruga ', 'Azul', '$2y$10$Atr0OEnRw2rXHZENeaVdvupO2OVlPHpWFyIYL6sGxNrsd3ChXu0z2', '3764367492', 'themagichest@gmail.com', 'Misiones', 'Posadas', 1, 95, '2025-09-18 01:48:39', 1);
+INSERT INTO `usuarios` (`idUsuarios`, `DNI_Usuarios`, `Nombres_Usuarios`, `Apellidos_Usuarios`, `Password_Usuarios`, `Telefono_Usuarios`, `Email_Usuarios`, `Roles_Usuarios`, `ImagenPerfil_Usuarios`, `FechaRegistro_Usuarios`, `Activo_Usuarios`, `ubicaciones_Usuarios`) VALUES
+(1, '45026308', 'Maximo Jesus', 'Rios', '$2y$10$58zloM57FHLVmhu/SrXdku4Yn/9KAeIKsA2I8KSXOfjqk0vYSuJcS', '3765102868', 'maximuz_ty@hotmail.com', 1, NULL, '2025-09-17 19:56:08', 1, 1),
+(2, '45053541', 'Uruga ', 'Azul', '$2y$10$Atr0OEnRw2rXHZENeaVdvupO2OVlPHpWFyIYL6sGxNrsd3ChXu0z2', '3764367492', 'themagichest@gmail.com', 1, NULL, '2025-09-18 01:48:39', 1, 1);
 
 --
 -- Índices para tablas volcadas
 --
 
 --
+-- Indices de la tabla `carrito_compras`
+--
+ALTER TABLE `carrito_compras`
+  ADD PRIMARY KEY (`idCarrito_Compras`),
+  ADD KEY `fk_carrito_compras_usuarios1_idx` (`usuarios_Carrito`),
+  ADD KEY `fk_carrito_compras_equipos1_idx` (`equipos_Carrito`),
+  ADD KEY `fk_carrito_compras_publicacion1_idx` (`publicacion_Carrito`),
+  ADD KEY `idx_carrito_activo` (`Activo_Carrito`),
+  ADD KEY `idx_carrito_fecha` (`FechaAgregado_Carrito`);
+
+--
 -- Indices de la tabla `categorias_equipos`
 --
 ALTER TABLE `categorias_equipos`
   ADD PRIMARY KEY (`idCategorias`),
-  ADD UNIQUE KEY `Nombres_Categorias` (`Nombres_Categorias`);
+  ADD UNIQUE KEY `Nombres_Categorias` (`Nombres_Categorias`),
+  ADD KEY `idx_categorias_puntos` (`PuntosBase_Categorias`),
+  ADD KEY `idx_categorias_activo` (`Activo_Categorias`);
 
 --
 -- Indices de la tabla `credenciales_institucion`
@@ -304,52 +380,58 @@ ALTER TABLE `equipos`
   ADD KEY `idx_equipos_cliente` (`idClientes_Equipos`),
   ADD KEY `idx_equipos_fecha_ingreso` (`FechaIngreso_Equipos`),
   ADD KEY `idx_equipos_categoria` (`idCategorias_Equipos`),
-  ADD KEY `fk_equipos_estados1_idx` (`idEstados_Equipos`);
+  ADD KEY `fk_equipos_estados1_idx` (`idEstados_Equipos`),
+  ADD KEY `idx_equipos_imagen` (`ImagenPrincipal_Equipos`);
 
 --
 -- Indices de la tabla `estados`
 --
 ALTER TABLE `estados`
-  ADD PRIMARY KEY (`idEstados`);
+  ADD PRIMARY KEY (`idEstados`),
+  ADD KEY `idx_estados_multiplicador` (`MultiplicadorPuntos_Estados`),
+  ADD KEY `idx_estados_activo` (`Activo_Estados`);
 
 --
--- Indices de la tabla `movimiento_recoleccion`
+-- Indices de la tabla `historial_puntos`
 --
-ALTER TABLE `movimiento_recoleccion`
-  ADD PRIMARY KEY (`id_Movimiento_Recoleccion`),
-  ADD KEY `fk_Movimiento_Recoleccion_Publicacion1_idx` (`Publicacion_id_Publicacion`);
+ALTER TABLE `historial_puntos`
+  ADD PRIMARY KEY (`idHistorialPuntos`),
+  ADD KEY `fk_Puntos_equipos1_idx` (`equipos_idEquipos`),
+  ADD KEY `fk_Puntos_usuarios1_idx` (`usuarios_idUsuarios`),
+  ADD KEY `idx_historial_fecha` (`FechaMovimiento_Puntos`),
+  ADD KEY `idx_historial_estado` (`Estado_Puntos`);
 
 --
 -- Indices de la tabla `publicacion`
 --
 ALTER TABLE `publicacion`
-  ADD PRIMARY KEY (`id_Publicacion`),
-  ADD KEY `fk_Publicacion_clientes1_idx` (`clientes_idClientes`),
-  ADD KEY `fk_Publicacion_estados1_idx` (`estados_idEstados`),
-  ADD KEY `fk_Publicacion_equipos1_idx` (`equipos_idEquipos`);
-
---
--- Indices de la tabla `punto_recoleccion`
---
-ALTER TABLE `punto_recoleccion`
-  ADD PRIMARY KEY (`id_Punto_Recoleccion`),
-  ADD KEY `fk_Punto_recoleccion_Movimiento_Recoleccion1_idx` (`Movimiento_Recoleccion_id_Movimiento_Recoleccion`);
-
---
--- Indices de la tabla `reserva_producto`
---
-ALTER TABLE `reserva_producto`
-  ADD PRIMARY KEY (`idReserva_producto`),
-  ADD KEY `fk_Reserva_producto_clientes1_idx` (`clientes_idClientes`),
-  ADD KEY `fk_Reserva_producto_equipos1_idx` (`equipos_idEquipos`),
-  ADD KEY `fk_Reserva_producto_estados1_idx` (`estados_idEstados`),
-  ADD KEY `fk_Reserva_producto_Publicacion1_idx` (`Publicacion_id_Publicacion`);
+  ADD PRIMARY KEY (`idPublicacion`),
+  ADD KEY `fk_Publicacion_clientes1_idx` (`clientes_Publicacion`),
+  ADD KEY `fk_Publicacion_estados1_idx` (`estados_Publicacion`),
+  ADD KEY `fk_Publicacion_equipos1_idx` (`equipos_Publicacion`),
+  ADD KEY `idx_publicacion_titulo` (`Titulo_Publicacion`);
 
 --
 -- Indices de la tabla `roles`
 --
 ALTER TABLE `roles`
   ADD PRIMARY KEY (`idRoles`);
+
+--
+-- Indices de la tabla `ubicaciones`
+--
+ALTER TABLE `ubicaciones`
+  ADD PRIMARY KEY (`idUbicaciones`),
+  ADD KEY `idx_ubicaciones_coordenadas` (`Latitud_Ubicaciones`,`Longitud_Ubicaciones`);
+
+--
+-- Indices de la tabla `ubicaciones_recoleccion`
+--
+ALTER TABLE `ubicaciones_recoleccion`
+  ADD PRIMARY KEY (`idUbicaciones_Recoleccion`),
+  ADD KEY `fk_ubicaciones_recoleccion_ubicaciones1_idx` (`ubicaciones_Recoleccion`),
+  ADD KEY `fk_ubicaciones_recoleccion_publicacion1_idx` (`publicacion_Recoleccion`),
+  ADD KEY `idx_ubicaciones_recoleccion_fecha` (`FechaMovimiento_Recoleccion`);
 
 --
 -- Indices de la tabla `usuarios`
@@ -359,11 +441,20 @@ ALTER TABLE `usuarios`
   ADD KEY `idx_clientes_documento` (`DNI_Usuarios`),
   ADD KEY `idx_clientes_telefono` (`Telefono_Usuarios`),
   ADD KEY `idx_clientes_email` (`Email_Usuarios`),
-  ADD KEY `fk_clientes_roles1_idx` (`Roles_Usuarios`);
+  ADD KEY `fk_clientes_roles1_idx` (`Roles_Usuarios`),
+  ADD KEY `fk_usuarios_ubicaciones1_idx` (`ubicaciones_Usuarios`),
+  ADD KEY `idx_usuarios_ubicacion` (`ubicaciones_Usuarios`),
+  ADD KEY `idx_usuarios_activo` (`Activo_Usuarios`);
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
 --
+
+--
+-- AUTO_INCREMENT de la tabla `carrito_compras`
+--
+ALTER TABLE `carrito_compras`
+  MODIFY `idCarrito_Compras` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `categorias_equipos`
@@ -387,7 +478,7 @@ ALTER TABLE `credenciales_tecnico`
 -- AUTO_INCREMENT de la tabla `equipos`
 --
 ALTER TABLE `equipos`
-  MODIFY `idEquipos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `idEquipos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `estados`
@@ -396,34 +487,34 @@ ALTER TABLE `estados`
   MODIFY `idEstados` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
--- AUTO_INCREMENT de la tabla `movimiento_recoleccion`
+-- AUTO_INCREMENT de la tabla `historial_puntos`
 --
-ALTER TABLE `movimiento_recoleccion`
-  MODIFY `id_Movimiento_Recoleccion` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `historial_puntos`
+  MODIFY `idHistorialPuntos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `publicacion`
 --
 ALTER TABLE `publicacion`
-  MODIFY `id_Publicacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT de la tabla `punto_recoleccion`
---
-ALTER TABLE `punto_recoleccion`
-  MODIFY `id_Punto_Recoleccion` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `reserva_producto`
---
-ALTER TABLE `reserva_producto`
-  MODIFY `idReserva_producto` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idPublicacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `roles`
 --
 ALTER TABLE `roles`
   MODIFY `idRoles` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de la tabla `ubicaciones`
+--
+ALTER TABLE `ubicaciones`
+  MODIFY `idUbicaciones` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT de la tabla `ubicaciones_recoleccion`
+--
+ALTER TABLE `ubicaciones_recoleccion`
+  MODIFY `idUbicaciones_Recoleccion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
@@ -434,6 +525,14 @@ ALTER TABLE `usuarios`
 --
 -- Restricciones para tablas volcadas
 --
+
+--
+-- Filtros para la tabla `carrito_compras`
+--
+ALTER TABLE `carrito_compras`
+  ADD CONSTRAINT `fk_carrito_compras_equipos1` FOREIGN KEY (`equipos_Carrito`) REFERENCES `equipos` (`idEquipos`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_carrito_compras_publicacion1` FOREIGN KEY (`publicacion_Carrito`) REFERENCES `publicacion` (`idPublicacion`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_carrito_compras_usuarios1` FOREIGN KEY (`usuarios_Carrito`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
 -- Filtros para la tabla `credenciales_institucion`
@@ -458,39 +557,33 @@ ALTER TABLE `equipos`
   ADD CONSTRAINT `fk_equipos_estados1` FOREIGN KEY (`idEstados_Equipos`) REFERENCES `estados` (`idEstados`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
--- Filtros para la tabla `movimiento_recoleccion`
+-- Filtros para la tabla `historial_puntos`
 --
-ALTER TABLE `movimiento_recoleccion`
-  ADD CONSTRAINT `fk_Movimiento_Recoleccion_Publicacion1` FOREIGN KEY (`Publicacion_id_Publicacion`) REFERENCES `publicacion` (`id_Publicacion`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE `historial_puntos`
+  ADD CONSTRAINT `fk_Puntos_equipos1` FOREIGN KEY (`equipos_idEquipos`) REFERENCES `equipos` (`idEquipos`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Puntos_usuarios1` FOREIGN KEY (`usuarios_idUsuarios`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
 -- Filtros para la tabla `publicacion`
 --
 ALTER TABLE `publicacion`
-  ADD CONSTRAINT `fk_Publicacion_clientes1` FOREIGN KEY (`clientes_idClientes`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_Publicacion_equipos1` FOREIGN KEY (`equipos_idEquipos`) REFERENCES `equipos` (`idEquipos`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_Publicacion_estados1` FOREIGN KEY (`estados_idEstados`) REFERENCES `estados` (`idEstados`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+  ADD CONSTRAINT `fk_Publicacion_clientes1` FOREIGN KEY (`clientes_Publicacion`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Publicacion_equipos1` FOREIGN KEY (`equipos_Publicacion`) REFERENCES `equipos` (`idEquipos`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_Publicacion_estados1` FOREIGN KEY (`estados_Publicacion`) REFERENCES `estados` (`idEstados`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
--- Filtros para la tabla `punto_recoleccion`
+-- Filtros para la tabla `ubicaciones_recoleccion`
 --
-ALTER TABLE `punto_recoleccion`
-  ADD CONSTRAINT `fk_Punto_recoleccion_Movimiento_Recoleccion1` FOREIGN KEY (`Movimiento_Recoleccion_id_Movimiento_Recoleccion`) REFERENCES `movimiento_recoleccion` (`id_Movimiento_Recoleccion`) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
---
--- Filtros para la tabla `reserva_producto`
---
-ALTER TABLE `reserva_producto`
-  ADD CONSTRAINT `fk_Reserva_producto_Publicacion1` FOREIGN KEY (`Publicacion_id_Publicacion`) REFERENCES `publicacion` (`id_Publicacion`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_Reserva_producto_clientes1` FOREIGN KEY (`clientes_idClientes`) REFERENCES `usuarios` (`idUsuarios`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_Reserva_producto_equipos1` FOREIGN KEY (`equipos_idEquipos`) REFERENCES `equipos` (`idEquipos`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  ADD CONSTRAINT `fk_Reserva_producto_estados1` FOREIGN KEY (`estados_idEstados`) REFERENCES `estados` (`idEstados`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE `ubicaciones_recoleccion`
+  ADD CONSTRAINT `fk_ubicaciones_recoleccion_publicacion1` FOREIGN KEY (`publicacion_Recoleccion`) REFERENCES `publicacion` (`idPublicacion`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_ubicaciones_recoleccion_ubicaciones1` FOREIGN KEY (`ubicaciones_Recoleccion`) REFERENCES `ubicaciones` (`idUbicaciones`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
 -- Filtros para la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  ADD CONSTRAINT `fk_clientes_roles1` FOREIGN KEY (`Roles_Usuarios`) REFERENCES `roles` (`idRoles`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+  ADD CONSTRAINT `fk_clientes_roles1` FOREIGN KEY (`Roles_Usuarios`) REFERENCES `roles` (`idRoles`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_usuarios_ubicaciones1` FOREIGN KEY (`ubicaciones_Usuarios`) REFERENCES `ubicaciones` (`idUbicaciones`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -6,8 +6,6 @@ use App\Models\UserModel;
 use App\Models\InstitucionModel;
 use App\Models\TecnicoModel;
 use CodeIgniter\RESTful\ResourceController;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 
 class AuthController extends ResourceController
 {
@@ -45,9 +43,38 @@ class AuthController extends ResourceController
                 }
             }
 
+            // Validate DNI format
+            if (!preg_match('/^\d{7,8}$/', $data['DNI_Usuarios'])) {
+                return $this->fail('El DNI debe contener entre 7 y 8 dígitos', 400);
+            }
+
+            // Validate email format
+            if (!filter_var($data['Email_Usuarios'], FILTER_VALIDATE_EMAIL)) {
+                return $this->fail('Formato de email inválido', 400);
+            }
+
+            // Validate password length
+            if (strlen($data['Password_Usuarios']) < 6) {
+                return $this->fail('La contraseña debe tener al menos 6 caracteres', 400);
+            }
+
             // Validate user role (assuming 1=ciudadano, 2=institucion, 3=tecnico)
             if (!in_array($data['Roles_Usuarios'], [1, 2, 3])) {
                 return $this->fail('Rol de usuario no válido', 400);
+            }
+
+            // Validate specific fields based on user role
+            if ($data['Roles_Usuarios'] == 2) { // institucion
+                $institutionFields = ['NroLegajo_Institucion', 'Tipo_Institucion', 'Contacto_Institucion', 'RegistroTitulo_Institucion'];
+                foreach ($institutionFields as $field) {
+                    if (empty($data[$field])) {
+                        return $this->fail("El campo {$field} es obligatorio para instituciones", 400);
+                    }
+                }
+            } elseif ($data['Roles_Usuarios'] == 3) { // tecnico
+                if (empty($data['Certificado_Tecnico'])) {
+                    return $this->fail('El campo Certificado_Tecnico es obligatorio para técnicos', 400);
+                }
             }
 
             // Check if email already exists
@@ -60,19 +87,60 @@ class AuthController extends ResourceController
                 return $this->fail('El DNI ya está registrado', 409);
             }
 
+            // Check if telephone already exists
+            if ($this->userModel->where('Telefono_Usuarios', $data['Telefono_Usuarios'])->first()) {
+                return $this->fail('El teléfono ya está registrado', 409);
+            }
+
+            // Validate location fields
+            if (empty($data['Direccion_Usuarios']) || empty($data['Municipios_Usuarios'])) {
+                return $this->fail('Dirección y municipio son obligatorios', 400);
+            }
+
             // Set default values
-            $data['Puntos_Usuarios'] = 0;
             $data['Activo_Usuarios'] = 1;
-            $data['Provincia_Usuarios'] = $data['Provincia_Usuarios'] ?? 'Misiones';
-            $data['Municipios_Usuarios'] = $data['Municipios_Usuarios'] ?? 'No especificado';
+            // Solo establecer ImagenPerfil_Usuarios como null si no se proporcionó
+            if (empty($data['ImagenPerfil_Usuarios'])) {
+                $data['ImagenPerfil_Usuarios'] = null;
+            }
+            
+            // Store location data before removing from user data
+            $ubicacionData = [
+                'Direccion_Ubicaciones' => $data['Direccion_Usuarios'],
+                'NroCalle_Ubicaciones' => $data['NroCalle_Usuarios'] ?? '',
+                'Provincia_Ubicaciones' => 'Misiones',
+                'Municipios_Ubicaciones' => $data['Municipios_Usuarios'],
+                'Latitud_Ubicaciones' => $data['Latitud_Usuarios'] ?? -27.366667 + (rand(-500, 500) / 10000), // Coordenadas aproximadas de Misiones
+                'Longitud_Ubicaciones' => $data['Longitud_Usuarios'] ?? -55.896944 + (rand(-500, 500) / 10000)
+            ];
+            
+            // Remove fields that don't belong to usuarios table
+            unset($data['Provincia_Usuarios']);
+            unset($data['Direccion_Usuarios']);
+            unset($data['NroCalle_Usuarios']);
+            unset($data['Municipios_Usuarios']);
 
             // Password will be hashed by the model callback
+
+            // Create user location first
+            $ubicacionModel = new \App\Models\UbicacionModel();
+
+            $ubicacionId = $ubicacionModel->insert($ubicacionData);
+            if (!$ubicacionId) {
+                $errors = $ubicacionModel->errors();
+                return $this->fail('Error al crear ubicación: ' . implode(', ', $errors), 400);
+            }
+
+            // Set the location ID for the user
+            $data['ubicaciones_Usuarios'] = $ubicacionId;
 
             // Create user
             $userId = $this->userModel->insert($data);
             
             if (!$userId) {
                 $errors = $this->userModel->errors();
+                // If user creation fails, delete the created location
+                $ubicacionModel->delete($ubicacionId);
                 return $this->fail('Error al crear usuario: ' . implode(', ', $errors), 400);
             }
 
@@ -87,10 +155,10 @@ class AuthController extends ResourceController
             } elseif ($data['Roles_Usuarios'] == 2) { // institucion
                 $institucionData = [
                     'clientes_Institucion' => $userId,
-                    'NroLegajo_Institucion' => $data['NroLegajo_Institucion'] ?? 'LEG-' . $userId,
-                    'Tipo_Institucion' => $data['Tipo_Institucion'] ?? 1,
-                    'Contacto_Institucion' => $data['Contacto_Institucion'] ?? $data['Telefono_Usuarios'],
-                    'RegistroTitulo_Institucion' => $data['RegistroTitulo_Institucion'] ?? 'REG-' . $userId,
+                    'NroLegajo_Institucion' => $data['NroLegajo_Institucion'],
+                    'Tipo_Institucion' => $data['Tipo_Institucion'],
+                    'Contacto_Institucion' => $data['Contacto_Institucion'],
+                    'RegistroTitulo_Institucion' => $data['RegistroTitulo_Institucion'],
                     'estados_Institucion' => 1 // Assuming 1 = active
                 ];
                 
@@ -102,7 +170,7 @@ class AuthController extends ResourceController
             } elseif ($data['Roles_Usuarios'] == 3) { // tecnico
                 $tecnicoData = [
                     'clientes_Tecnico' => $userId,
-                    'Certificado_Tecnico' => $data['Certificado_Tecnico'] ?? 'CERT-' . $userId,
+                    'Certificado_Tecnico' => $data['Certificado_Tecnico'],
                     'estados_Tecnico' => 1 // Assuming 1 = active
                 ];
                 
@@ -173,9 +241,6 @@ class AuthController extends ResourceController
                 return $this->fail('Credenciales inválidas', 401);
             }
 
-            // Generate JWT token
-            $token = $this->generateJWT($user);
-
             // Remove password from response
             unset($user['Password_Usuarios']);
 
@@ -187,13 +252,20 @@ class AuthController extends ResourceController
                 $profile = $this->tecnicoModel->getByUserId($user['idUsuarios']);
             }
 
+            // Get user location data
+            $location = null;
+            if ($user['ubicaciones_Usuarios']) {
+                $locationModel = new \App\Models\UbicacionModel();
+                $location = $locationModel->find($user['ubicaciones_Usuarios']);
+            }
+
             return $this->respond([
                 'success' => true,
                 'message' => 'Login exitoso',
                 'data' => [
                     'user' => $user,
                     'profile' => $profile,
-                    'token' => $token
+                    'location' => $location
                 ]
             ]);
 
@@ -209,10 +281,11 @@ class AuthController extends ResourceController
     public function profile()
     {
         try {
-            $userId = $this->getUserIdFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $user = $this->userModel->find($userId);
@@ -246,39 +319,6 @@ class AuthController extends ResourceController
         }
     }
 
-    /**
-     * Get user points
-     */
-    public function getUserPoints()
-    {
-        try {
-            $userId = $this->getUserIdFromToken();
-            
-            if (!$userId) {
-                return $this->fail('Token inválido', 401);
-            }
-
-            $user = $this->userModel->find($userId);
-            
-            if (!$user) {
-                return $this->fail('Usuario no encontrado', 404);
-            }
-
-            return $this->respond([
-                'success' => true,
-                'data' => [
-                    'user_id' => $userId,
-                    'puntos' => $user['Puntos_Usuarios'] ?? 0,
-                    'nombres' => $user['Nombres_Usuarios'],
-                    'apellidos' => $user['Apellidos_Usuarios']
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            log_message('error', 'Error al obtener puntos del usuario: ' . $e->getMessage());
-            return $this->fail('Error interno del servidor', 500);
-        }
-    }
 
     /**
      * Update user profile
@@ -286,10 +326,11 @@ class AuthController extends ResourceController
     public function updateProfile()
     {
         try {
-            $userId = $this->getUserIdFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $data = $this->request->getJSON(true);
@@ -308,7 +349,7 @@ class AuthController extends ResourceController
             $userData = [];
             $profileData = [];
 
-            $userFields = ['Nombres_Usuarios', 'Apellidos_Usuarios', 'Telefono_Usuarios', 'Provincia_Usuarios', 'Municipios_Usuarios'];
+            $userFields = ['Nombres_Usuarios', 'Apellidos_Usuarios', 'Telefono_Usuarios', 'Provincia_Usuarios', 'Municipios_Usuarios', 'ImagenPerfil_Usuarios'];
             
             foreach ($data as $key => $value) {
                 if (in_array($key, $userFields)) {
@@ -370,10 +411,11 @@ class AuthController extends ResourceController
     public function changePassword()
     {
         try {
-            $userId = $this->getUserIdFromToken();
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
             
             if (!$userId) {
-                return $this->fail('Token inválido', 401);
+                return $this->fail('ID de usuario requerido', 400);
             }
 
             $data = $this->request->getJSON(true);
@@ -424,43 +466,9 @@ class AuthController extends ResourceController
         }
     }
 
-    /**
-     * Refresh JWT token
-     */
-    public function refreshToken()
-    {
-        try {
-            $userId = $this->getUserIdFromToken();
-            
-            if (!$userId) {
-                return $this->fail('Token inválido', 401);
-            }
-
-            $user = $this->userModel->find($userId);
-            
-            if (!$user || !$user['Activo_Usuarios']) {
-                return $this->fail('Usuario no válido', 401);
-            }
-
-            // Generate new token
-            $token = $this->generateJWT($user);
-
-            return $this->respond([
-                'success' => true,
-                'message' => 'Token renovado exitosamente',
-                'data' => [
-                    'token' => $token
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            log_message('error', 'Error al renovar token: ' . $e->getMessage());
-            return $this->fail('Error interno del servidor', 500);
-        }
-    }
 
     /**
-     * Logout user (invalidate token - client side)
+     * Logout user (client side only)
      */
     public function logout()
     {
@@ -468,52 +476,6 @@ class AuthController extends ResourceController
             'success' => true,
             'message' => 'Logout exitoso'
         ]);
-    }
-
-    /**
-     * Generate JWT token
-     */
-    private function generateJWT(array $user): string
-    {
-        $key = getenv('JWT_SECRET');
-        $payload = [
-            'iss' => 'raee-backend',
-            'aud' => 'raee-frontend',
-            'iat' => time(),
-            'exp' => time() + (24 * 60 * 60), // 24 hours
-            'data' => [
-                'idUsuarios' => $user['idUsuarios'],
-                'Email_Usuarios' => $user['Email_Usuarios'],
-                'Roles_Usuarios' => $user['Roles_Usuarios']
-            ]
-        ];
-
-        return JWT::encode($payload, $key, 'HS256');
-    }
-
-    /**
-     * Get user ID from JWT token
-     */
-    private function getUserIdFromToken(): ?int
-    {
-        try {
-            $authHeader = $this->request->getHeaderLine('Authorization');
-            
-            if (!$authHeader) {
-                return null;
-            }
-
-            $token = str_replace('Bearer ', '', $authHeader);
-            $key = getenv('JWT_SECRET');
-            
-            $decoded = JWT::decode($token, new Key($key, 'HS256'));
-            
-            return $decoded->data->idUsuarios ?? null;
-
-        } catch (\Exception $e) {
-            log_message('error', 'Error al decodificar token: ' . $e->getMessage());
-            return null;
-        }
     }
 
     /**
@@ -587,4 +549,164 @@ class AuthController extends ResourceController
             return $this->fail('Error interno del servidor', 500);
         }
     }
+
+
+    /**
+     * Get user points
+     */
+    public function getUserPoints()
+    {
+        try {
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            
+            if (!$userId) {
+                return $this->fail('ID de usuario requerido', 400);
+            }
+
+            $user = $this->userModel->find($userId);
+            
+            if (!$user) {
+                return $this->fail('Usuario no encontrado', 404);
+            }
+
+            // Obtener puntos actuales del usuario
+            $puntos = $user['Puntos_Usuarios'] ?? 0;
+
+            return $this->respond([
+                'success' => true,
+                'data' => [
+                    'user_id' => $userId,
+                    'puntos' => $puntos,
+                    'nombres' => $user['Nombres_Usuarios'],
+                    'apellidos' => $user['Apellidos_Usuarios']
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error al obtener puntos del usuario: ' . $e->getMessage());
+            return $this->fail('Error interno del servidor', 500);
+        }
+    }
+
+    /**
+     * Get user statistics
+     */
+    public function getUserStatistics()
+    {
+        try {
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            
+            if (!$userId) {
+                return $this->fail('ID de usuario requerido', 400);
+            }
+
+            $user = $this->userModel->find($userId);
+            
+            if (!$user) {
+                return $this->fail('Usuario no encontrado', 404);
+            }
+
+            // Obtener estadísticas usando HistorialPuntosModel
+            $historialModel = new \App\Models\HistorialPuntosModel();
+            $estadisticas = $historialModel->getUserStatistics($userId);
+
+            return $this->respond([
+                'success' => true,
+                'data' => $estadisticas
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error al obtener estadísticas: ' . $e->getMessage());
+            return $this->fail('Error interno del servidor', 500);
+        }
+    }
+
+    /**
+     * Get user points history
+     */
+    public function getUserPointsHistory()
+    {
+        try {
+            // Obtener ID del usuario desde los parámetros de la URL
+            $userId = $this->request->getGet('user_id');
+            
+            if (!$userId) {
+                return $this->fail('ID de usuario requerido', 400);
+            }
+
+            $user = $this->userModel->find($userId);
+            
+            if (!$user) {
+                return $this->fail('Usuario no encontrado', 404);
+            }
+
+            // Obtener historial de puntos
+            $historialModel = new \App\Models\HistorialPuntosModel();
+            $historial = $historialModel->getUserPointsHistory($userId, 20);
+
+            return $this->respond([
+                'success' => true,
+                'data' => $historial
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error al obtener historial de puntos: ' . $e->getMessage());
+            return $this->fail('Error interno del servidor', 500);
+        }
+    }
+
+    /**
+     * Get collection locations
+     */
+    public function getCollectionLocations()
+    {
+        try {
+            $ubicacionModel = new \App\Models\UbicacionModel();
+            $ubicaciones = $ubicacionModel->getCollectionLocations();
+
+            return $this->respond([
+                'success' => true,
+                'data' => $ubicaciones
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error al obtener ubicaciones: ' . $e->getMessage());
+            return $this->fail('Error interno del servidor', 500);
+        }
+    }
+
+    /**
+     * Validate telephone number
+     */
+    public function validateTelefono()
+    {
+        try {
+            $data = $this->request->getJSON(true);
+            
+            if (!$data || empty($data['telefono'])) {
+                return $this->fail('Teléfono es obligatorio', 400);
+            }
+
+            $telefono = $data['telefono'];
+            
+            // Check if telephone exists
+            $exists = $this->userModel->where('Telefono_Usuarios', $telefono)->first();
+            
+            return $this->respond([
+                'success' => true,
+                'data' => [
+                    'telefono' => $telefono,
+                    'available' => !$exists,
+                    'message' => $exists ? 'Teléfono ya registrado' : 'Teléfono disponible'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error al validar teléfono: ' . $e->getMessage());
+            return $this->fail('Error interno del servidor', 500);
+        }
+    }
+
 }

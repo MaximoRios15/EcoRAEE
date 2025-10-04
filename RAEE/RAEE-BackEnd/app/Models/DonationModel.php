@@ -124,10 +124,10 @@ class DonationModel extends Model
         $db = \Config\Database::connect();
         $builder = $db->table('equipos e');
         
-        $builder->select('e.*, c.Nombres_Categorias, est.Descripcion_Estados, p.id_Publicacion, p.Descripcion_Publicacion, p.Puntos_Publicacion, p.Fecha_Publicacion, p.estados_idEstados as estado_publicacion')
+        $builder->select('e.*, c.Nombres_Categorias, est.Descripcion_Estados, p.idPublicacion, p.Descripcion_Publicacion, p.Puntos_Publicacion, p.Fecha_Publicacion, p.estados_Publicacion as estado_publicacion')
                 ->join('categorias_equipos c', 'e.idCategorias_Equipos = c.idCategorias', 'left')
                 ->join('estados est', 'e.idEstados_Equipos = est.idEstados', 'left')
-                ->join('publicacion p', 'e.idEquipos = p.equipos_idEquipos', 'left')
+                ->join('publicacion p', 'e.idEquipos = p.equipos_Publicacion', 'left')
                 ->where('e.idClientes_Equipos', $userId);
         
         // Apply filters
@@ -158,11 +158,11 @@ class DonationModel extends Model
         $db = \Config\Database::connect();
         $builder = $db->table('equipos e');
         
-        $builder->select('e.*, c.Nombres_Categorias, est.Descripcion_Estados, u.Nombres_Usuarios, u.Apellidos_Usuarios, u.Email_Usuarios, u.Telefono_Usuarios, p.id_Publicacion, p.Descripcion_Publicacion, p.Puntos_Publicacion, p.Fecha_Publicacion, p.estados_idEstados as estado_publicacion')
+        $builder->select('e.*, c.Nombres_Categorias, est.Descripcion_Estados, u.Nombres_Usuarios, u.Apellidos_Usuarios, u.Email_Usuarios, u.Telefono_Usuarios, p.idPublicacion, p.Descripcion_Publicacion, p.Puntos_Publicacion, p.Fecha_Publicacion, p.estados_Publicacion as estado_publicacion')
                 ->join('categorias_equipos c', 'e.idCategorias_Equipos = c.idCategorias', 'left')
                 ->join('estados est', 'e.idEstados_Equipos = est.idEstados', 'left')
                 ->join('usuarios u', 'e.idClientes_Equipos = u.idUsuarios', 'left')
-                ->join('publicacion p', 'e.idEquipos = p.equipos_idEquipos', 'left')
+                ->join('publicacion p', 'e.idEquipos = p.equipos_Publicacion', 'left')
                 ->where('e.idEquipos', $donationId);
         
         return $builder->get()->getRowArray() ?? [];
@@ -180,7 +180,7 @@ class DonationModel extends Model
                 ->join('categorias_equipos c', 'e.idCategorias_Equipos = c.idCategorias', 'left')
                 ->join('estados est', 'e.idEstados_Equipos = est.idEstados', 'left')
                 ->join('usuarios u', 'e.idClientes_Equipos = u.idUsuarios', 'left')
-                ->join('publicacion p', 'e.idEquipos = p.equipos_idEquipos', 'left');
+                ->join('publicacion p', 'e.idEquipos = p.equipos_Publicacion', 'left');
         
         // Apply filters
         if (!empty($filters['categoria'])) {
@@ -192,7 +192,7 @@ class DonationModel extends Model
         }
         
         if (!empty($filters['estado_publicacion'])) {
-            $builder->where('p.estados_idEstados', $filters['estado_publicacion']);
+            $builder->where('p.estados_Publicacion', $filters['estado_publicacion']);
         }
         
         if (!empty($filters['search'])) {
@@ -246,18 +246,40 @@ class DonationModel extends Model
     /**
      * Create publication for equipment
      */
-    public function createPublication(int $equipmentId, int $userId, string $description, int $points): bool
+    public function createPublication(int $equipmentId, int $userId, string $title, string $description, int $points, int $estadoId): int
     {
         $db = \Config\Database::connect();
         $builder = $db->table('publicacion');
         
         $data = [
+            'Titulo_Publicacion' => $title,
             'Descripcion_Publicacion' => $description,
             'Puntos_Publicacion' => $points,
             'Fecha_Publicacion' => date('Y-m-d H:i:s'),
-            'clientes_idClientes' => $userId,
-            'estados_idEstados' => 1, // Assuming 1 = active/pending
-            'equipos_idEquipos' => $equipmentId
+            'clientes_Publicacion' => $userId,
+            'estados_Publicacion' => $estadoId,
+            'equipos_Publicacion' => $equipmentId
+        ];
+        
+        if ($builder->insert($data)) {
+            return $db->insertID();
+        }
+        
+        return false;
+    }
+
+    /**
+     * Create collection location for equipment
+     */
+    public function createCollectionLocation(int $publicacionId, int $ubicacionId): bool
+    {
+        $db = \Config\Database::connect();
+        $builder = $db->table('ubicaciones_recoleccion');
+        
+        $data = [
+            'ubicaciones_Recoleccion' => $ubicacionId,
+            'publicacion_Recoleccion' => $publicacionId,
+            'FechaMovimiento_Recoleccion' => date('Y-m-d H:i:s')
         ];
         
         return $builder->insert($data);
