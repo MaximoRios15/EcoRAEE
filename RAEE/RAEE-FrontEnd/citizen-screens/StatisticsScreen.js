@@ -8,16 +8,23 @@ import {
   Alert,
   ActivityIndicator,
   Dimensions,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
 import ApiService from '../services/ApiService';
 
-const { width } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function StatisticsScreen({ navigation }) {
   const { user, signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
+  const [userPoints, setUserPoints] = useState(0);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [statistics, setStatistics] = useState({
     totalDonations: 0,
     totalPointsEarned: 0,
@@ -29,8 +36,89 @@ export default function StatisticsScreen({ navigation }) {
 
   useEffect(() => {
     loadStatistics();
+    loadThemePreference();
   }, []);
 
+  // Cargar preferencia del tema desde AsyncStorage
+  const loadThemePreference = async () => {
+    try {
+      const savedTheme = await AsyncStorage.getItem('theme_mode');
+      if (savedTheme !== null) {
+        setIsDarkMode(savedTheme === 'dark');
+      }
+    } catch (error) {
+      console.error('Error loading theme preference:', error);
+    }
+  };
+
+  // Guardar preferencia del tema en AsyncStorage
+  const saveThemePreference = async (isDark) => {
+    try {
+      await AsyncStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
+    } catch (error) {
+      console.error('Error saving theme preference:', error);
+    }
+  };
+
+  // Toggle entre modo oscuro y claro
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    saveThemePreference(newTheme);
+  };
+
+  // Definir colores dinámicos según el tema
+  const themeColors = {
+    background: isDarkMode ? '#1A1A2E' : '#FFFFFF',
+    surface: isDarkMode ? '#2C2C3E' : '#F8F9FA',
+    primary: isDarkMode ? '#4CAF50' : '#2E7D32',
+    text: isDarkMode ? '#FFFFFF' : '#212121',
+    textSecondary: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(33, 33, 33, 0.7)',
+    card: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+    border: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+    header: isDarkMode ? '#1A1A2E' : '#FFFFFF',
+    sidebar: isDarkMode ? '#16213E' : '#F8F9FA',
+    overlay: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)',
+  };
+
+  // Función para renderizar elementos del sidebar
+  const renderSidebarItem = (title, icon, onPress) => (
+    <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: themeColors.card }]} onPress={onPress}>
+      <Text style={styles.sidebarIcon}>{icon}</Text>
+      <Text style={[styles.sidebarText, { color: themeColors.text }]}>{title}</Text>
+    </TouchableOpacity>
+  );
+
+  // Función para manejar acciones del sidebar
+  const handleActionPress = (action) => {
+    switch (action) {
+      case 'home':
+        navigation.navigate('Home');
+        break;
+      case 'donation':
+        navigation.navigate('Donation');
+        break;
+      case 'exchange':
+        navigation.navigate('ExchangeShop');
+        break;
+      case 'profile':
+        navigation.navigate('Profile');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro que deseas cerrar sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Cerrar Sesión', onPress: signOut, style: 'destructive' }
+      ]
+    );
+  };
 
   const loadStatistics = async () => {
     setIsLoading(true);
@@ -60,7 +148,6 @@ export default function StatisticsScreen({ navigation }) {
           const realPoints = parseInt(equipo.Puntos_Equipos) || 0;
           totalPointsEarned += realPoints;
           
-
           // Crear objeto de equipo con información completa desde tabla equipos
           const equipment = {
             id: equipo.idEquipos,
@@ -92,7 +179,6 @@ export default function StatisticsScreen({ navigation }) {
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
           const monthName = date.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
           
-          
           if (monthlyData[monthKey]) {
             monthlyData[monthKey].donations += 1;
             monthlyData[monthKey].points += realPoints;
@@ -119,7 +205,6 @@ export default function StatisticsScreen({ navigation }) {
         .sort((a, b) => new Date(a.month) - new Date(b.month))
         .slice(-4); // Últimos 4 meses
       
-
       const realStats = {
         totalDonations,
         totalPointsEarned: 0, // Fijo en 0 por el momento
@@ -147,97 +232,169 @@ export default function StatisticsScreen({ navigation }) {
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro que deseas cerrar sesión?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Cerrar Sesión', onPress: signOut, style: 'destructive' }
-      ]
-    );
-  };
-
   const renderStatCard = (title, value, subtitle, icon, color = '#4CAF50') => (
-    <View style={[styles.statCard, { borderLeftColor: color }]}>
+    <LinearGradient
+      colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
+      style={[styles.statCard, { borderLeftColor: color }]}
+    >
       <View style={styles.statCardHeader}>
         <Ionicons name={icon} size={24} color={color} />
-        <Text style={styles.statCardTitle}>{title}</Text>
+        <Text style={[styles.statCardTitle, { color: themeColors.text }]}>{title}</Text>
       </View>
       <Text style={[styles.statCardValue, { color }]}>{value}</Text>
-      {subtitle && <Text style={styles.statCardSubtitle}>{subtitle}</Text>}
-    </View>
+      {subtitle && <Text style={[styles.statCardSubtitle, { color: themeColors.textSecondary }]}>{subtitle}</Text>}
+    </LinearGradient>
   );
 
   const renderEquipmentItem = (equipment, index) => (
-    <View key={equipment.id || index} style={styles.equipmentItem}>
+    <View key={equipment.id || index} style={[styles.equipmentItem, { backgroundColor: themeColors.card }]}>
       <View style={styles.equipmentInfo}>
-        <Text style={styles.equipmentTitle}>{equipment.title}</Text>
-        <Text style={styles.equipmentBrand}>{equipment.brand} {equipment.model}</Text>
-        <Text style={styles.equipmentDetails}>
+        <Text style={[styles.equipmentTitle, { color: themeColors.text }]}>{equipment.title}</Text>
+        <Text style={[styles.equipmentBrand, { color: themeColors.textSecondary }]}>{equipment.brand} {equipment.model}</Text>
+        <Text style={[styles.equipmentDetails, { color: themeColors.textSecondary }]}>
           {equipment.quantity} unidad(es) • {equipment.weight} kg
         </Text>
-        <Text style={styles.equipmentDate}>
+        <Text style={[styles.equipmentDate, { color: themeColors.textSecondary }]}>
           {new Date(equipment.FechaIngreso_Equipos).toLocaleDateString('es-ES')}
         </Text>
       </View>
-      <Text style={styles.equipmentPoints}>+{equipment.points} pts</Text>
+      <Text style={[styles.equipmentPoints, { color: themeColors.primary }]}>+{equipment.points} pts</Text>
     </View>
   );
 
   const renderCategorySection = (categoryName, equipments) => (
     <View key={categoryName} style={styles.categorySection}>
-      <Text style={styles.categorySectionTitle}>{categoryName}</Text>
+      <Text style={[styles.categorySectionTitle, { color: themeColors.text }]}>{categoryName}</Text>
       {equipments.map(renderEquipmentItem)}
     </View>
   );
 
   const renderMonthlyItem = (month, index) => (
-    <View key={index} style={styles.monthlyItem}>
-      <Text style={styles.monthName}>{month.month}</Text>
+    <View key={index} style={[styles.monthlyItem, { borderBottomColor: themeColors.border }]}>
+      <Text style={[styles.monthName, { color: themeColors.text }]}>{month.month}</Text>
       <View style={styles.monthlyStats}>
-        <Text style={styles.monthlyDonations}>{month.donations} donaciones</Text>
-        <Text style={styles.monthlyPoints}>{month.points} puntos</Text>
+        <Text style={[styles.monthlyDonations, { color: themeColors.textSecondary }]}>{month.donations} donaciones</Text>
+        <Text style={[styles.monthlyPoints, { color: themeColors.primary }]}>{month.points} puntos</Text>
       </View>
     </View>
   );
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4CAF50" />
-        <Text style={styles.loadingText}>Cargando estadísticas...</Text>
+      <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <View style={[styles.loadingContainer, { backgroundColor: themeColors.background }]}>
+          <ActivityIndicator size="large" color={themeColors.primary} />
+          <Text style={[styles.loadingText, { color: themeColors.text }]}>Cargando estadísticas...</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Volver</Text>
-        </TouchableOpacity>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.refreshButton} onPress={loadStatistics}>
-            <Ionicons name="refresh" size={20} color="white" />
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      {/* Sidebar */}
+      {sidebarVisible && (
+        <View style={styles.sidebar}>
+          <LinearGradient
+            colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
+            style={styles.sidebarGradient}
+          >
+            {/* Welcome Section in Sidebar */}
+            <View style={styles.sidebarWelcome}>
+              <View style={styles.sidebarAvatarContainer}>
+                {user?.ImagenPerfil_Usuarios ? (
+                  <Image 
+                    source={{ uri: user.ImagenPerfil_Usuarios }} 
+                    style={styles.sidebarAvatarImage}
+                  />
+                ) : (
+                  <Text style={styles.sidebarAvatarText}>
+                    {user?.Nombres_Usuarios?.charAt(0)}{user?.Apellidos_Usuarios?.charAt(0)}
+                  </Text>
+                )}
+              </View>
+              <Text style={[styles.sidebarWelcomeTitle, { color: themeColors.text }]}>¡Bienvenido a EcoRAEE!</Text>
+              <Text style={[styles.sidebarUserName, { color: themeColors.text }]}>{user?.Nombres_Usuarios} {user?.Apellidos_Usuarios}</Text>
+              <Text style={[styles.sidebarUserType, { color: themeColors.textSecondary }]}>Ciudadano EcoRAEE</Text>
+              <Text style={[styles.sidebarPointsText, { color: themeColors.text }]}>
+                Puntos: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{user?.Puntos_Usuarios || 0}</Text>
+              </Text>
+            </View>
+
+            {/* Menú de navegación */}
+            <View style={styles.sidebarMenu}>
+              {renderSidebarItem('Inicio', '🏠', () => {
+                setSidebarVisible(false);
+                handleActionPress('home');
+              })}
+              {renderSidebarItem('Mi Perfil', '👤', () => {
+                setSidebarVisible(false);
+                handleActionPress('profile');
+              })}
+              {renderSidebarItem(
+                isDarkMode ? 'Modo Claro' : 'Modo Oscuro', 
+                isDarkMode ? '☀️' : '🌙', 
+                () => {
+                  toggleTheme();
+                }
+              )}
+              {renderSidebarItem('Cerrar Sesión', '🚪', handleLogout)}
+            </View>
+          </LinearGradient>
+        </View>
+      )}
+
+      {/* Overlay para cerrar sidebar */}
+      {sidebarVisible && (
+        <TouchableOpacity 
+          style={[styles.overlay, { backgroundColor: themeColors.overlay }]} 
+          onPress={() => setSidebarVisible(false)}
+          activeOpacity={1}
+        />
+      )}
+
+      {/* Modern Header */}
+      <View style={[styles.modernHeader, { backgroundColor: themeColors.header }]}>
+        <View style={styles.headerContent}>
+          <TouchableOpacity 
+            style={[styles.sidebarToggle, { backgroundColor: isDarkMode ? '#2C2C3E' : '#E9ECEF' }]} 
+            onPress={() => setSidebarVisible(!sidebarVisible)}
+          >
+            <Text style={[styles.sidebarToggleIcon, { color: themeColors.text }]}>☰</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-          </TouchableOpacity>
+          
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../img/logo-EcoRAEE.png')} 
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={[styles.appName, { color: themeColors.text }]}>Mis Estadísticas</Text>
+          </View>
+          
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.refreshButton} onPress={loadStatistics}>
+              <Ionicons name="refresh" size={24} color={themeColors.text} />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        {/* Description */}
+        <View style={styles.descriptionContainer}>
+          <Text style={[styles.descriptionText, { color: themeColors.textSecondary }]}>
+            Tu impacto ambiental y progreso
+          </Text>
         </View>
       </View>
 
-      <ScrollView style={styles.content}>
-        {/* Título */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Mis Estadísticas</Text>
-          <Text style={styles.subtitle}>Tu impacto ambiental y progreso</Text>
-        </View>
-
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Resumen general */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Resumen General</Text>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Resumen General</Text>
           <View style={styles.statsGrid}>
             {renderStatCard(
               'Donaciones\nTotales',
@@ -270,31 +427,41 @@ export default function StatisticsScreen({ navigation }) {
           </View>
         </View>
 
-
         {/* Equipos donados por categorías */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Equipos Donados</Text>
-          <View style={styles.categoriesCard}>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Equipos Donados</Text>
+          <LinearGradient
+            colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
+            style={styles.categoriesCard}
+          >
             {statistics.categoriesDonated.length > 0 ? (
               statistics.categoriesDonated.map(category => 
                 renderCategorySection(category.name, category.equipments)
               )
             ) : (
               <View style={styles.emptySection}>
-                <Text style={styles.emptyText}>No tienes equipos donados aún</Text>
+                <Text style={[styles.emptyText, { color: themeColors.textSecondary }]}>No tienes equipos donados aún</Text>
               </View>
             )}
-          </View>
+          </LinearGradient>
         </View>
 
         {/* Estadísticas mensuales */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Progreso Mensual</Text>
-          <View style={styles.monthlyCard}>
-            {statistics.monthlyStats.map(renderMonthlyItem)}
-          </View>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Progreso Mensual</Text>
+          <LinearGradient
+            colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
+            style={styles.monthlyCard}
+          >
+            {statistics.monthlyStats.length > 0 ? (
+              statistics.monthlyStats.map(renderMonthlyItem)
+            ) : (
+              <View style={styles.emptySection}>
+                <Text style={[styles.emptyText, { color: themeColors.textSecondary }]}>No hay datos mensuales disponibles</Text>
+              </View>
+            )}
+          </LinearGradient>
         </View>
-
       </ScrollView>
     </View>
   );
@@ -303,85 +470,186 @@ export default function StatisticsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
   },
-  header: {
+  // Sidebar styles
+  sidebar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: screenWidth * 0.75,
+    zIndex: 1000,
+  },
+  sidebarGradient: {
+    flex: 1,
+    paddingTop: 70,
+    paddingHorizontal: 20,
+  },
+  sidebarWelcome: {
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  sidebarAvatarContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  sidebarAvatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  sidebarAvatarText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  sidebarWelcomeTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  sidebarUserName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    opacity: 0.9,
+    textAlign: 'center',
+  },
+  sidebarUserType: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 8,
+    opacity: 0.8,
+  },
+  sidebarPointsText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  sidebarPointsValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  sidebarMenu: {
+    flex: 1,
+  },
+  sidebarItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  sidebarIcon: {
+    fontSize: 20,
+    marginRight: 15,
+    width: 24,
+    textAlign: 'center',
+  },
+  sidebarText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 999,
+  },
+  // Modern Header styles
+  modernHeader: {
+    backgroundColor: '#1A1A2E',
+    paddingTop: 50,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    paddingTop: 50,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    marginBottom: 8,
   },
-  backButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
+  sidebarToggle: {
+    backgroundColor: '#2C2C3E',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  backButtonText: {
+  sidebarToggleIcon: {
+    fontSize: 18,
+    color: '#FFFFFF',
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  logoImage: {
+    width: 32,
+    height: 32,
+    marginRight: 12,
+  },
+  appName: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  logoutButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  logoutButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 15,
   },
   refreshButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    padding: 5,
+  },
+  descriptionContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  descriptionText: {
+    fontSize: 13,
+    textAlign: 'center',
+    fontWeight: '400',
+    lineHeight: 18,
   },
   content: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
   },
-  titleContainer: {
-    marginBottom: 25,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
+  scrollContent: {
+    paddingBottom: 20,
   },
   section: {
     marginBottom: 25,
@@ -389,7 +657,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 15,
   },
   statsGrid: {
@@ -398,20 +665,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statCard: {
-    backgroundColor: 'white',
     borderRadius: 12,
     padding: 15,
     marginBottom: 10,
-    width: (width - 60) / 2,
+    width: (screenWidth - 60) / 2,
     borderLeftWidth: 4,
-    shadowColor: '#000',
+    shadowColor: '#4CAF50',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   statCardHeader: {
     flexDirection: 'row',
@@ -421,7 +687,6 @@ const styles = StyleSheet.create({
   statCardTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
     marginLeft: 8,
   },
   statCardValue: {
@@ -431,46 +696,18 @@ const styles = StyleSheet.create({
   },
   statCardSubtitle: {
     fontSize: 12,
-    color: '#666',
   },
   categoriesCard: {
-    backgroundColor: 'white',
     borderRadius: 12,
     padding: 15,
-    shadowColor: '#000',
+    shadowColor: '#4CAF50',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  categoryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  categoryInfo: {
-    flex: 1,
-  },
-  categoryName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  categoryCount: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  categoryPoints: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   categorySection: {
     marginBottom: 20,
@@ -478,7 +715,6 @@ const styles = StyleSheet.create({
   categorySectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 10,
     paddingBottom: 8,
     borderBottomWidth: 2,
@@ -491,7 +727,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 15,
     marginBottom: 8,
-    backgroundColor: '#f8f9fa',
     borderRadius: 8,
     borderLeftWidth: 3,
     borderLeftColor: '#4CAF50',
@@ -502,28 +737,23 @@ const styles = StyleSheet.create({
   equipmentTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 2,
   },
   equipmentBrand: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 2,
   },
   equipmentDetails: {
     fontSize: 13,
-    color: '#888',
     marginBottom: 2,
   },
   equipmentDate: {
     fontSize: 12,
-    color: '#999',
     fontStyle: 'italic',
   },
   equipmentPoints: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4CAF50',
   },
   emptySection: {
     padding: 20,
@@ -531,21 +761,19 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
     fontStyle: 'italic',
   },
   monthlyCard: {
-    backgroundColor: 'white',
     borderRadius: 12,
     padding: 15,
-    shadowColor: '#000',
+    shadowColor: '#4CAF50',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   monthlyItem: {
     flexDirection: 'row',
@@ -553,24 +781,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
   },
   monthName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
   },
   monthlyStats: {
     alignItems: 'flex-end',
   },
   monthlyDonations: {
     fontSize: 14,
-    color: '#666',
   },
   monthlyPoints: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#4CAF50',
     marginTop: 2,
   },
 });

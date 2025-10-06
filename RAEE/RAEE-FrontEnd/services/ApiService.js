@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 class ApiService {
   constructor() {
     // URL base del backend CodeIgniter 4
-    this.baseURL = 'http://192.168.1.2/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
+    this.baseURL = 'http://192.168.0.13/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
   }
 
   // Configurar headers por defecto
@@ -54,7 +54,9 @@ class ApiService {
         
         if (!response.ok) {
           // Manejar errores específicos por código de estado
-          if (response.status === 403) {
+          if (response.status === 401) {
+            throw new Error('Credenciales incorrectas. Verifica tu DNI y contraseña.');
+          } else if (response.status === 403) {
             throw new Error('No tienes permisos para realizar esta acción.');
           } else if (response.status === 404) {
             throw new Error('El recurso solicitado no fue encontrado.');
@@ -141,6 +143,12 @@ class ApiService {
   // Obtener ubicaciones de recolección
   async getCollectionLocations() {
     return await this.makeRequest('locations', 'GET');
+  }
+
+  // Obtener ubicaciones de ecopuntos (alias para getCollectionLocations)
+  async getUbicaciones() {
+    const result = await this.makeRequest('ubicaciones', 'GET');
+    return result;
   }
 
   // ==================== PUBLICACIONES/DONACIONES ====================

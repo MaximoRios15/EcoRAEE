@@ -58,24 +58,28 @@ export const AuthProvider = ({ children }) => {
   // Efectos para cargar el usuario al iniciar la app
   useEffect(() => {
     const bootstrapAsync = async () => {
-      let userData = null;
-
       try {
-        // Solo restaurar usuario si hay datos válidos
-        const savedUserData = await AsyncStorage.getItem('userData');
+        // Limpiar automáticamente todos los datos de usuario al abrir la app
+        await AsyncStorage.removeItem('userData');
+        await AsyncStorage.removeItem('profileImage');
+        await AsyncStorage.removeItem('profileImageUserId');
         
-        if (savedUserData) {
-          userData = JSON.parse(savedUserData);
-        }
+        // Limpiar todos los cooldowns de cambio de imagen
+        const keys = await AsyncStorage.getAllKeys();
+        const imageChangeKeys = keys.filter(key => key.startsWith('lastImageChange_'));
+        await AsyncStorage.multiRemove(imageChangeKeys);
+        
+        // Limpiar preferencia de tema también si se desea
+        // await AsyncStorage.removeItem('theme_mode');
+        
       } catch (e) {
-        console.error('Error restoring user data:', e);
-        userData = null;
+        console.error('Error clearing user data:', e);
       }
 
-      // Restaurar el estado de autenticación
+      // Siempre restaurar con usuario nulo (forzar logout)
       dispatch({ 
         type: 'RESTORE_USER', 
-        user: userData 
+        user: null 
       });
     };
 

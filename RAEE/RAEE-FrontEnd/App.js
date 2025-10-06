@@ -9,11 +9,11 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Import screens
-import LoginScreen from './citizen-screens/LoginScreen';
-import RegisterScreen from './citizen-screens/RegisterScreen';
+import LoginScreen from './login-screens/LoginScreen';
+import RegisterScreen from './login-screens/RegisterScreen';
+import ForgotPasswordScreen from './login-screens/ForgotPasswordScreen';
 import HomeScreen from './citizen-screens/HomeScreen';
 import DonationScreen from './citizen-screens/DonationScreen';
-import ForgotPasswordScreen from './citizen-screens/ForgotPasswordScreen';
 import ProfileScreen from './citizen-screens/ProfileScreen';
 import ExchangeShopScreen from './citizen-screens/ExchangeShopScreen';
 import StatisticsScreen from './citizen-screens/StatisticsScreen';

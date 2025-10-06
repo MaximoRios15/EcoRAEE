@@ -13,9 +13,13 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
 import ApiService from '../services/ApiService';
 import * as ImagePicker from 'expo-image-picker';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 // Los puntos base y multiplicadores ahora se obtienen de la base de datos
 
@@ -44,6 +48,8 @@ export default function DonationScreen({ navigation }) {
   const [states, setStates] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(true); // true = modo oscuro (actual), false = modo claro
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const [formData, setFormData] = useState({
     idCategorias_Equipos: '',
     Marca_Equipos: '',
@@ -68,7 +74,50 @@ export default function DonationScreen({ navigation }) {
   // Cargar categorías, estados y ubicaciones al montar el componente
   useEffect(() => {
     loadCategoriesStatesAndLocations();
+    loadThemePreference();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cargar preferencia de tema
+  const loadThemePreference = async () => {
+    try {
+      const savedTheme = await AsyncStorage.getItem('theme_mode');
+      if (savedTheme !== null) {
+        setIsDarkMode(savedTheme === 'dark');
+      }
+    } catch (error) {
+      console.error('Error loading theme preference:', error);
+    }
+  };
+
+  // Guardar preferencia de tema
+  const saveThemePreference = async (isDark) => {
+    try {
+      await AsyncStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
+    } catch (error) {
+      console.error('Error saving theme preference:', error);
+    }
+  };
+
+  // Alternar tema
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    saveThemePreference(newTheme);
+  };
+
+  // Colores dinámicos del tema
+  const themeColors = {
+    background: isDarkMode ? '#1A1A2E' : '#FFFFFF',
+    surface: isDarkMode ? '#2C2C3E' : '#F8F9FA',
+    primary: isDarkMode ? '#4CAF50' : '#2E7D32',
+    text: isDarkMode ? '#FFFFFF' : '#212121',
+    textSecondary: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(33, 33, 33, 0.7)',
+    card: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+    border: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+    header: isDarkMode ? '#1A1A2E' : '#FFFFFF',
+    sidebar: isDarkMode ? '#16213E' : '#F8F9FA',
+    overlay: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)',
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -79,6 +128,34 @@ export default function DonationScreen({ navigation }) {
         { text: 'Cerrar Sesión', onPress: signOut, style: 'destructive' }
       ]
     );
+  };
+
+  // Función para renderizar elementos del sidebar
+  const renderSidebarItem = (title, icon, onPress) => (
+    <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: themeColors.card }]} onPress={onPress}>
+      <Text style={styles.sidebarIcon}>{icon}</Text>
+      <Text style={[styles.sidebarText, { color: themeColors.text }]}>{title}</Text>
+    </TouchableOpacity>
+  );
+
+  // Función para manejar acciones del sidebar
+  const handleActionPress = (action) => {
+    switch (action) {
+      case 'home':
+        navigation.navigate('Home');
+        break;
+      case 'stats':
+        navigation.navigate('Statistics');
+        break;
+      case 'profile':
+        navigation.navigate('Profile');
+        break;
+      case 'exchange':
+        navigation.navigate('ExchangeShop');
+        break;
+      default:
+        break;
+    }
   };
 
   const loadCategoriesStatesAndLocations = async () => {
@@ -426,25 +503,110 @@ export default function DonationScreen({ navigation }) {
   // Mostrar indicador de carga mientras se cargan los datos
   if (loadingData) {
     return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#2E7D32" />
-          <Text style={styles.loadingText}>Cargando categorías, estados y ubicaciones...</Text>
+      <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <View style={[styles.loadingContainer, { backgroundColor: themeColors.background }]}>
+          <ActivityIndicator size="large" color={themeColors.primary} />
+          <Text style={[styles.loadingText, { color: themeColors.text }]}>Cargando categorías, estados y ubicaciones...</Text>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header con botón volver y botón de cerrar sesión */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Volver</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-        </TouchableOpacity>
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      {/* Sidebar */}
+      {sidebarVisible && (
+        <View style={styles.sidebar}>
+          <LinearGradient
+            colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
+            style={styles.sidebarGradient}
+          >
+            {/* Welcome Section in Sidebar */}
+            <View style={styles.sidebarWelcome}>
+              <View style={styles.sidebarAvatarContainer}>
+                {user?.ImagenPerfil_Usuarios ? (
+                  <Image 
+                    source={{ uri: user.ImagenPerfil_Usuarios }} 
+                    style={styles.sidebarAvatarImage}
+                  />
+                ) : (
+                  <Text style={styles.sidebarAvatarText}>
+                    {user?.Nombres_Usuarios?.charAt(0)}{user?.Apellidos_Usuarios?.charAt(0)}
+                  </Text>
+                )}
+              </View>
+              <Text style={[styles.sidebarWelcomeTitle, { color: themeColors.text }]}>¡Bienvenido a EcoRAEE!</Text>
+              <Text style={[styles.sidebarUserName, { color: themeColors.text }]}>{user?.Nombres_Usuarios} {user?.Apellidos_Usuarios}</Text>
+              <Text style={[styles.sidebarUserType, { color: themeColors.textSecondary }]}>Ciudadano EcoRAEE</Text>
+              <Text style={[styles.sidebarPointsText, { color: themeColors.text }]}>
+                Puntos: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{user?.Puntos_Usuarios || 0}</Text>
+              </Text>
+            </View>
+
+            {/* Menú de navegación */}
+            <View style={styles.sidebarMenu}>
+              {renderSidebarItem('Inicio', '🏠', () => {
+                setSidebarVisible(false);
+                handleActionPress('home');
+              })}
+              {renderSidebarItem('Ver Estadísticas', '📊', () => {
+                setSidebarVisible(false);
+                handleActionPress('stats');
+              })}
+              {renderSidebarItem('Mi Perfil', '👤', () => {
+                setSidebarVisible(false);
+                handleActionPress('profile');
+              })}
+              {renderSidebarItem(
+                isDarkMode ? 'Modo Claro' : 'Modo Oscuro', 
+                isDarkMode ? '☀️' : '🌙', 
+                () => {
+                  toggleTheme();
+                }
+              )}
+              {renderSidebarItem('Cerrar Sesión', '🚪', handleLogout)}
+            </View>
+          </LinearGradient>
+        </View>
+      )}
+
+      {/* Overlay para cerrar sidebar */}
+      {sidebarVisible && (
+        <TouchableOpacity 
+          style={[styles.overlay, { backgroundColor: themeColors.overlay }]} 
+          onPress={() => setSidebarVisible(false)}
+          activeOpacity={1}
+        />
+      )}
+
+      {/* Modern Header */}
+      <View style={[styles.modernHeader, { backgroundColor: themeColors.header }]}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity 
+            style={[styles.sidebarToggle, { backgroundColor: isDarkMode ? '#2C2C3E' : '#E9ECEF' }]} 
+            onPress={() => setSidebarVisible(!sidebarVisible)}
+          >
+            <Text style={[styles.sidebarToggleIcon, { color: themeColors.text }]}>☰</Text>
+          </TouchableOpacity>
+          
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../img/logo-EcoRAEE.png')} 
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={[styles.headerTitle, { color: themeColors.text }]}>Donar Dispositivos</Text>
+          </View>
+          
+          <View style={styles.headerRight} />
+        </View>
+        
+        {/* Description */}
+        <View style={styles.descriptionContainer}>
+          <Text style={[styles.descriptionText, { color: themeColors.textSecondary }]}>
+            Registra tu residuo electrónico para donación
+          </Text>
+        </View>
       </View>
 
       <ScrollView 
@@ -452,32 +614,26 @@ export default function DonationScreen({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Tarjeta de Información */}
-        <View style={styles.welcomeCard}>
-          <Text style={styles.welcomeTitle}>Donar RAEE</Text>
-          <Text style={styles.userName}>Registra tu residuo electrónico para donación</Text>
-          
-          {/* Información educativa */}
-          <View style={styles.educationalInfo}>
-            <Text style={styles.educationalTitle}>🌱 ¿Sabías que...?</Text>
-            <Text style={styles.educationalText}>
-              Al donar tus aparatos Eléctricos y Electrónicos, contribuyes a la economía circular 
-              y reduces el impacto ambiental. ¡Recibirás puntos que podrás canjear por 
-              productos o servicios técnicos!
-            </Text>
-          </View>
-
+        {/* Información educativa */}
+        <View style={[styles.educationalCard, { backgroundColor: themeColors.surface }]}>
+          <Text style={[styles.educationalTitle, { color: themeColors.primary }]}>🌱 ¿Sabías que...?</Text>
+          <Text style={[styles.educationalText, { color: themeColors.textSecondary }]}>
+            Al donar tus aparatos Eléctricos y Electrónicos, contribuyes a la economía circular 
+            y reduces el impacto ambiental. ¡Recibirás puntos que podrás canjear por 
+            productos o servicios técnicos!
+          </Text>
         </View>
 
-        <View style={styles.form}>
+        <View style={[styles.form, { backgroundColor: themeColors.surface }]}>
           {/* Tipo de RAEE */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Tipo de RAEE *</Text>
-            <View style={styles.pickerContainer}>
+            <Text style={[styles.label, { color: themeColors.text }]}>Tipo de RAEE *</Text>
+            <View style={[styles.pickerContainer, { borderColor: themeColors.border, backgroundColor: themeColors.background }]}>
               <Picker
                 selectedValue={formData.idCategorias_Equipos}
                 onValueChange={(value) => handleInputChange('idCategorias_Equipos', value)}
-                style={styles.picker}
+                style={[styles.picker, { backgroundColor: themeColors.background, color: themeColors.text }]}
+                dropdownIconColor={themeColors.text}
               >
                 {categories.map((category) => (
                   <Picker.Item
@@ -492,36 +648,37 @@ export default function DonationScreen({ navigation }) {
 
           {/* Marca */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Marca *</Text>
+            <Text style={[styles.label, { color: themeColors.text }]}>Marca *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }]}
               value={formData.Marca_Equipos}
               onChangeText={(value) => handleInputChange('Marca_Equipos', value)}
               placeholder="Ej: Samsung, Apple, HP..."
-              placeholderTextColor="#999"
+              placeholderTextColor={themeColors.textSecondary}
             />
           </View>
 
           {/* Modelo */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Modelo</Text>
+            <Text style={[styles.label, { color: themeColors.text }]}>Modelo</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }]}
               value={formData.Modelo_Equipos}
               onChangeText={(value) => handleInputChange('Modelo_Equipos', value)}
               placeholder="Ej: Galaxy S21, iPhone 12..."
-              placeholderTextColor="#999"
+              placeholderTextColor={themeColors.textSecondary}
             />
           </View>
 
           {/* Estado */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Estado *</Text>
-            <View style={styles.pickerContainer}>
+            <Text style={[styles.label, { color: themeColors.text }]}>Estado *</Text>
+            <View style={[styles.pickerContainer, { borderColor: themeColors.border, backgroundColor: themeColors.background }]}>
               <Picker
                 selectedValue={formData.idEstados_Equipos}
                 onValueChange={(value) => handleInputChange('idEstados_Equipos', value)}
-                style={styles.picker}
+                style={[styles.picker, { backgroundColor: themeColors.background, color: themeColors.text }]}
+                dropdownIconColor={themeColors.text}
               >
                 {states.map((state) => (
                   <Picker.Item
@@ -536,26 +693,26 @@ export default function DonationScreen({ navigation }) {
 
           {/* Cantidad */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Cantidad</Text>
+            <Text style={[styles.label, { color: themeColors.text }]}>Cantidad</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }]}
               value={formData.Cantidad_Equipos}
               onChangeText={(value) => handleInputChange('Cantidad_Equipos', value)}
               placeholder="1"
               keyboardType="numeric"
-              placeholderTextColor="#999"
+              placeholderTextColor={themeColors.textSecondary}
             />
           </View>
 
           {/* Descripción */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Descripción</Text>
+            <Text style={[styles.label, { color: themeColors.text }]}>Descripción</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, styles.textArea, { backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }]}
               value={formData.Descripcion_Equipos}
               onChangeText={(value) => handleInputChange('Descripcion_Equipos', value)}
               placeholder="Describe el estado, accesorios incluidos, etc..."
-              placeholderTextColor="#999"
+              placeholderTextColor={themeColors.textSecondary}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
@@ -564,16 +721,16 @@ export default function DonationScreen({ navigation }) {
 
           {/* Fotos del dispositivo */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Fotos del dispositivo</Text>
-            <Text style={styles.photoSubtext}>Máximo 3 fotos (requerido)</Text>
+            <Text style={[styles.label, { color: themeColors.text }]}>Fotos del dispositivo</Text>
+            <Text style={[styles.photoSubtext, { color: themeColors.textSecondary }]}>Máximo 3 fotos (requerido)</Text>
             
             {/* Botones para agregar fotos */}
             <View style={styles.photoButtons}>
-              <TouchableOpacity style={styles.photoButton} onPress={tomarFoto}>
-                <Text style={styles.photoButtonText}>📷 Tomar Foto</Text>
+              <TouchableOpacity style={[styles.photoButton, { backgroundColor: themeColors.background, borderColor: themeColors.border }]} onPress={tomarFoto}>
+                <Text style={[styles.photoButtonText, { color: themeColors.primary }]}>📷 Tomar Foto</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.photoButton} onPress={seleccionarImagen}>
-                <Text style={styles.photoButtonText}>🖼️ Seleccionar Galería</Text>
+              <TouchableOpacity style={[styles.photoButton, { backgroundColor: themeColors.background, borderColor: themeColors.border }]} onPress={seleccionarImagen}>
+                <Text style={[styles.photoButtonText, { color: themeColors.primary }]}>🖼️ Seleccionar Galería</Text>
               </TouchableOpacity>
             </View>
 
@@ -597,38 +754,38 @@ export default function DonationScreen({ navigation }) {
 
           {/* Peso */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Peso (kg) *</Text>
+            <Text style={[styles.label, { color: themeColors.text }]}>Peso (kg) *</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }]}
               value={formData.PesoKG_Equipos}
               onChangeText={(value) => handleInputChange('PesoKG_Equipos', value)}
               placeholder="Ej: 1.5"
               keyboardType="numeric"
-              placeholderTextColor="#999"
+              placeholderTextColor={themeColors.textSecondary}
             />
           </View>
 
           {/* Dimensiones */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Dimensiones (cm)</Text>
+            <Text style={[styles.label, { color: themeColors.text }]}>Dimensiones (cm)</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }]}
               value={formData.DimencionesCM_Equipos}
               onChangeText={(value) => handleInputChange('DimencionesCM_Equipos', value)}
               placeholder="Ej: 30x20x5"
-              placeholderTextColor="#999"
+              placeholderTextColor={themeColors.textSecondary}
             />
           </View>
 
           {/* Accesorios incluidos */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Accesorios incluidos</Text>
+            <Text style={[styles.label, { color: themeColors.text }]}>Accesorios incluidos</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, styles.textArea, { backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }]}
               value={formData.Accesorios_Equipos}
               onChangeText={(value) => handleInputChange('Accesorios_Equipos', value)}
               placeholder="Ej: Cargador, cable USB, manual, caja..."
-              placeholderTextColor="#999"
+              placeholderTextColor={themeColors.textSecondary}
               multiline
               numberOfLines={3}
               textAlignVertical="top"
@@ -637,12 +794,13 @@ export default function DonationScreen({ navigation }) {
 
           {/* Ubicación */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Punto de recolección *</Text>
-            <View style={styles.pickerContainer}>
+            <Text style={[styles.label, { color: themeColors.text }]}>Punto de entrega *</Text>
+            <View style={[styles.pickerContainer, { borderColor: themeColors.border, backgroundColor: themeColors.background }]}>
               <Picker
                 selectedValue={formData.ubicacion}
                 onValueChange={(value) => handleInputChange('ubicacion', value)}
-                style={styles.picker}
+                style={[styles.picker, { backgroundColor: themeColors.background, color: themeColors.text }]}
+                dropdownIconColor={themeColors.text}
               >
                 {locations.map((location) => (
                   <Picker.Item
@@ -653,15 +811,15 @@ export default function DonationScreen({ navigation }) {
                 ))}
               </Picker>
             </View>
-            <Text style={styles.helpText}>
-              Selecciona el punto de recolección municipal más cercano a tu ubicación
+            <Text style={[styles.helpText, { color: themeColors.textSecondary }]}>
+              Selecciona el ecopunto para entregar a la municipalidad más cercana de tu ubicación
             </Text>
           </View>
 
           {/* Mostrar puntos que generará la donación */}
           {desglosePuntos && (
-            <View style={styles.pointsContainer}>
-              <Text style={styles.pointsTitle}>
+            <View style={[styles.pointsContainer, { backgroundColor: themeColors.card }]}>
+              <Text style={[styles.pointsTitle, { color: themeColors.text }]}>
                 🎯 Puntos que obtendrás por esta donación
               </Text>
               
@@ -711,18 +869,19 @@ export default function DonationScreen({ navigation }) {
           {/* Botones */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={styles.cancelButton}
+              style={[styles.cancelButton, { backgroundColor: themeColors.background, borderColor: themeColors.primary }]}
               onPress={() => {
                 navigation.goBack();
               }}
               disabled={isLoading}
             >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
+              <Text style={[styles.cancelButtonText, { color: themeColors.primary }]}>Cancelar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.submitButton,
+                { backgroundColor: themeColors.primary },
                 isLoading && styles.submitButtonDisabled
               ]}
               onPress={handleSubmit}
@@ -744,19 +903,175 @@ export default function DonationScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   loadingText: {
     marginTop: 15,
     fontSize: 16,
-    color: '#666',
     textAlign: 'center',
+  },
+  // Sidebar styles
+  sidebar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: screenWidth * 0.75,
+    zIndex: 1000,
+  },
+  sidebarGradient: {
+    flex: 1,
+    paddingTop: 60,
+    paddingHorizontal: 20,
+  },
+  sidebarWelcome: {
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  sidebarAvatarContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  sidebarAvatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  sidebarAvatarText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  sidebarWelcomeTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  sidebarUserName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    opacity: 0.9,
+    textAlign: 'center',
+  },
+  sidebarUserType: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 8,
+    opacity: 0.8,
+  },
+  sidebarPointsText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  sidebarPointsValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  sidebarMenu: {
+    flex: 1,
+  },
+  sidebarItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  sidebarIcon: {
+    fontSize: 20,
+    marginRight: 15,
+    width: 24,
+    textAlign: 'center',
+  },
+  sidebarText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  sidebarToggle: {
+    backgroundColor: '#2C2C3E',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sidebarToggleIcon: {
+    fontSize: 18,
+    color: '#FFFFFF',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 999,
+  },
+  // Modern Header styles
+  modernHeader: {
+    backgroundColor: '#1A1A2E',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  logoImage: {
+    width: 35,
+    height: 35,
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  headerRight: {
+    width: 50, // Same width as sidebar toggle for balance
+  },
+  descriptionContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  descriptionText: {
+    fontSize: 13,
+    textAlign: 'center',
+    fontWeight: '400',
+    lineHeight: 18,
   },
   header: {
     flexDirection: 'row',
@@ -804,11 +1119,12 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20, // Espacio adicional en la parte inferior del scroll
   },
-  welcomeCard: {
+  educationalCard: {
     backgroundColor: 'white',
     borderRadius: 15,
     padding: 20,
-    marginBottom: 25,
+    marginBottom: 20,
+    marginTop: 10,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -817,18 +1133,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4CAF50',
-    marginBottom: 15,
   },
   form: {
     backgroundColor: 'white',
@@ -889,6 +1193,7 @@ const styles = StyleSheet.create({
   picker: {
     height: 50,
     justifyContent: 'center',
+    borderRadius: 12,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -947,32 +1252,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  // Nuevos estilos para funcionalidades agregadas
-  educationalInfo: {
-    backgroundColor: '#e8f5e8',
-    padding: 15,
-    borderRadius: 12,
-    marginTop: 15,
-    borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
+  // Estilos para información educativa
   educationalTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2E7D32',
     marginBottom: 8,
   },
   educationalText: {
     fontSize: 14,
-    color: '#555',
     lineHeight: 20,
   },
   pointsContainer: {

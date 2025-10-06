@@ -14,11 +14,13 @@ import {
   Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
 import ApiService from '../services/ApiService';
 
-const { width } = Dimensions.get('window');
-const cardWidth = (width - 60) / 2; // 2 columnas con margen
+const { width: screenWidth } = Dimensions.get('window');
+const cardWidth = (screenWidth - 60) / 2; // 2 columnas con margen
 
 export default function ExchangeShopScreen({ navigation }) {
   const { user } = useAuth();
@@ -33,6 +35,8 @@ export default function ExchangeShopScreen({ navigation }) {
 
   const [categories, setCategories] = useState([]);
   const [states, setStates] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(true); // true = modo oscuro (actual), false = modo claro
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   
   // Filtros
   const [filters, setFilters] = useState({
@@ -55,7 +59,96 @@ export default function ExchangeShopScreen({ navigation }) {
     loadEquipment();
     loadCategories();
     loadStates();
+    loadThemePreference();
   }, []);
+
+  // Cargar preferencia del tema desde AsyncStorage
+  const loadThemePreference = async () => {
+    try {
+      const savedTheme = await AsyncStorage.getItem('theme_mode');
+      if (savedTheme !== null) {
+        setIsDarkMode(savedTheme === 'dark');
+      }
+    } catch (error) {
+      console.error('Error loading theme preference:', error);
+    }
+  };
+
+  // Guardar preferencia del tema en AsyncStorage
+  const saveThemePreference = async (isDark) => {
+    try {
+      await AsyncStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
+    } catch (error) {
+      console.error('Error saving theme preference:', error);
+    }
+  };
+
+  // Toggle entre modo oscuro y claro
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    saveThemePreference(newTheme);
+  };
+
+  // Definir colores dinámicos según el tema
+  const themeColors = {
+    background: isDarkMode ? '#1A1A2E' : '#FFFFFF',
+    surface: isDarkMode ? '#2C2C3E' : '#F8F9FA',
+    primary: isDarkMode ? '#4CAF50' : '#2E7D32',
+    text: isDarkMode ? '#FFFFFF' : '#212121',
+    textSecondary: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(33, 33, 33, 0.7)',
+    card: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+    border: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+    header: isDarkMode ? '#1A1A2E' : '#FFFFFF',
+    sidebar: isDarkMode ? '#16213E' : '#F8F9FA',
+    overlay: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)',
+  };
+
+  // Función para renderizar elementos del sidebar
+  const renderSidebarItem = (title, icon, onPress) => (
+    <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: themeColors.card }]} onPress={onPress}>
+      <Text style={styles.sidebarIcon}>{icon}</Text>
+      <Text style={[styles.sidebarText, { color: themeColors.text }]}>{title}</Text>
+    </TouchableOpacity>
+  );
+
+  // Función para manejar acciones del sidebar
+  const handleActionPress = (action) => {
+    switch (action) {
+      case 'stats':
+        // Navegar a estadísticas
+        console.log('Navegando a estadísticas');
+        break;
+      case 'profile':
+        // Navegar a perfil
+        console.log('Navegando a perfil');
+        break;
+      case 'home':
+        navigation.navigate('Home');
+        break;
+      default:
+        console.log('Acción no reconocida:', action);
+    }
+  };
+
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    Alert.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro de que quieres cerrar sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Cerrar Sesión', 
+          style: 'destructive',
+          onPress: () => {
+            // Aquí implementarías la lógica de logout
+            console.log('Cerrando sesión');
+          }
+        }
+      ]
+    );
+  };
 
   const loadCategories = async () => {
     try {
@@ -91,13 +184,13 @@ export default function ExchangeShopScreen({ navigation }) {
 
   const getImageByCategory = (categoryId) => {
     const imageMap = {
-      1: require('../img/perfil1animal.png'),
-      2: require('../img/perfil2animal.png'),
-      3: require('../img/perfil3animal.png'),
-      4: require('../img/perfil4animal.png'),
-      5: require('../img/perfil5animal.png'),
+      1: require('../img/profile/perfil1animal.png'),
+      2: require('../img/profile/perfil2animal.png'),
+      3: require('../img/profile/perfil3animal.png'),
+      4: require('../img/profile/perfil4animal.png'),
+      5: require('../img/profile/perfil5animal.png'),
     };
-    return imageMap[categoryId] || require('../img/perfil1animal.png');
+    return imageMap[categoryId] || require('../img/profile/perfil1animal.png');
   };
 
   const getStateIcon = (state) => {
@@ -201,7 +294,6 @@ export default function ExchangeShopScreen({ navigation }) {
   };
 
   const addToCart = (item) => {
-    console.log('Adding to cart:', item);
     const existingItem = cart.find(cartItem => cartItem.id === item.id);
     
     if (existingItem) {
@@ -220,7 +312,6 @@ export default function ExchangeShopScreen({ navigation }) {
     } else {
       // Si no existe, agregar nuevo item
       const newItem = { ...item, quantity: 1 };
-      console.log('New item to add:', newItem);
       setCart([...cart, newItem]);
       
       Alert.alert(
@@ -346,7 +437,7 @@ export default function ExchangeShopScreen({ navigation }) {
             shipping: item.Direccion_Ubicaciones && item.Municipios_Ubicaciones 
               ? `${item.Direccion_Ubicaciones}, ${item.Municipios_Ubicaciones}`
               : 'Ubicación no disponible',
-            installments: `Puedes canjear con ${item.Puntos_Publicacion} puntos`,
+            installments: '',
             description: item.Descripcion_Publicacion || item.Descripcion_Equipos || '',
             weight: item.PesoKG_Equipos,
             dimensions: item.DimencionesCM_Equipos,
@@ -511,7 +602,7 @@ export default function ExchangeShopScreen({ navigation }) {
 
   const renderEquipmentCard = ({ item }) => (
     <TouchableOpacity 
-      style={styles.productCard}
+      style={[styles.productCard, { backgroundColor: themeColors.surface }]}
       onPress={() => handleRedeem(item)}
     >
       <View style={styles.productImageContainer}>
@@ -519,12 +610,13 @@ export default function ExchangeShopScreen({ navigation }) {
         <TouchableOpacity 
           style={[
             styles.addToCartButton,
+            { backgroundColor: themeColors.primary },
             isInCart(item) && styles.removeFromCartButton
           ]}
           onPress={() => isInCart(item) ? removeFromCart(item) : addToCart(item)}
         >
           <Ionicons 
-            name={isInCart(item) ? "close" : "add"} 
+            name={isInCart(item) ? "close" : "cart-outline"} 
             size={20} 
             color="white" 
           />
@@ -532,44 +624,124 @@ export default function ExchangeShopScreen({ navigation }) {
       </View>
       
       <View style={styles.productInfo}>
-        <Text style={styles.productTitle} numberOfLines={2}>
+        <Text style={[styles.productTitle, { color: themeColors.text }]} numberOfLines={2}>
           {item.title}
         </Text>
         
         <View style={styles.brandContainer}>
-          <Text style={styles.brandName}>{item.brand}</Text>
+          <Text style={[styles.brandName, { color: themeColors.primary }]}>{item.category}</Text>
+        </View>
+        
+        <View style={styles.stateContainer}>
           {getStateIcon(item.state)}
+          <Text style={[styles.stateText, { color: themeColors.textSecondary }]}>{item.state}</Text>
         </View>
         
         <View style={styles.priceContainer}>
-          <Text style={styles.pointsPrice}>{item.pointsPrice} puntos</Text>
+          <Text style={[styles.pointsPrice, { color: themeColors.primary }]}>{item.pointsPrice} puntos</Text>
         </View>
         
-        <Text style={styles.installments}>{item.installments}</Text>
-        <Text style={styles.shipping}>{item.shipping}</Text>
+        <Text style={[styles.shipping, { color: themeColors.primary }]}>{item.shipping}</Text>
       </View>
     </TouchableOpacity>
   );
 
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      {/* Sidebar */}
+      {sidebarVisible && (
+        <View style={styles.sidebar}>
+          <LinearGradient
+            colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
+            style={styles.sidebarGradient}
+          >
+            {/* Welcome Section in Sidebar */}
+            <View style={styles.sidebarWelcome}>
+              <View style={styles.sidebarAvatarContainer}>
+                {user?.ImagenPerfil_Usuarios ? (
+                  <Image 
+                    source={{ uri: user.ImagenPerfil_Usuarios }} 
+                    style={styles.sidebarAvatarImage}
+                  />
+                ) : (
+                  <Text style={styles.sidebarAvatarText}>
+                    {user?.Nombres_Usuarios?.charAt(0)}{user?.Apellidos_Usuarios?.charAt(0)}
+                  </Text>
+                )}
+              </View>
+              <Text style={[styles.sidebarWelcomeTitle, { color: themeColors.text }]}>¡Bienvenido a EcoRAEE!</Text>
+              <Text style={[styles.sidebarUserName, { color: themeColors.text }]}>{user?.Nombres_Usuarios} {user?.Apellidos_Usuarios}</Text>
+              <Text style={[styles.sidebarUserType, { color: themeColors.textSecondary }]}>Ciudadano EcoRAEE</Text>
+              <Text style={[styles.sidebarPointsText, { color: themeColors.text }]}>
+                Puntos: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{userPoints}</Text>
+              </Text>
+            </View>
+
+            {/* Sidebar Menu Items */}
+            <View style={styles.sidebarMenu}>
+              {renderSidebarItem('Inicio', '🏠', () => {
+                setSidebarVisible(false);
+                handleActionPress('home');
+              })}
+              {renderSidebarItem('Ver Estadísticas', '📊', () => {
+                setSidebarVisible(false);
+                handleActionPress('stats');
+              })}
+              {renderSidebarItem('Mi Perfil', '👤', () => {
+                setSidebarVisible(false);
+                handleActionPress('profile');
+              })}
+              {renderSidebarItem(
+                isDarkMode ? 'Modo Claro' : 'Modo Oscuro', 
+                isDarkMode ? '☀️' : '🌙', 
+                () => {
+                  toggleTheme();
+                }
+              )}
+              {renderSidebarItem('Cerrar Sesión', '🚪', handleLogout)}
+            </View>
+          </LinearGradient>
+        </View>
+      )}
+
+      {/* Overlay */}
+      {sidebarVisible && (
+        <TouchableOpacity 
+          style={[styles.overlay, { backgroundColor: themeColors.overlay }]} 
+          onPress={() => setSidebarVisible(false)}
+          activeOpacity={1}
+        />
+      )}
+
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: themeColors.header }]}>
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="white" />
+          <TouchableOpacity 
+            style={[styles.sidebarToggle, { backgroundColor: isDarkMode ? '#2C2C3E' : '#E9ECEF' }]} 
+            onPress={() => setSidebarVisible(!sidebarVisible)}
+          >
+            <Text style={[styles.sidebarToggleIcon, { color: themeColors.text }]}>☰</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Tienda de Canjes</Text>
+          
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../img/logo-EcoRAEE.png')} 
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={[styles.headerTitle, { color: themeColors.text }]}>Tienda de Canjes</Text>
+          </View>
+          
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.refreshButton} onPress={loadEquipment}>
-              <Ionicons name="refresh" size={24} color="white" />
+              <Ionicons name="refresh" size={24} color={themeColors.text} />
             </TouchableOpacity>
             <TouchableOpacity 
               style={styles.cartButton} 
               onPress={() => setShowCartModal(true)}
             >
-              <Ionicons name="cart" size={24} color="white" />
+              <Ionicons name="cart" size={24} color={themeColors.text} />
               {getCartItemCount() > 0 && (
                 <View style={styles.cartBadge}>
                   <Text style={styles.cartBadgeText}>{getCartItemCount()}</Text>
@@ -579,29 +751,36 @@ export default function ExchangeShopScreen({ navigation }) {
           </View>
         </View>
         
+        {/* Description */}
+        <View style={styles.descriptionContainer}>
+          <Text style={[styles.descriptionText, { color: themeColors.textSecondary }]}>
+            Canjea tus puntos por equipos electrónicos disponibles
+          </Text>
+        </View>
+        
         {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+        <View style={[styles.searchContainer, { backgroundColor: themeColors.surface }]}>
+          <Ionicons name="search" size={20} color={themeColors.textSecondary} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: themeColors.text }]}
             placeholder="Buscar equipos..."
             value={searchText}
             onChangeText={handleSearch}
-            placeholderTextColor="#666"
+            placeholderTextColor={themeColors.textSecondary}
           />
         </View>
         
         {/* User Points */}
-        <View style={styles.pointsContainer}>
-          <Ionicons name="star" size={20} color="#4CAF50" />
-          <Text style={styles.pointsText}>Tienes {userPoints} puntos disponibles</Text>
+        <View style={[styles.pointsContainer, { backgroundColor: themeColors.card }]}>
+          <Ionicons name="star" size={20} color={themeColors.primary} />
+          <Text style={[styles.pointsText, { color: themeColors.text }]}>Tienes {userPoints} puntos disponibles</Text>
         </View>
       </View>
 
       {/* Filter Button */}
-      <View style={styles.filterButtonContainer}>
+      <View style={[styles.filterButtonContainer, { backgroundColor: themeColors.background, borderBottomColor: themeColors.border }]}>
         <TouchableOpacity 
-          style={styles.filterButton}
+          style={[styles.filterButton, { backgroundColor: themeColors.primary }]}
           onPress={() => setShowFilterModal(true)}
         >
           <Ionicons name="filter" size={20} color="white" />
@@ -610,20 +789,20 @@ export default function ExchangeShopScreen({ navigation }) {
         
         {/* Active Filters Display */}
         {getActiveFiltersCount() > 0 && (
-          <View style={styles.activeFiltersContainer}>
+          <View style={[styles.activeFiltersContainer, { backgroundColor: themeColors.surface, borderColor: themeColors.primary }]}>
             <ScrollView 
               horizontal 
               showsHorizontalScrollIndicator={false}
               style={styles.activeFiltersScroll}
             >
               {getActiveFiltersList().map((filter, index) => (
-                <View key={index} style={styles.activeFilterTag}>
+                <View key={index} style={[styles.activeFilterTag, { backgroundColor: themeColors.primary }]}>
                   <Text style={styles.activeFilterText}>{filter}</Text>
                 </View>
               ))}
             </ScrollView>
-            <TouchableOpacity onPress={clearFilters} style={styles.clearFiltersButton}>
-              <Ionicons name="close" size={16} color="#666" />
+            <TouchableOpacity onPress={clearFilters} style={[styles.clearFiltersButton, { backgroundColor: themeColors.card }]}>
+              <Ionicons name="close" size={16} color={themeColors.textSecondary} />
             </TouchableOpacity>
           </View>
         )}
@@ -632,8 +811,8 @@ export default function ExchangeShopScreen({ navigation }) {
       {/* Equipment List */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
-          <Text style={styles.loadingText}>Cargando equipos...</Text>
+          <ActivityIndicator size="large" color={themeColors.primary} />
+          <Text style={[styles.loadingText, { color: themeColors.text }]}>Cargando equipos...</Text>
         </View>
       ) : (
         <FlatList
@@ -641,7 +820,7 @@ export default function ExchangeShopScreen({ navigation }) {
           renderItem={renderEquipmentCard}
           keyExtractor={(item) => item.id.toString()}
           numColumns={2}
-          contentContainerStyle={styles.equipmentList}
+          contentContainerStyle={[styles.equipmentList, { backgroundColor: themeColors.background }]}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -653,31 +832,33 @@ export default function ExchangeShopScreen({ navigation }) {
         transparent={true}
         onRequestClose={() => setShowFilterModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filtros</Text>
+        <View style={[styles.modalOverlay, { backgroundColor: themeColors.overlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: themeColors.surface }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: themeColors.border }]}>
+              <Text style={[styles.modalTitle, { color: themeColors.text }]}>Filtros</Text>
               <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <Ionicons name="close" size={24} color="#666" />
+                <Ionicons name="close" size={24} color={themeColors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalBody}>
+            <ScrollView style={[styles.modalBody, { backgroundColor: themeColors.surface }]}>
               {/* Categoría */}
               <View style={styles.filterSection}>
-                <Text style={styles.filterLabel}>Categoría</Text>
+                <Text style={[styles.filterLabel, { color: themeColors.text }]}>Categoría</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View style={styles.optionsContainer}>
                     <TouchableOpacity
                       style={[
                         styles.optionButton,
-                        filters.selectedCategory === null && styles.selectedOption
+                        { backgroundColor: themeColors.card, borderColor: themeColors.border },
+                        filters.selectedCategory === null && [styles.selectedOption, { backgroundColor: themeColors.primary, borderColor: themeColors.primary }]
                       ]}
                       onPress={() => setFilters({...filters, selectedCategory: null})}
                     >
                       <Text style={[
                         styles.optionText,
-                        filters.selectedCategory === null && styles.selectedOptionText
+                        { color: themeColors.text },
+                        filters.selectedCategory === null && [styles.selectedOptionText, { color: 'white' }]
                       ]}>
                         Todas
                       </Text>
@@ -687,13 +868,15 @@ export default function ExchangeShopScreen({ navigation }) {
                         key={category.id}
                         style={[
                           styles.optionButton,
-                          filters.selectedCategory === category.id && styles.selectedOption
+                          { backgroundColor: themeColors.card, borderColor: themeColors.border },
+                          filters.selectedCategory === category.id && [styles.selectedOption, { backgroundColor: themeColors.primary, borderColor: themeColors.primary }]
                         ]}
                         onPress={() => setFilters({...filters, selectedCategory: category.id})}
                       >
                         <Text style={[
                           styles.optionText,
-                          filters.selectedCategory === category.id && styles.selectedOptionText
+                          { color: themeColors.text },
+                          filters.selectedCategory === category.id && [styles.selectedOptionText, { color: 'white' }]
                         ]}>
                           {category.name}
                         </Text>
@@ -705,19 +888,20 @@ export default function ExchangeShopScreen({ navigation }) {
 
               {/* Estado */}
               <View style={styles.filterSection}>
-                <Text style={styles.filterLabel}>Estado</Text>
+                <Text style={[styles.filterLabel, { color: themeColors.text }]}>Estado</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View style={styles.optionsContainer}>
                     <TouchableOpacity
                       style={[
                         styles.optionButton,
-                        filters.selectedState === null && styles.selectedOption
+                        filters.selectedState === null && [styles.selectedOption, { backgroundColor: themeColors.primary, borderColor: themeColors.primary }]
                       ]}
                       onPress={() => setFilters({...filters, selectedState: null})}
                     >
                       <Text style={[
                         styles.optionText,
-                        filters.selectedState === null && styles.selectedOptionText
+                        { color: themeColors.text },
+                        filters.selectedState === null && [styles.selectedOptionText, { color: 'white' }]
                       ]}>
                         Todos
                       </Text>
@@ -727,13 +911,15 @@ export default function ExchangeShopScreen({ navigation }) {
                         key={state.id}
                         style={[
                           styles.optionButton,
-                          filters.selectedState === state.id && styles.selectedOption
+                          { backgroundColor: themeColors.card, borderColor: themeColors.border },
+                          filters.selectedState === state.id && [styles.selectedOption, { backgroundColor: themeColors.primary, borderColor: themeColors.primary }]
                         ]}
                         onPress={() => setFilters({...filters, selectedState: state.id})}
                       >
                         <Text style={[
                           styles.optionText,
-                          filters.selectedState === state.id && styles.selectedOptionText
+                          { color: themeColors.text },
+                          filters.selectedState === state.id && [styles.selectedOptionText, { color: 'white' }]
                         ]}>
                           {state.name}
                         </Text>
@@ -745,23 +931,25 @@ export default function ExchangeShopScreen({ navigation }) {
 
               {/* Puntos */}
               <View style={styles.filterSection}>
-                <Text style={styles.filterLabel}>Puntos</Text>
+                <Text style={[styles.filterLabel, { color: themeColors.text }]}>Puntos</Text>
                 <View style={styles.rangeContainer}>
                   <View style={styles.rangeInput}>
-                    <Text style={styles.rangeLabel}>Mínimo</Text>
+                    <Text style={[styles.rangeLabel, { color: themeColors.text }]}>Mínimo</Text>
                     <TextInput
-                      style={styles.rangeTextInput}
+                      style={[styles.rangeTextInput, { backgroundColor: themeColors.surface, borderColor: themeColors.border, color: themeColors.text }]}
                       placeholder="0"
+                      placeholderTextColor={themeColors.textSecondary}
                       value={filters.minPoints}
                       onChangeText={(text) => setFilters({...filters, minPoints: text})}
                       keyboardType="numeric"
                     />
                   </View>
                   <View style={styles.rangeInput}>
-                    <Text style={styles.rangeLabel}>Máximo</Text>
+                    <Text style={[styles.rangeLabel, { color: themeColors.text }]}>Máximo</Text>
                     <TextInput
-                      style={styles.rangeTextInput}
+                      style={[styles.rangeTextInput, { backgroundColor: themeColors.surface, borderColor: themeColors.border, color: themeColors.text }]}
                       placeholder="1000"
+                      placeholderTextColor={themeColors.textSecondary}
                       value={filters.maxPoints}
                       onChangeText={(text) => setFilters({...filters, maxPoints: text})}
                       keyboardType="numeric"
@@ -772,23 +960,25 @@ export default function ExchangeShopScreen({ navigation }) {
 
               {/* Peso */}
               <View style={styles.filterSection}>
-                <Text style={styles.filterLabel}>Peso (kg)</Text>
+                <Text style={[styles.filterLabel, { color: themeColors.text }]}>Peso (kg)</Text>
                 <View style={styles.rangeContainer}>
                   <View style={styles.rangeInput}>
-                    <Text style={styles.rangeLabel}>Mínimo</Text>
+                    <Text style={[styles.rangeLabel, { color: themeColors.text }]}>Mínimo</Text>
                     <TextInput
-                      style={styles.rangeTextInput}
+                      style={[styles.rangeTextInput, { backgroundColor: themeColors.surface, borderColor: themeColors.border, color: themeColors.text }]}
                       placeholder="0"
+                      placeholderTextColor={themeColors.textSecondary}
                       value={filters.minWeight}
                       onChangeText={(text) => setFilters({...filters, minWeight: text})}
                       keyboardType="numeric"
                     />
                   </View>
                   <View style={styles.rangeInput}>
-                    <Text style={styles.rangeLabel}>Máximo</Text>
+                    <Text style={[styles.rangeLabel, { color: themeColors.text }]}>Máximo</Text>
                     <TextInput
-                      style={styles.rangeTextInput}
+                      style={[styles.rangeTextInput, { backgroundColor: themeColors.surface, borderColor: themeColors.border, color: themeColors.text }]}
                       placeholder="50"
+                      placeholderTextColor={themeColors.textSecondary}
                       value={filters.maxWeight}
                       onChangeText={(text) => setFilters({...filters, maxWeight: text})}
                       keyboardType="numeric"
@@ -799,18 +989,19 @@ export default function ExchangeShopScreen({ navigation }) {
 
               {/* Accesorios */}
               <View style={styles.filterSection}>
-                <Text style={styles.filterLabel}>Accesorios</Text>
+                <Text style={[styles.filterLabel, { color: themeColors.text }]}>Accesorios</Text>
                 <View style={styles.accessoriesContainer}>
                   <TouchableOpacity
                     style={[
                       styles.accessoryOption,
-                      filters.hasAccessories === null && styles.selectedAccessoryOption
+                      filters.hasAccessories === null && [styles.selectedAccessoryOption, { backgroundColor: themeColors.primary, borderColor: themeColors.primary }]
                     ]}
                     onPress={() => setFilters({...filters, hasAccessories: null})}
                   >
                     <Text style={[
                       styles.accessoryText,
-                      filters.hasAccessories === null && styles.selectedAccessoryText
+                      { color: themeColors.text },
+                      filters.hasAccessories === null && [styles.selectedAccessoryText, { color: 'white' }]
                     ]}>
                       Todos
                     </Text>
@@ -818,13 +1009,15 @@ export default function ExchangeShopScreen({ navigation }) {
                   <TouchableOpacity
                     style={[
                       styles.accessoryOption,
-                      filters.hasAccessories === true && styles.selectedAccessoryOption
+                      { backgroundColor: themeColors.card, borderColor: themeColors.border },
+                      filters.hasAccessories === true && [styles.selectedAccessoryOption, { backgroundColor: themeColors.primary, borderColor: themeColors.primary }]
                     ]}
                     onPress={() => setFilters({...filters, hasAccessories: true})}
                   >
                     <Text style={[
                       styles.accessoryText,
-                      filters.hasAccessories === true && styles.selectedAccessoryText
+                      { color: themeColors.text },
+                      filters.hasAccessories === true && [styles.selectedAccessoryText, { color: 'white' }]
                     ]}>
                       Con accesorios
                     </Text>
@@ -832,13 +1025,15 @@ export default function ExchangeShopScreen({ navigation }) {
                   <TouchableOpacity
                     style={[
                       styles.accessoryOption,
-                      filters.hasAccessories === false && styles.selectedAccessoryOption
+                      { backgroundColor: themeColors.card, borderColor: themeColors.border },
+                      filters.hasAccessories === false && [styles.selectedAccessoryOption, { backgroundColor: themeColors.primary, borderColor: themeColors.primary }]
                     ]}
                     onPress={() => setFilters({...filters, hasAccessories: false})}
                   >
                     <Text style={[
                       styles.accessoryText,
-                      filters.hasAccessories === false && styles.selectedAccessoryText
+                      { color: themeColors.text },
+                      filters.hasAccessories === false && [styles.selectedAccessoryText, { color: 'white' }]
                     ]}>
                       Sin accesorios
                     </Text>
@@ -847,11 +1042,11 @@ export default function ExchangeShopScreen({ navigation }) {
               </View>
             </ScrollView>
 
-            <View style={styles.modalFooter}>
-              <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
-                <Text style={styles.clearButtonText}>Limpiar</Text>
+            <View style={[styles.modalFooter, { borderTopColor: themeColors.border }]}>
+              <TouchableOpacity style={[styles.clearButton, { backgroundColor: themeColors.card }]} onPress={clearFilters}>
+                <Text style={[styles.clearButtonText, { color: themeColors.textSecondary }]}>Limpiar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.applyButton} onPress={applyFilters}>
+              <TouchableOpacity style={[styles.applyButton, { backgroundColor: themeColors.primary }]} onPress={applyFilters}>
                 <Text style={styles.applyButtonText}>Aplicar Filtros</Text>
               </TouchableOpacity>
             </View>
@@ -866,16 +1061,16 @@ export default function ExchangeShopScreen({ navigation }) {
         transparent={true}
         onRequestClose={() => setShowCartModal(false)}
       >
-        <View style={styles.newModalOverlay}>
-          <View style={styles.newCartModal}>
+        <View style={[styles.newModalOverlay, { backgroundColor: themeColors.overlay }]}>
+          <View style={[styles.newCartModal, { backgroundColor: themeColors.surface }]}>
             {/* Header */}
-            <View style={styles.newModalHeader}>
-              <Text style={styles.newModalTitle}>Mi Carrito</Text>
+            <View style={[styles.newModalHeader, { borderBottomColor: themeColors.border }]}>
+              <Text style={[styles.newModalTitle, { color: themeColors.text }]}>Mi Carrito</Text>
               <TouchableOpacity 
                 style={styles.closeButton}
                 onPress={() => setShowCartModal(false)}
               >
-                <Ionicons name="close" size={24} color="#666" />
+                <Ionicons name="close" size={24} color={themeColors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -883,9 +1078,9 @@ export default function ExchangeShopScreen({ navigation }) {
             <View style={styles.newModalContent}>
               {cart.length === 0 ? (
                 <View style={styles.newEmptyCart}>
-                  <Ionicons name="cart-outline" size={80} color="#ddd" />
-                  <Text style={styles.newEmptyText}>Tu carrito está vacío</Text>
-                  <Text style={styles.newEmptySubtext}>Agrega publicaciones para canjear</Text>
+                  <Ionicons name="cart-outline" size={80} color={themeColors.textSecondary} />
+                  <Text style={[styles.newEmptyText, { color: themeColors.text }]}>Tu carrito está vacío</Text>
+                  <Text style={[styles.newEmptySubtext, { color: themeColors.textSecondary }]}>Agrega publicaciones para canjear</Text>
                 </View>
               ) : (
                 <ScrollView 
@@ -893,13 +1088,13 @@ export default function ExchangeShopScreen({ navigation }) {
                   showsVerticalScrollIndicator={false}
                 >
                   {cart.map((item) => (
-                    <View key={item.id} style={styles.newCartItem}>
+                    <View key={item.id} style={[styles.newCartItem, { borderBottomColor: themeColors.border }]}>
                       <Image source={item.image} style={styles.newItemImage} />
                       <View style={styles.newItemDetails}>
-                        <Text style={styles.newItemTitle}>{item.title}</Text>
-                        <Text style={styles.newItemBrand}>{item.brand}</Text>
-                        <Text style={styles.newItemPoints}>{item.pointsPrice} puntos</Text>
-                        <Text style={styles.newItemLocation}>{item.shipping}</Text>
+                        <Text style={[styles.newItemTitle, { color: themeColors.text }]}>{item.title}</Text>
+                        <Text style={[styles.newItemBrand, { color: themeColors.textSecondary }]}>{item.brand}</Text>
+                        <Text style={[styles.newItemPoints, { color: themeColors.primary }]}>{item.pointsPrice} puntos</Text>
+                        <Text style={[styles.newItemLocation, { color: themeColors.textSecondary }]}>{item.shipping}</Text>
                       </View>
                       <TouchableOpacity 
                         style={styles.newRemoveButton}
@@ -915,15 +1110,15 @@ export default function ExchangeShopScreen({ navigation }) {
 
             {/* Footer - Solo si hay items */}
             {cart.length > 0 && (
-              <View style={styles.newModalFooter}>
+              <View style={[styles.newModalFooter, { backgroundColor: themeColors.card, borderTopColor: themeColors.border }]}>
                 <View style={styles.newTotalRow}>
-                  <Text style={styles.newTotalLabel}>Total:</Text>
-                  <Text style={styles.newTotalAmount}>{getCartTotalPoints()} puntos</Text>
+                  <Text style={[styles.newTotalLabel, { color: themeColors.text }]}>Total:</Text>
+                  <Text style={[styles.newTotalAmount, { color: themeColors.primary }]}>{getCartTotalPoints()} puntos</Text>
                 </View>
                 
                 <View style={styles.newButtonRow}>
                   <TouchableOpacity 
-                    style={styles.newClearButton}
+                    style={[styles.newClearButton, { borderColor: '#ff4444' }]}
                     onPress={() => setCart([])}
                   >
                     <Text style={styles.newClearText}>Limpiar</Text>
@@ -932,6 +1127,7 @@ export default function ExchangeShopScreen({ navigation }) {
                   <TouchableOpacity 
                     style={[
                       styles.newExchangeButton,
+                      { backgroundColor: themeColors.primary },
                       getCartTotalPoints() > userPoints && styles.newExchangeDisabled
                     ]}
                     onPress={handleExchange}
@@ -976,10 +1172,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  logoImage: {
+    width: 35,
+    height: 35,
+    marginRight: 12,
+  },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: 'white',
+  },
+  descriptionContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  descriptionText: {
+    fontSize: 13,
+    textAlign: 'center',
+    fontWeight: '400',
+    lineHeight: 18,
   },
   headerRight: {
     flexDirection: 'row',
@@ -1034,6 +1252,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
+    marginBottom: -13,
   },
   pointsText: {
     color: 'white',
@@ -1045,6 +1264,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     paddingVertical: 15,
     paddingHorizontal: 20,
+    paddingTop: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
     flexDirection: 'row',
@@ -1204,6 +1424,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginRight: 4,
   },
+  stateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  stateText: {
+    fontSize: 11,
+    color: '#666',
+    fontStyle: 'italic',
+    marginLeft: 4,
+  },
   priceContainer: {
     marginBottom: 8,
   },
@@ -1266,7 +1497,7 @@ const styles = StyleSheet.create({
   filterLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#FFFFFF',
     marginBottom: 10,
   },
   optionsContainer: {
@@ -1277,9 +1508,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginRight: 8,
     borderRadius: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: 'rgba(0, 0, 0, 0.2)',
   },
   selectedOption: {
     backgroundColor: '#4CAF50',
@@ -1287,7 +1518,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 14,
-    color: '#666',
+    color: '#212121',
     fontWeight: '500',
   },
   selectedOptionText: {
@@ -1326,9 +1557,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginBottom: 8,
     borderRadius: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: 'rgba(0, 0, 0, 0.2)',
   },
   selectedAccessoryOption: {
     backgroundColor: '#4CAF50',
@@ -1336,7 +1567,7 @@ const styles = StyleSheet.create({
   },
   accessoryText: {
     fontSize: 14,
-    color: '#666',
+    color: '#212121',
     fontWeight: '500',
   },
   selectedAccessoryText: {
@@ -1725,5 +1956,129 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
     fontWeight: '600',
+  },
+  // Sidebar styles
+  sidebar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: screenWidth * 0.75,
+    zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 2,
+      height: 0,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  sidebarGradient: {
+    flex: 1,
+    paddingTop: 60,
+    paddingHorizontal: 20,
+  },
+  sidebarWelcome: {
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  sidebarAvatarContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  sidebarAvatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  sidebarAvatarText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  sidebarWelcomeTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  sidebarUserName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    opacity: 0.9,
+    textAlign: 'center',
+  },
+  sidebarUserType: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 8,
+    opacity: 0.8,
+  },
+  sidebarPointsText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  sidebarPointsValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  sidebarMenu: {
+    flex: 1,
+  },
+  sidebarItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  sidebarIcon: {
+    fontSize: 20,
+    marginRight: 15,
+    width: 24,
+    textAlign: 'center',
+  },
+  sidebarText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 999,
+  },
+  sidebarToggle: {
+    backgroundColor: '#2C2C3E',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sidebarToggleIcon: {
+    fontSize: 18,
+    color: '#FFFFFF',
   },
 });

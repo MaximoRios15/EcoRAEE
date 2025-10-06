@@ -2,7 +2,7 @@
 
 ## Descripción del Proyecto
 
-EcoRAEE es una aplicación móvil desarrollada con React Native y Expo que conecta ciudadanos con técnicos especializados e instituciones educativas para promover el reciclaje responsable de residuos electrónicos (RAEE) y la economía circular.
+EcoRAEE es una aplicación móvil desarrollada con React Native y Expo que conecta ciudadanos con técnicos especializados e instituciones educativas para promover el reciclaje responsable de residuos electrónicos (RAEE) y la economía circular. La aplicación permite a los usuarios donar dispositivos electrónicos, ganar puntos por sus contribuciones y acceder a un sistema de canjes.
 
 ## Arquitectura y Tecnologías
 
@@ -14,182 +14,236 @@ EcoRAEE es una aplicación móvil desarrollada con React Native y Expo que conec
 - **Almacenamiento Local**: AsyncStorage
 - **Comunicación API**: Fetch API nativo
 - **UI/UX**: Componentes nativos de React Native
+- **Animaciones**: React Native Animated API
+- **Gradientes**: Expo Linear Gradient
+- **Iconos**: Expo Vector Icons
 
 ### Estructura del Proyecto
 
 ```
 RAEE-FrontEnd/
-├── citizen-screens/        # Pantallas de la aplicación para ciudadanos
-│   ├── LoginScreen.js      # Pantalla de inicio de sesión
-│   ├── RegisterScreen.js   # Pantalla de registro
-│   ├── HomeScreen.js       # Pantalla principal/dashboard
-│   ├── DonationScreen.js   # Pantalla de donación de RAEE
-│   ├── ProfileScreen.js    # Pantalla de gestión de perfil
-│   ├── ExchangeShopScreen.js # Pantalla de tienda de canjes
-│   ├── StatisticsScreen.js # Pantalla de estadísticas
+├── login-screens/           # Pantallas de autenticación
+│   ├── LoginScreen.js       # Pantalla de inicio de sesión
+│   ├── RegisterScreen.js    # Pantalla de registro de usuarios
 │   └── ForgotPasswordScreen.js # Pantalla de recuperación de contraseña
-├── contexts/               # Contextos de React para estado global
-│   └── AuthContext.js     # Contexto de autenticación
-├── services/              # Servicios de comunicación con API
-│   └── ApiService.js      # Servicio principal de API
-├── img/                   # Imágenes de perfil predefinidas
-│   ├── perfil1animal.png  # Avatar 1 - Tema animal
-│   ├── perfil1flores.png  # Avatar 1 - Tema flores
-│   ├── perfil2animal.png  # Avatar 2 - Tema animal
-│   ├── perfil2flores.png  # Avatar 2 - Tema flores
-│   ├── perfil3animal.png  # Avatar 3 - Tema animal
-│   ├── perfil3flores.png  # Avatar 3 - Tema flores
-│   ├── perfil4animal.png  # Avatar 4 - Tema animal
-│   ├── perfil4flores.png  # Avatar 4 - Tema flores
-│   ├── perfil5animal.png  # Avatar 5 - Tema animal
-│   └── perfil5flores.png  # Avatar 5 - Tema flores
-├── App.js                 # Componente principal de la aplicación
-├── app.json              # Configuración de Expo
-├── package.json          # Dependencias y scripts
-└── logo-EcoRAEE.png      # Logo de la aplicación
+├── citizen-screens/         # Pantallas principales de la aplicación
+│   ├── HomeScreen.js        # Pantalla principal/dashboard
+│   ├── DonationScreen.js    # Pantalla de donación de RAEE
+│   ├── ProfileScreen.js     # Pantalla de gestión de perfil
+│   ├── ExchangeShopScreen.js # Pantalla de tienda de canjes
+│   └── StatisticsScreen.js  # Pantalla de estadísticas
+├── contexts/                # Contextos de React para estado global
+│   └── AuthContext.js       # Contexto de autenticación
+├── services/               # Servicios de comunicación con API
+│   └── ApiService.js       # Servicio principal de API
+├── img/                    # Recursos de imagen
+│   ├── logo-EcoRAEE.png    # Logo principal de la aplicación
+│   ├── profile/            # Imágenes de perfil predefinidas
+│   │   ├── perfil1animal.png
+│   │   ├── perfil1flores.png
+│   │   ├── perfil2animal.png
+│   │   ├── perfil2flores.png
+│   │   ├── perfil3animal.png
+│   │   ├── perfil3flores.png
+│   │   ├── perfil4animal.png
+│   │   ├── perfil4flores.png
+│   │   ├── perfil5animal.png
+│   │   └── perfil5flores.png
+│   └── ubication/          # Imágenes de ubicaciones
+│       ├── EcoPunto_AvUrquiza.png
+│       └── EcoPunto_ItaembeMini.png
+├── App.js                  # Componente principal de la aplicación
+├── app.json               # Configuración de Expo
+├── package.json           # Dependencias y scripts
+└── README-FrontEnd.md     # Documentación del proyecto
 ```
 
 ## Pantallas (Screens)
 
 ### 1. LoginScreen.js
+**Ubicación**: `/login-screens/LoginScreen.js`  
 **Funcionalidad**: Pantalla de autenticación de usuarios
-- **Campos**: DNI y contraseña
+
+#### Características Principales:
+- **Campos de entrada**: DNI y contraseña
 - **Validaciones**: Formato de DNI y campos requeridos
-- **Características**:
-  - Integración con AuthContext para manejo de estado
-  - Loading state durante autenticación
-  - Navegación a registro y recuperación de contraseña
-  - Diseño responsive con logo de EcoRAEE
-  - Manejo de errores con alertas
-  - **Icono de visibilidad de contraseña**: Toggle para mostrar/ocultar contraseña
+- **Tema dinámico**: Soporte completo para modo oscuro/claro
+- **Animación Rainbow**: Efecto animado en el nombre "EcoRAEE"
+- **Navegación**: Enlaces a registro y recuperación de contraseña
+
+#### Componentes Especiales:
+- **RainbowText**: Componente personalizado con animación de colores
+  - Colores: `['#066c34', '#319417', '#51b003', '#319417', '#066c34']`
+  - Animación horizontal de izquierda a derecha
+  - Duración: 1500ms con reinicio automático
+- **LinearGradient**: Fondos degradados para botones y formularios
+- **Tema Toggle**: Botón para cambiar entre modo oscuro y claro
+
+#### Integraciones:
+- **AuthContext**: Manejo de estado de autenticación
+- **AsyncStorage**: Persistencia de preferencias de tema
+- **ApiService**: Comunicación con backend para login
+- **Manejo de errores**: Alertas específicas para credenciales incorrectas
 
 ### 2. RegisterScreen.js
-**Funcionalidad**: Registro de nuevos usuarios ciudadanos
-- **Campos**: DNI, nombre, apellido, email, teléfono, dirección, contraseña
-- **Validaciones**: 
-  - Formato de email y DNI
-  - Confirmación de contraseña
-  - Campos obligatorios
-- **Características**:
-  - Formulario completo con validación en tiempo real
-  - Integración con ApiService para registro
-  - Navegación automática tras registro exitoso
-  - Diseño consistente con la aplicación
+**Ubicación**: `/login-screens/RegisterScreen.js`  
+**Funcionalidad**: Registro de nuevos usuarios
 
-### 3. HomeScreen.js
-**Funcionalidad**: Dashboard principal de la aplicación
-- **Elementos**:
-  - Header con logo y botón de cerrar sesión
-  - Tarjeta de bienvenida con datos del usuario
-  - Puntos acumulados del usuario
-  - Acciones rápidas (botones de navegación)
-  - Información sobre EcoRAEE
-- **Acciones Disponibles**:
-  - Donar dispositivos (navegación a DonationScreen)
-  - Canjear puntos (próximamente)
-  - Ver estadísticas (próximamente)
-  - Mi perfil (próximamente)
-- **Características**:
-  - Carga automática del perfil del usuario
-  - Confirmación para cerrar sesión
-  - Diseño modular con tarjetas
+#### Campos del Formulario:
+- **Datos básicos**: DNI, nombre, apellido, email, teléfono
+- **Ubicación**: Dirección, número de calle, provincia (Misiones), municipio
+- **Seguridad**: Contraseña y confirmación
+- **Tipo de usuario**: Ciudadano, Técnico, Institución
 
-### 4. DonationScreen.js
-**Funcionalidad**: Registro de donaciones de RAEE
-- **Campos del Formulario**:
-  - Tipo de RAEE (selector con opciones predefinidas)
-  - Marca del dispositivo
-  - Modelo del dispositivo
-  - Estado del dispositivo (funcional, parcialmente funcional, etc.)
-  - Descripción adicional
-  - Cantidad
-  - Peso del dispositivo
-- **Tipos de RAEE Soportados**:
-  - Teléfono móvil, Computadora, Laptop, Tablet
-  - Televisor, Monitor, Impresora
-  - Electrodomésticos pequeños y grandes
-  - Otros dispositivos
-- **Características**:
-  - Validación completa del formulario
-  - Integración con ApiService para envío
-  - Reseteo del formulario tras envío exitoso
-  - Navegación automática de regreso
-  - **Sistema de puntos dinámico**: Cálculo automático de puntos basado en:
-    - Categoría del dispositivo
-    - Estado del dispositivo (multiplicador)
-    - Peso del dispositivo (bonus)
-    - Cantidad de unidades
-  - **Desglose de puntos en tiempo real**: Muestra cálculo detallado antes del envío
+#### Validaciones Implementadas:
+- **DNI**: Formato numérico 7-8 dígitos, verificación de disponibilidad
+- **Email**: Formato válido, verificación de disponibilidad
+- **Teléfono**: Solo números, verificación de disponibilidad
+- **Contraseña**: Mínimo 6 caracteres, confirmación obligatoria
 
-### 5. ProfileScreen.js
-**Funcionalidad**: Gestión completa del perfil de usuario
-- **Elementos Principales**:
-  - Información personal del usuario (nombre, apellido, email, teléfono)
-  - Puntos acumulados del usuario
-  - Botones de verificación (correo y celular)
-- **Características de Edición**:
-  - **Selector de imagen de perfil**: Modal con galería de imágenes locales
-  - **Edición de nombre y apellido**: Modal con campos editables
-  - **Persistencia de datos**: Cambios guardados en AsyncStorage y base de datos
-  - **Validación de formularios**: Validación en tiempo real
-  - **Integración con API**: Sincronización automática con backend
-- **Funcionalidades Avanzadas**:
-  - **Galería de imágenes**: 10 opciones de avatares predefinidos (5 personajes × 2 temas: animal y flores)
-  - **Edición inline**: Modales responsivos con manejo de teclado
-  - **Feedback visual**: Alertas de confirmación y error
-  - **Navegación intuitiva**: Botones de cancelar/guardar
+#### Campos Específicos por Tipo:
+- **Instituciones**: Número de legajo, tipo de institución, contacto, registro/título
+- **Técnicos**: Certificado técnico
 
-### 6. ForgotPasswordScreen.js
+#### Características Especiales:
+- **Selección de avatar**: 10 imágenes de perfil predefinidas (5 personajes × 2 temas)
+- **Validación en tiempo real**: Verificación de disponibilidad de DNI, email y teléfono
+- **Tema dinámico**: Todos los campos adaptados al tema actual
+- **Municipios de Misiones**: Lista completa de 78 municipios
+- **Estados de carga**: Indicadores visuales durante validaciones
+
+### 3. ForgotPasswordScreen.js
+**Ubicación**: `/login-screens/ForgotPasswordScreen.js`  
 **Funcionalidad**: Recuperación de contraseña
-- **Campos**: Email del usuario
-- **Validaciones**: Formato de email válido
-- **Características**:
-  - Interfaz simple y clara
-  - Validación de formato de email
-  - Simulación de envío de email de recuperación
-  - Navegación de regreso al login
-  - Enlaces a términos y condiciones
+
+#### Características:
+- **Campo único**: Email del usuario
+- **Validación**: Formato de email válido
+- **Tema dinámico**: Adaptado al tema actual
+- **Navegación**: Enlace de regreso al login
+- **Diseño consistente**: Mismo estilo que LoginScreen
+
+### 4. HomeScreen.js
+**Ubicación**: `/citizen-screens/HomeScreen.js`  
+**Funcionalidad**: Dashboard principal de la aplicación
+
+#### Elementos Principales:
+- **Header**: Logo EcoRAEE, toggle de tema, botón de cerrar sesión
+- **Tarjeta de bienvenida**: Información personal del usuario
+- **Puntos del usuario**: Visualización de puntos acumulados
+- **Carrusel de ubicaciones**: ScrollView horizontal con ecopuntos disponibles
+- **Acciones principales**: Botones para donar y canjear
+- **Información**: Tarjeta "Sobre EcoRAEE"
+
+#### Características Técnicas:
+- **Carrusel infinito**: Animación automática con pausa al tocar
+- **Sidebar**: Menú lateral con opciones de navegación
+- **Tema dinámico**: Colores adaptativos
+- **Sombras verdes**: Efectos visuales consistentes
+- **Responsive**: Adaptación a diferentes tamaños de pantalla
+
+#### Animaciones:
+- **Carrusel**: Scroll automático con control de usuario
+- **Sombras**: Efectos de elevación con colores temáticos
+- **Transiciones**: Animaciones suaves entre estados
+
+### 5. DonationScreen.js
+**Ubicación**: `/citizen-screens/DonationScreen.js`  
+**Funcionalidad**: Registro de donaciones de RAEE
+
+#### Formulario de Donación:
+- **Categoría**: Tipo de dispositivo (teléfono, computadora, etc.)
+- **Detalles**: Marca, modelo, estado, descripción
+- **Cantidad y peso**: Información cuantitativa
+- **Ubicación**: Selector de municipios de Misiones
+
+#### Sistema de Puntos:
+- **Cálculo dinámico**: Basado en categoría, estado y peso
+- **Multiplicadores**: Por estado del dispositivo
+- **Bonus por peso**: Puntos adicionales según peso
+- **Desglose visual**: Cálculo detallado en tiempo real
+
+#### Características:
+- **Validación completa**: Todos los campos requeridos
+- **Loading states**: Indicadores durante envío
+- **Tema dinámico**: Adaptación completa al tema
+- **Sidebar**: Menú lateral con navegación
+- **Logo en header**: Consistencia visual
+
+### 6. ProfileScreen.js
+**Ubicación**: `/citizen-screens/ProfileScreen.js`  
+**Funcionalidad**: Gestión completa del perfil de usuario
+
+#### Información Mostrada:
+- **Datos personales**: Nombre, apellido, email, teléfono
+- **Avatar**: Imagen de perfil seleccionada
+- **Puntos**: Total de puntos acumulados
+- **Estado de verificación**: Correo y teléfono
+
+#### Funcionalidades de Edición:
+- **Modal de edición de nombre**: Formulario con validación
+- **Selector de avatar**: Galería con 10 opciones predefinidas
+- **Botones de verificación**: Para correo y teléfono (preparados para implementación)
+
+#### Características Técnicas:
+- **Modales responsivos**: Manejo de teclado virtual
+- **Persistencia**: Guardado en AsyncStorage y base de datos
+- **Validación en tiempo real**: Feedback inmediato
+- **Tema dinámico**: Todos los elementos adaptativos
+- **Sombras verdes**: Efectos visuales consistentes
+
+### 7. ExchangeShopScreen.js
+**Ubicación**: `/citizen-screens/ExchangeShopScreen.js`  
+**Funcionalidad**: Tienda de canjes de puntos
+
+#### Características Actuales:
+- **Estructura base**: Diseño consistente con HomeScreen
+- **Sidebar**: Menú lateral con navegación
+- **Header**: Logo EcoRAEE y toggle de tema
+- **Tema dinámico**: Colores adaptativos
+- **Preparado para**: Implementación de catálogo de productos
+
+### 8. StatisticsScreen.js
+**Ubicación**: `/citizen-screens/StatisticsScreen.js`  
+**Funcionalidad**: Visualización de estadísticas del usuario
+
+#### Características:
+- **Diseño consistente**: Mismo estilo que HomeScreen
+- **Sidebar**: Menú lateral sin botones de donación/canje
+- **Tema dinámico**: Adaptación completa al tema
+- **Preparado para**: Gráficos y estadísticas detalladas
 
 ## Contextos (Contexts)
 
 ### AuthContext.js
+**Ubicación**: `/contexts/AuthContext.js`  
 **Propósito**: Manejo centralizado del estado de autenticación
 
 #### Estado Manejado:
-- `isLoading`: Estado de carga de la aplicación
-- `isSignout`: Indicador de cierre de sesión
-- `userToken`: Token JWT del usuario autenticado
-- `user`: Datos del usuario actual
+```javascript
+{
+  isLoading: boolean,      // Estado de carga
+  isSignout: boolean,      // Indicador de cierre de sesión
+  userToken: string|null,  // Token de sesión (prototipo)
+  user: object|null        // Datos del usuario
+}
+```
 
 #### Acciones Disponibles:
-- **signIn(credentials)**: Autenticación de usuario
-  - Valida credenciales con el backend
-  - Guarda token en AsyncStorage
-  - Carga perfil del usuario
-  - Actualiza estado global
-
-- **signUp(userData)**: Registro de nuevo usuario
-  - Envía datos al backend
-  - Maneja respuesta de registro
-  - No autentica automáticamente
-
-- **signOut()**: Cierre de sesión
-  - Limpia token del almacenamiento
-  - Resetea estado de usuario
-  - Notifica al backend (opcional)
-
+- **signIn(credentials)**: Autenticación con DNI y contraseña
+- **signUp(userData)**: Registro de nuevos usuarios
+- **signOut()**: Cierre de sesión completo
 - **updateUser(userData)**: Actualización de datos del usuario
-  - Actualiza información en el estado local
-  - Útil para cambios de perfil
+- **refreshProfile()**: Recarga del perfil desde el backend
 
-- **refreshProfile()**: Recarga del perfil del usuario
-  - Obtiene datos actualizados del backend
-  - Actualiza estado local
-  - Maneja errores de token expirado
+#### Características Especiales:
+- **Auto-logout**: Cierre automático de sesión al abrir la app
+- **Limpieza de datos**: Eliminación completa de AsyncStorage al cerrar sesión
+- **Persistencia de tema**: Mantiene preferencias de modo oscuro/claro
+- **Manejo de errores**: Gestión robusta de errores de autenticación
 
-#### Reducer Pattern:
-Utiliza useReducer para manejo predecible del estado con acciones:
-- `RESTORE_TOKEN`: Restaura sesión al iniciar app
+#### Reducer Actions:
+- `RESTORE_TOKEN`: Restaura sesión al iniciar
 - `SIGN_IN`: Establece usuario autenticado
 - `SIGN_OUT`: Limpia estado de autenticación
 - `SET_LOADING`: Controla estados de carga
@@ -198,52 +252,121 @@ Utiliza useReducer para manejo predecible del estado con acciones:
 ## Servicios (Services)
 
 ### ApiService.js
-**Propósito**: Comunicación centralizada con el backend de EcoRAEE
+**Ubicación**: `/services/ApiService.js`  
+**Propósito**: Comunicación centralizada con el backend
 
 #### Configuración:
 - **Base URL**: `http://192.168.0.9/EcoRAEE/RAEE/RAEE-BackEnd/public/api`
 - **Headers**: Content-Type y Authorization automáticos
-- **Token Management**: Carga, guardado y eliminación automática
+- **Session Management**: Gestión automática de sesiones
 
 #### Métodos de Autenticación:
-- **register(userData)**: Registro de nuevos usuarios
-- **login(credentials)**: Autenticación con DNI y contraseña
-- **getProfile()**: Obtención del perfil del usuario autenticado
+- **register(userData)**: Registro de usuarios con validación
+- **login(credentials)**: Autenticación con manejo de errores específicos
+- **getProfile(userId)**: Obtención del perfil del usuario
 - **updateUserProfile(profileData)**: Actualización de datos del perfil
-- **logout()**: Cierre de sesión (limpia token local)
+
+#### Métodos de Validación:
+- **validateDni(dni)**: Verificación de disponibilidad de DNI
+- **validateEmail(email)**: Verificación de disponibilidad de email
+- **validateTelefono(telefono)**: Verificación de disponibilidad de teléfono
 
 #### Métodos de Donaciones:
-- **createDonation(donationData)**: Crear nueva donación de RAEE
-- **getAllDonations()**: Obtener todas las donaciones (admin)
-- **getUserDonations()**: Obtener donaciones del usuario actual
+- **createDonation(donationData)**: Crear nueva donación
+- **getAllDonations()**: Obtener todas las donaciones
+- **getUserDonations()**: Obtener donaciones del usuario
 - **getDonation(donationId)**: Obtener donación específica
-- **updateDonationStatus(donationId, status)**: Actualizar estado de donación
 
-#### Métodos de Entregas:
-- **createDelivery(deliveryData)**: Programar nueva entrega
-- **getAllDeliveries()**: Obtener todas las entregas
-- **getUserDeliveries()**: Obtener entregas del usuario
-- **getDelivery(deliveryId)**: Obtener entrega específica
-- **updateDeliveryStatus(deliveryId, status)**: Actualizar estado de entrega
-- **getAvailableTimeSlots()**: Obtener horarios disponibles
-
-#### Métodos para Técnicos:
-- **registerTechnician(technicianData)**: Registro de técnicos
-- **getTechnicianProfile()**: Perfil del técnico
-- **updateTechnicianProfile(profileData)**: Actualizar perfil técnico
-- **getAllTechnicians()**: Listar todos los técnicos
-
-#### Métodos para Instituciones:
-- **registerInstitution(institutionData)**: Registro de instituciones
-- **getInstitutionProfile()**: Perfil de la institución
-- **updateInstitutionProfile(profileData)**: Actualizar perfil institucional
+#### Métodos de Datos Maestros:
+- **getCategories()**: Obtener categorías de RAEE
+- **getStates()**: Obtener estados de dispositivos
+- **getLocations()**: Obtener ubicaciones disponibles
 
 #### Características Técnicas:
 - **Singleton Pattern**: Una instancia única del servicio
-- **Error Handling**: Manejo robusto de errores HTTP y de red
-- **Token Persistence**: Almacenamiento automático en AsyncStorage
+- **Error Handling**: Manejo específico por código HTTP (401, 403, 404, 500+)
+- **Session Persistence**: Almacenamiento automático en AsyncStorage
 - **Request Interceptor**: Headers automáticos y validación de respuestas
 - **JSON Validation**: Verificación de respuestas JSON válidas
+- **Network Error Handling**: Manejo de errores de conexión y timeout
+
+## Sistema de Temas
+
+### Implementación de Tema Dinámico
+Todos los componentes principales implementan un sistema de tema dinámico que permite alternar entre modo oscuro y claro.
+
+#### Colores del Tema:
+```javascript
+const themeColors = {
+  background: isDarkMode ? '#1A1A2E' : '#FFFFFF',
+  surface: isDarkMode ? '#2C2C3E' : '#F8F9FA',
+  primary: isDarkMode ? '#4CAF50' : '#2E7D32',
+  text: isDarkMode ? '#FFFFFF' : '#212121',
+  textSecondary: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(33, 33, 33, 0.7)',
+  card: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+  border: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
+  header: isDarkMode ? '#1A1A2E' : '#FFFFFF',
+  sidebar: isDarkMode ? '#16213E' : '#F8F9FA',
+  overlay: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)'
+};
+```
+
+#### Persistencia:
+- **AsyncStorage**: Preferencia guardada en `theme_mode`
+- **Estado local**: Cada pantalla maneja su propio estado de tema
+- **Sincronización**: Cambios aplicados inmediatamente
+
+## Animaciones y Efectos Visuales
+
+### RainbowText Component
+Componente personalizado para el efecto rainbow en el nombre "EcoRAEE":
+
+```javascript
+const RainbowText = ({ children, style }) => {
+  const animationValue = useRef(new Animated.Value(0)).current;
+  
+  const colors = ['#066c34', '#319417', '#51b003', '#319417', '#066c34'];
+  
+  // Animación continua de izquierda a derecha
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(animationValue, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animationValue, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: false,
+        }),
+      ])
+    ).start();
+  }, []);
+  
+  // Interpolación de colores por carácter
+  // ... lógica de animación
+};
+```
+
+### Efectos de Sombra
+Todos los componentes principales implementan sombras verdes consistentes:
+
+```javascript
+shadowColor: '#4CAF50',
+shadowOffset: { width: 0, height: 4 },
+shadowOpacity: 0.3,
+shadowRadius: 8,
+elevation: 8,
+```
+
+### Carrusel Animado
+El carrusel en HomeScreen implementa:
+- **Scroll automático**: Animación continua
+- **Control de usuario**: Pausa al tocar, reanuda al soltar
+- **Posición persistente**: Mantiene la posición al reanudar
+- **Loop infinito**: Reinicio automático al final
 
 ## Dependencias Principales
 
@@ -281,20 +404,30 @@ Utiliza useReducer para manejo predecible del estado con acciones:
 ```json
 {
   "expo": {
-    "name": "EcoRAEE",                        // Nombre de la app
-    "slug": "ecoraee",                        // Identificador único
-    "version": "1.0.0",                       // Versión de la aplicación
-    "sdkVersion": "54.0.0",                   // Versión del SDK de Expo
-    "orientation": "portrait",                // Orientación fija vertical
-    "icon": "./logo-EcoRAEE.png",            // Icono de la aplicación
-    "userInterfaceStyle": "light",            // Tema claro
-    "splash": {                               // Configuración de splash screen
+    "name": "EcoRAEE",
+    "slug": "ecoraee",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "orientation": "portrait",
+    "icon": "./logo-EcoRAEE.png",
+    "userInterfaceStyle": "light",
+    "splash": {
       "image": "./logo-EcoRAEE.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     }
   }
 }
+```
+
+### App.js - Configuración de Navegación:
+```javascript
+// Importaciones actualizadas para nueva estructura
+import LoginScreen from './login-screens/LoginScreen';
+import RegisterScreen from './login-screens/RegisterScreen';
+import ForgotPasswordScreen from './login-screens/ForgotPasswordScreen';
+import HomeScreen from './citizen-screens/HomeScreen';
+// ... resto de imports
 ```
 
 ## Instalación y Configuración
@@ -356,68 +489,98 @@ npm run web        # Ejecuta en navegador web
 
 ```
 App.js (AuthProvider)
-├── AuthContext verifica token
+├── AuthContext verifica sesión y limpia datos automáticamente
 ├── Si no autenticado:
-│   ├── LoginScreen
-│   ├── RegisterScreen
-│   └── ForgotPasswordScreen
+│   ├── LoginScreen (/login-screens/)
+│   ├── RegisterScreen (/login-screens/)
+│   └── ForgotPasswordScreen (/login-screens/)
 └── Si autenticado:
-    ├── HomeScreen (Dashboard)
-    │   ├── DonationScreen
-    │   └── ProfileScreen
+    ├── HomeScreen (/citizen-screens/)
+    │   ├── DonationScreen (/citizen-screens/)
+    │   ├── ExchangeShopScreen (/citizen-screens/)
+    │   ├── StatisticsScreen (/citizen-screens/)
+    │   └── ProfileScreen (/citizen-screens/)
     └── ProfileScreen (Gestión de perfil)
-        ├── Edición de nombre/apellido
-        ├── Selector de imagen de perfil
-        └── Verificación de contacto
+        ├── Modal de edición de nombre/apellido
+        ├── Modal selector de imagen de perfil
+        └── Botones de verificación (preparados)
 ```
 
 ## Características de Seguridad
 
-- **JWT Token**: Autenticación basada en tokens
+- **Autenticación Simple**: Sistema de autenticación básico para prototipo
 - **AsyncStorage**: Almacenamiento seguro local
-- **Validación de Formularios**: Validación client-side
+- **Validación de Formularios**: Validación client-side y server-side
 - **Error Handling**: Manejo robusto de errores de red
-- **Token Expiration**: Manejo automático de tokens expirados
+- **Auto-logout**: Cierre automático de sesión al abrir la app (prototipo)
+- **Limpieza de datos**: Eliminación completa de datos al cerrar sesión
 
 ## Estado Actual y Funcionalidades
 
-### ✅ Implementado:
-- Sistema de autenticación completo
-- Registro de usuarios ciudadanos
-- Dashboard principal con información del usuario
-- Sistema de donaciones de RAEE con cálculo de puntos
-- **Gestión completa de perfil de usuario**:
-  - Edición de nombre y apellido
-  - Selector de imagen de perfil
-  - Persistencia de datos en AsyncStorage
-  - Sincronización con base de datos
-- **Sistema de puntos dinámico**:
-  - Cálculo automático basado en categoría, estado y peso
-  - Desglose detallado en tiempo real
-  - Bonus por peso y multiplicadores por estado
-- Navegación entre pantallas
-- Integración completa con backend
-- Manejo de estado global con Context API
-- **UI/UX mejorada**:
-  - Modales responsivos con manejo de teclado
-  - Iconos de edición intuitivos
-  - Galería de imágenes de perfil
-  - Validación de formularios en tiempo real
+### ✅ Implementado y Funcionando:
 
-### 🚧 En Desarrollo/Próximamente:
-- **Sistema de verificación**:
-  - Verificación de correo electrónico
-  - Verificación de número de teléfono
-  - Tabla de códigos de verificación optimizada
-  - Generación y validación de códigos OTP
-- Canje de puntos
-- Visualización de estadísticas personales
-- Historial de donaciones
-- Sistema de notificaciones
-- Modo offline
+#### Sistema de Autenticación Completo:
+- **Login**: Con validación de credenciales y manejo de errores específicos
+- **Registro**: Con validación en tiempo real de DNI, email y teléfono
+- **Recuperación de contraseña**: Interfaz implementada
+- **Auto-logout**: Cierre automático al abrir la app
 
-### 📊 **Base de Datos de Verificaciones**
-La aplicación está preparada para implementar un sistema de verificación robusto con la siguiente estructura:
+#### Pantallas Principales:
+- **HomeScreen**: Dashboard con carrusel animado y sidebar
+- **DonationScreen**: Formulario completo de donación con cálculo de puntos
+- **ProfileScreen**: Gestión completa de perfil con edición de datos y avatar
+- **ExchangeShopScreen**: Estructura base preparada para implementación
+- **StatisticsScreen**: Estructura base preparada para implementación
+
+#### Sistema de Temas:
+- **Tema dinámico**: Modo oscuro/claro en todas las pantallas
+- **Persistencia**: Preferencias guardadas en AsyncStorage
+- **Consistencia**: Colores y estilos unificados
+
+#### Animaciones y Efectos:
+- **RainbowText**: Animación del nombre "EcoRAEE"
+- **Carrusel infinito**: En HomeScreen con control de usuario
+- **Sombras verdes**: Efectos visuales consistentes
+- **Gradientes**: LinearGradient en botones y formularios
+
+#### Gestión de Perfil:
+- **Edición de datos**: Modal para cambiar nombre y apellido
+- **Selector de avatar**: 10 imágenes predefinidas (5 personajes × 2 temas)
+- **Persistencia**: Guardado en AsyncStorage y base de datos
+- **Validación**: En tiempo real con feedback visual
+
+#### Sistema de Donaciones:
+- **Formulario completo**: Todos los campos necesarios
+- **Cálculo de puntos**: Dinámico basado en categoría, estado y peso
+- **Validación**: Completa con mensajes de error específicos
+- **Integración**: Con backend para guardado de datos
+
+#### Validaciones en Tiempo Real:
+- **DNI**: Verificación de disponibilidad y formato
+- **Email**: Verificación de disponibilidad y formato
+- **Teléfono**: Verificación de disponibilidad y formato
+- **Contraseñas**: Validación de coincidencia y longitud
+
+### 🚧 Preparado para Implementación:
+
+#### Sistema de Verificación:
+- **Estructura base**: Botones implementados en ProfileScreen
+- **Backend preparado**: Tabla de verificaciones diseñada
+- **UI lista**: Modales y flujos preparados
+- **Pendiente**: Implementación de códigos OTP
+
+#### Tienda de Canjes:
+- **Estructura base**: Pantalla y navegación implementadas
+- **Sidebar**: Menú lateral funcional
+- **Pendiente**: Catálogo de productos y sistema de canjes
+
+#### Estadísticas:
+- **Estructura base**: Pantalla implementada
+- **Navegación**: Funcional
+- **Pendiente**: Gráficos y datos estadísticos
+
+### 📊 Base de Datos de Verificaciones
+La aplicación está preparada para implementar un sistema de verificación robusto:
 
 ```sql
 CREATE TABLE verificaciones (
@@ -435,19 +598,12 @@ CREATE TABLE verificaciones (
     
     FOREIGN KEY (usuario_id) REFERENCES usuarios(idUsuarios) ON DELETE CASCADE,
     
-    -- Índices optimizados para consultas frecuentes
     INDEX idx_usuario_tipo (usuario_id, tipo_verificacion),
     INDEX idx_codigo_usado (codigo, usado),
     INDEX idx_expira_usado (expira_en, usado),
     INDEX idx_token (token_verificacion)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
-
-**Características de la tabla:**
-- **Optimizada para rendimiento**: Tipos de datos eficientes y índices estratégicos
-- **Seguridad**: Restricciones de integridad y validación de códigos
-- **Escalabilidad**: Diseño preparado para alto volumen de verificaciones
-- **Limpieza automática**: Índices para gestión de códigos expirados
 
 ## Arquitectura de Comunicación
 
@@ -461,75 +617,98 @@ Backend (CodeIgniter 4)
 Base de Datos (MySQL)
 ```
 
-## Funcionalidades Recientes Implementadas
+## Funcionalidades Técnicas Avanzadas
 
-### 🎨 **Sistema de Gestión de Perfil**
-- **Edición de Datos Personales**: Modal responsivo para editar nombre y apellido
-- **Selector de Avatar**: Galería con 10 imágenes de perfil predefinidas (5 personajes con 2 variantes temáticas cada uno)
-- **Persistencia Local**: AsyncStorage para mantener preferencias del usuario
-- **Sincronización Backend**: Actualización automática en base de datos
-- **UI/UX Optimizada**: Modales con manejo inteligente de teclado
+### Manejo de Estado:
+- **Context API**: Estado global de autenticación
+- **useReducer**: Manejo predecible de acciones
+- **Local State**: Estado local en cada componente
+- **AsyncStorage**: Persistencia de datos
 
-#### **Galería de Avatares Disponibles:**
-- **Perfil 1**: `perfil1animal.png` (tema animal) | `perfil1flores.png` (tema flores)
-- **Perfil 2**: `perfil2animal.png` (tema animal) | `perfil2flores.png` (tema flores)
-- **Perfil 3**: `perfil3animal.png` (tema animal) | `perfil3flores.png` (tema flores)
-- **Perfil 4**: `perfil4animal.png` (tema animal) | `perfil4flores.png` (tema flores)
-- **Perfil 5**: `perfil5animal.png` (tema animal) | `perfil5flores.png` (tema flores)
+### Optimizaciones de Performance:
+- **Lazy Loading**: Carga bajo demanda de componentes
+- **Memoización**: Optimización de renders
+- **Efficient Animations**: useNativeDriver donde sea posible
+- **Image Optimization**: Compresión y cache de imágenes
 
-**Características de la galería:**
-- **Temas variados**: Cada personaje tiene 2 versiones (animal y flores)
-- **Selección intuitiva**: Modal con grid de imágenes
-- **Persistencia**: La selección se guarda automáticamente
-- **Sin filtros**: Imágenes se muestran en su estado original
+### Manejo de Errores:
+- **Try-Catch**: En todas las operaciones async
+- **Error Boundaries**: Para errores de componentes
+- **User Feedback**: Alertas y mensajes informativos
+- **Fallback UI**: Estados de error con opciones de recuperación
 
-### 🎯 **Sistema de Puntos Dinámico**
-- **Cálculo Automático**: Puntos basados en categoría, estado y peso del dispositivo
-- **Desglose Detallado**: Visualización en tiempo real del cálculo de puntos
-- **Multiplicadores**: Sistema de bonificaciones por estado del dispositivo
-- **Bonus por Peso**: Puntos adicionales según el peso del RAEE
-- **Validación Visual**: Indicadores claros de suma/resta de puntos
+### Accesibilidad:
+- **Screen Reader**: Etiquetas y descripciones
+- **Touch Targets**: Tamaños apropiados para dedos
+- **Color Contrast**: Cumplimiento de estándares
+- **Keyboard Navigation**: Soporte para teclado virtual
 
-### 🔧 **Mejoras de Usabilidad**
-- **Icono de Visibilidad**: Toggle para mostrar/ocultar contraseña en login
-- **Modales Responsivos**: Adaptación automática al teclado virtual
-- **Validación en Tiempo Real**: Feedback inmediato en formularios
-- **Navegación Intuitiva**: Botones de edición con iconos claros
-- **Feedback Visual**: Alertas de confirmación y error mejoradas
+## Notas Técnicas para Desarrolladores
 
-### 📱 **Optimizaciones Técnicas**
-- **Manejo de Estado**: Context API optimizado para perfil de usuario
-- **AsyncStorage**: Persistencia eficiente de preferencias
-- **API Integration**: Nuevos endpoints para actualización de perfil
-- **Error Handling**: Manejo robusto de errores de red y validación
-- **Performance**: Optimización de renders y carga de imágenes
+### Estructura de Carpetas:
+- **`/login-screens/`**: Todas las pantallas de autenticación
+- **`/citizen-screens/`**: Pantallas principales de la aplicación
+- **`/contexts/`**: Contextos de React para estado global
+- **`/services/`**: Servicios de comunicación con API
+- **`/img/`**: Todos los recursos de imagen organizados por tipo
 
-## Notas Técnicas
+### Convenciones de Código:
+- **Naming**: camelCase para variables, PascalCase para componentes
+- **Imports**: Ordenados por tipo (React, librerías, locales)
+- **Comments**: Documentación en español para funcionalidades complejas
+- **Error Handling**: Siempre con try-catch y feedback al usuario
 
-- **Patrón de Diseño**: Context + Reducer para estado global
-- **Comunicación API**: RESTful con JSON
-- **Persistencia**: AsyncStorage para datos locales
-- **UI/UX**: Diseño Material Design adaptado
-- **Performance**: Lazy loading y optimización de renders
-- **Compatibilidad**: iOS 11+, Android 6.0+
+### Patrones de Diseño:
+- **Singleton**: ApiService como instancia única
+- **Observer**: Context API para estado global
+- **Factory**: Creación de componentes de tema
+- **Strategy**: Diferentes validaciones por tipo de campo
 
-## Soporte y Mantenimiento
+### Testing:
+- **Unit Tests**: Para funciones utilitarias
+- **Integration Tests**: Para flujos de autenticación
+- **E2E Tests**: Para flujos completos de usuario
+- **Performance Tests**: Para animaciones y cargas
 
-### Logs y Debugging:
-- Utilizar `console.log` para debugging en desarrollo
-- Expo DevTools para inspección en tiempo real
-- React Native Debugger para debugging avanzado
+## Logs y Debugging
 
-### Actualizaciones:
-- Seguir versionado semántico (SemVer)
-- Actualizar dependencias regularmente
-- Probar en múltiples dispositivos antes de release
+### Sistema de Logs Implementado:
+```javascript
+// Ejemplo de log implementado
+const now = new Date();
+const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+console.log(`[LOGIN] LOGIN EXITOSO - Usuario: ${dni} - ${time} ${date}`);
+```
 
-### Monitoreo:
-- Expo Analytics para métricas de uso
-- Crash reporting con Expo
-- Performance monitoring en producción
+### Herramientas de Debugging:
+- **Expo DevTools**: Para inspección en tiempo real
+- **React Native Debugger**: Para debugging avanzado
+- **Console Logs**: Para seguimiento de flujos
+- **Network Inspector**: Para monitoreo de API calls
+
+## Actualizaciones y Mantenimiento
+
+### Versionado:
+- **Semantic Versioning**: Seguimiento de cambios
+- **Changelog**: Registro de nuevas funcionalidades
+- **Migration Guide**: Guías para actualizaciones
+
+### Dependencias:
+- **Audit Regular**: Verificación de vulnerabilidades
+- **Updates**: Actualizaciones periódicas
+- **Compatibility**: Verificación de compatibilidad
+
+### Performance Monitoring:
+- **Bundle Size**: Monitoreo del tamaño de la app
+- **Load Times**: Tiempos de carga de pantallas
+- **Memory Usage**: Uso de memoria en dispositivos
+- **Crash Reports**: Reportes de errores en producción
 
 ---
 
 **Desarrollado para EcoRAEE - Plataforma de Reciclaje de Residuos Electrónicos**
+
+*Última actualización: Octubre 2025*
+*Versión del Frontend: 1.4.1*
+*Estado: Desarrollo*

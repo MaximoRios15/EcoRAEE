@@ -16,9 +16,12 @@ import {
   Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
 import ApiService from '../services/ApiService';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function ProfileScreen({ navigation }) {
   const { user, signOut, refreshProfile } = useAuth();
@@ -31,21 +34,23 @@ export default function ProfileScreen({ navigation }) {
   const [isImageChangeBlocked, setIsImageChangeBlocked] = useState(false);
   const [userPoints, setUserPoints] = useState(0);
   const [userPublicationsCount, setUserPublicationsCount] = useState(0);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const isLoadingImageRef = useRef(false);
   const loadedImageRef = useRef(false);
 
   // Imágenes disponibles en la carpeta img
   const availableImages = [
-    { id: 1, name: 'perfil1animal.png', source: require('../img/perfil1animal.png') },
-    { id: 2, name: 'perfil1flores.png', source: require('../img/perfil1flores.png') },
-    { id: 3, name: 'perfil2animal.png', source: require('../img/perfil2animal.png') },
-    { id: 4, name: 'perfil2flores.png', source: require('../img/perfil2flores.png') },
-    { id: 5, name: 'perfil3animal.png', source: require('../img/perfil3animal.png') },
-    { id: 6, name: 'perfil3flores.png', source: require('../img/perfil3flores.png') },
-    { id: 7, name: 'perfil4animal.png', source: require('../img/perfil4animal.png') },
-    { id: 8, name: 'perfil4flores.png', source: require('../img/perfil4flores.png') },
-    { id: 9, name: 'perfil5animal.png', source: require('../img/perfil5animal.png') },
-    { id: 10, name: 'perfil5flores.png', source: require('../img/perfil5flores.png') },
+    { id: 1, name: 'perfil1animal.png', source: require('../img/profile/perfil1animal.png') },
+    { id: 2, name: 'perfil1flores.png', source: require('../img/profile/perfil1flores.png') },
+    { id: 3, name: 'perfil2animal.png', source: require('../img/profile/perfil2animal.png') },
+    { id: 4, name: 'perfil2flores.png', source: require('../img/profile/perfil2flores.png') },
+    { id: 5, name: 'perfil3animal.png', source: require('../img/profile/perfil3animal.png') },
+    { id: 6, name: 'perfil3flores.png', source: require('../img/profile/perfil3flores.png') },
+    { id: 7, name: 'perfil4animal.png', source: require('../img/profile/perfil4animal.png') },
+    { id: 8, name: 'perfil4flores.png', source: require('../img/profile/perfil4flores.png') },
+    { id: 9, name: 'perfil5animal.png', source: require('../img/profile/perfil5animal.png') },
+    { id: 10, name: 'perfil5flores.png', source: require('../img/profile/perfil5flores.png') },
   ];
 
   useEffect(() => {
@@ -57,7 +62,51 @@ export default function ProfileScreen({ navigation }) {
     loadUserPoints();
     // Cargar contador de publicaciones
     loadUserPublicationsCount();
+    // Cargar preferencia del tema
+    loadThemePreference();
   }, []);
+
+  // Cargar preferencia del tema desde AsyncStorage
+  const loadThemePreference = async () => {
+    try {
+      const savedTheme = await AsyncStorage.getItem('theme_mode');
+      if (savedTheme !== null) {
+        setIsDarkMode(savedTheme === 'dark');
+      }
+    } catch (error) {
+      console.error('Error loading theme preference:', error);
+    }
+  };
+
+  // Guardar preferencia del tema en AsyncStorage
+  const saveThemePreference = async (isDark) => {
+    try {
+      await AsyncStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
+    } catch (error) {
+      console.error('Error saving theme preference:', error);
+    }
+  };
+
+  // Toggle entre modo oscuro y claro
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    saveThemePreference(newTheme);
+  };
+
+  // Definir colores dinámicos según el tema
+  const themeColors = {
+    background: isDarkMode ? '#1A1A2E' : '#FFFFFF',
+    surface: isDarkMode ? '#2C2C3E' : '#F8F9FA',
+    primary: isDarkMode ? '#4CAF50' : '#2E7D32',
+    text: isDarkMode ? '#FFFFFF' : '#212121',
+    textSecondary: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(33, 33, 33, 0.7)',
+    card: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+    border: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+    header: isDarkMode ? '#1A1A2E' : '#FFFFFF',
+    sidebar: isDarkMode ? '#16213E' : '#F8F9FA',
+    overlay: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)',
+  };
 
   // Cargar imagen de perfil cuando el usuario esté disponible
   useEffect(() => {
@@ -127,16 +176,16 @@ export default function ProfileScreen({ navigation }) {
       // Si no hay imagen personalizada del usuario actual, cargar imagen de la base de datos
       if (user?.ImagenPerfil_Usuarios) {
         const imageMap = {
-          'perfil1animal.png': require('../img/perfil1animal.png'),
-          'perfil1flores.png': require('../img/perfil1flores.png'),
-          'perfil2animal.png': require('../img/perfil2animal.png'),
-          'perfil2flores.png': require('../img/perfil2flores.png'),
-          'perfil3animal.png': require('../img/perfil3animal.png'),
-          'perfil3flores.png': require('../img/perfil3flores.png'),
-          'perfil4animal.png': require('../img/perfil4animal.png'),
-          'perfil4flores.png': require('../img/perfil4flores.png'),
-          'perfil5animal.png': require('../img/perfil5animal.png'),
-          'perfil5flores.png': require('../img/perfil5flores.png')
+          'perfil1animal.png': require('../img/profile/perfil1animal.png'),
+          'perfil1flores.png': require('../img/profile/perfil1flores.png'),
+          'perfil2animal.png': require('../img/profile/perfil2animal.png'),
+          'perfil2flores.png': require('../img/profile/perfil2flores.png'),
+          'perfil3animal.png': require('../img/profile/perfil3animal.png'),
+          'perfil3flores.png': require('../img/profile/perfil3flores.png'),
+          'perfil4animal.png': require('../img/profile/perfil4animal.png'),
+          'perfil4flores.png': require('../img/profile/perfil4flores.png'),
+          'perfil5animal.png': require('../img/profile/perfil5animal.png'),
+          'perfil5flores.png': require('../img/profile/perfil5flores.png')
         };
 
         const imageSource = imageMap[user.ImagenPerfil_Usuarios];
@@ -306,10 +355,30 @@ export default function ProfileScreen({ navigation }) {
       case 'change_password':
         Alert.alert('Próximamente', 'El cambio de contraseña estará disponible pronto');
         break;
+      case 'home':
+        navigation.navigate('Home');
+        break;
+      case 'stats':
+        navigation.navigate('Statistics');
+        break;
+      case 'donation':
+        navigation.navigate('Donation');
+        break;
+      case 'exchange':
+        navigation.navigate('ExchangeShop');
+        break;
       default:
         break;
     }
   };
+
+  // Función para renderizar elementos del sidebar
+  const renderSidebarItem = (title, icon, onPress) => (
+    <TouchableOpacity style={[styles.sidebarItem, { backgroundColor: themeColors.card }]} onPress={onPress}>
+      <Text style={styles.sidebarIcon}>{icon}</Text>
+      <Text style={[styles.sidebarText, { color: themeColors.text }]}>{title}</Text>
+    </TouchableOpacity>
+  );
 
   const openImageSelector = async () => {
     // Verificación inmediata del cooldown antes de abrir el modal
@@ -436,35 +505,104 @@ export default function ProfileScreen({ navigation }) {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: themeColors.background }]}>
         <ActivityIndicator size="large" color="#4CAF50" />
-        <Text style={styles.loadingText}>Cargando perfil...</Text>
+        <Text style={[styles.loadingText, { color: themeColors.text }]}>Cargando perfil...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.safeArea}>
-      {/* Header con botón volver y botón de cerrar sesión */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Volver</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-        </TouchableOpacity>
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      {/* Sidebar */}
+      {sidebarVisible && (
+        <View style={styles.sidebar}>
+          <LinearGradient
+            colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
+            style={styles.sidebarGradient}
+          >
+            {/* Welcome Section in Sidebar */}
+            <View style={styles.sidebarWelcome}>
+              <View style={styles.sidebarAvatarContainer}>
+                {profileImage ? (
+                  <Image source={profileImage} style={styles.sidebarAvatarImage} />
+                ) : (
+                  <Text style={styles.sidebarAvatarText}>
+                    {user?.Nombres_Usuarios?.charAt(0)}{user?.Apellidos_Usuarios?.charAt(0)}
+                  </Text>
+                )}
+              </View>
+              <Text style={[styles.sidebarWelcomeTitle, { color: themeColors.text }]}>¡Bienvenido a EcoRAEE!</Text>
+              <Text style={[styles.sidebarUserName, { color: themeColors.text }]}>{user?.Nombres_Usuarios} {user?.Apellidos_Usuarios}</Text>
+              <Text style={[styles.sidebarUserType, { color: themeColors.textSecondary }]}>Ciudadano EcoRAEE</Text>
+              <Text style={[styles.sidebarPointsText, { color: themeColors.text }]}>
+                Puntos: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{userPoints}</Text>
+              </Text>
+            </View>
+
+            {/* Sidebar Menu Items */}
+            <View style={styles.sidebarMenu}>
+              {renderSidebarItem('Inicio', '🏠', () => {
+                setSidebarVisible(false);
+                handleActionPress('home');
+              })}
+              {renderSidebarItem('Ver Estadísticas', '📊', () => {
+                setSidebarVisible(false);
+                handleActionPress('stats');
+              })}
+              {renderSidebarItem(
+                isDarkMode ? 'Modo Claro' : 'Modo Oscuro', 
+                isDarkMode ? '☀️' : '🌙', 
+                () => {
+                  toggleTheme();
+                }
+              )}
+              {renderSidebarItem('Cerrar Sesión', '🚪', handleLogout)}
+            </View>
+          </LinearGradient>
+        </View>
+      )}
+
+      {/* Overlay */}
+      {sidebarVisible && (
+        <TouchableOpacity 
+          style={[styles.overlay, { backgroundColor: themeColors.overlay }]} 
+          onPress={() => setSidebarVisible(false)}
+          activeOpacity={1}
+        />
+      )}
+
+      {/* Modern Header */}
+      <View style={[styles.header, { backgroundColor: themeColors.header }]}>
+        <View style={styles.headerContent}>
+          <TouchableOpacity 
+            style={[styles.sidebarToggle, { backgroundColor: isDarkMode ? '#2C2C3E' : '#E9ECEF' }]} 
+            onPress={() => setSidebarVisible(!sidebarVisible)}
+          >
+            <Text style={[styles.sidebarToggleIcon, { color: themeColors.text }]}>☰</Text>
+          </TouchableOpacity>
+          
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../img/logo-EcoRAEE.png')} 
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={[styles.appName, { color: themeColors.text }]}>Mi Perfil</Text>
+          </View>
+          
+          <View style={styles.headerSpacer} />
+        </View>
       </View>
 
-      {/* Título Mi Perfil */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>Mi Perfil</Text>
-      </View>
-
-      <ScrollView style={styles.container}>
-        <View style={styles.content}>
+      <ScrollView style={[styles.content, { backgroundColor: themeColors.background }]} showsVerticalScrollIndicator={false}>
+        <View style={styles.profileContent}>
 
           {/* Tarjeta de Información del Usuario */}
-          <View style={styles.profileCard}>
+          <LinearGradient
+            colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
+            style={styles.profileCard}
+          >
             <View style={styles.profileHeader}>
               <View style={styles.avatarContainer}>
                 {profileImage ? (
@@ -490,13 +628,13 @@ export default function ProfileScreen({ navigation }) {
               </View>
               <View style={styles.userInfo}>
                 <View style={styles.nameContainer}>
-                  <Text style={styles.userName}>{user?.Apellidos_Usuarios}, {user?.Nombres_Usuarios}</Text>
+                  <Text style={[styles.userName, { color: themeColors.text }]}>{user?.Apellidos_Usuarios}, {user?.Nombres_Usuarios}</Text>
                   <TouchableOpacity style={styles.editNameIcon} onPress={openEditNameModal}>
-                    <Ionicons name="pencil" size={14} color="#4CAF50" />
+                    <Ionicons name="pencil" size={16} color="white" />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.userEmail}>{user?.Email_Usuarios}</Text>
-                <Text style={styles.userType}>Ciudadano</Text>
+                <Text style={[styles.userEmail, { color: themeColors.textSecondary }]}>{user?.Email_Usuarios}</Text>
+                <Text style={[styles.userType, { color: themeColors.textSecondary }]}>Ciudadano</Text>
               </View>
             </View>
             
@@ -512,41 +650,56 @@ export default function ProfileScreen({ navigation }) {
             
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{userPoints}</Text>
-                <Text style={styles.statLabel}>Puntos Totales</Text>
+                <Text style={[styles.statValue, { color: themeColors.primary }]}>{userPoints}</Text>
+                <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Puntos Totales</Text>
               </View>
-              <View style={styles.statDivider} />
+              <View style={[styles.statDivider, { backgroundColor: themeColors.border }]} />
               <View style={styles.statItem}>
-                <Text style={styles.statValue}>{userPublicationsCount}</Text>
-                <Text style={styles.statLabel}>Donaciones</Text>
+                <Text style={[styles.statValue, { color: themeColors.primary }]}>{userPublicationsCount}</Text>
+                <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Donaciones</Text>
               </View>
             </View>
-          </View>
+          </LinearGradient>
 
           {/* Configuración de Cuenta */}
-          <Text style={styles.sectionTitle}>Configuración de Cuenta</Text>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Configuración de Cuenta</Text>
           
           <View style={styles.buttonsContainer}>
-            <TouchableOpacity 
+            <LinearGradient
+              colors={isDarkMode ? ['#1A1A2E', '#2C2C3E'] : ['#E9ECEF', '#F8F9FA']}
               style={styles.actionButton}
-              onPress={() => handleActionPress('verify_email')}
             >
-              <Text style={styles.actionButtonText}>Verificar Correo</Text>
-            </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.actionButtonContent}
+                onPress={() => handleActionPress('verify_email')}
+              >
+                <Text style={[styles.actionButtonText, { color: themeColors.text }]}>Verificar Correo</Text>
+              </TouchableOpacity>
+            </LinearGradient>
             
-            <TouchableOpacity 
+            <LinearGradient
+              colors={isDarkMode ? ['#1A1A2E', '#2C2C3E'] : ['#E9ECEF', '#F8F9FA']}
               style={styles.actionButton}
-              onPress={() => handleActionPress('verify_phone')}
             >
-              <Text style={styles.actionButtonText}>Verificar Celular</Text>
-            </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.actionButtonContent}
+                onPress={() => handleActionPress('verify_phone')}
+              >
+                <Text style={[styles.actionButtonText, { color: themeColors.text }]}>Verificar Celular</Text>
+              </TouchableOpacity>
+            </LinearGradient>
             
-            <TouchableOpacity 
+            <LinearGradient
+              colors={isDarkMode ? ['#1A1A2E', '#2C2C3E'] : ['#E9ECEF', '#F8F9FA']}
               style={styles.actionButton}
-              onPress={() => handleActionPress('change_password')}
             >
-              <Text style={styles.actionButtonText}>Cambiar Contraseña</Text>
-            </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.actionButtonContent}
+                onPress={() => handleActionPress('change_password')}
+              >
+                <Text style={[styles.actionButtonText, { color: themeColors.text }]}>Cambiar Contraseña</Text>
+              </TouchableOpacity>
+            </LinearGradient>
           </View>
         </View>
       </ScrollView>
@@ -601,20 +754,20 @@ export default function ProfileScreen({ navigation }) {
         animationType="slide"
         onRequestClose={() => setShowEditNameModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View style={[styles.modalOverlay, { backgroundColor: themeColors.overlay }]}>
           <KeyboardAvoidingView 
             style={styles.keyboardAvoidingContainer}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
           >
-            <View style={styles.editNameModalContent}>
+            <View style={[styles.editNameModalContent, { backgroundColor: themeColors.surface }]}>
               <View style={styles.editNameModalHeader}>
-                <Text style={styles.editNameModalTitle}>Editar Nombre</Text>
+                <Text style={[styles.editNameModalTitle, { color: themeColors.text }]}>Editar Nombre y Apellido</Text>
                 <TouchableOpacity 
                   style={styles.closeButton}
                   onPress={() => setShowEditNameModal(false)}
                 >
-                  <Ionicons name="close" size={24} color="#666" />
+                  <Ionicons name="close" size={24} color={themeColors.textSecondary} />
                 </TouchableOpacity>
               </View>
               
@@ -624,23 +777,33 @@ export default function ProfileScreen({ navigation }) {
                 keyboardShouldPersistTaps="handled"
               >
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Nombre</Text>
+                  <Text style={[styles.inputLabel, { color: themeColors.text }]}>Nombre</Text>
                   <TextInput
-                    style={styles.nameInput}
+                    style={[styles.nameInput, { 
+                      backgroundColor: themeColors.background, 
+                      borderColor: themeColors.border, 
+                      color: themeColors.text 
+                    }]}
                     value={editName.nombre}
                     onChangeText={(text) => setEditName(prev => ({ ...prev, nombre: text }))}
                     placeholder="Ingresa tu nombre"
+                    placeholderTextColor={themeColors.textSecondary}
                     returnKeyType="next"
                   />
                 </View>
                 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Apellido</Text>
+                  <Text style={[styles.inputLabel, { color: themeColors.text }]}>Apellido</Text>
                   <TextInput
-                    style={styles.nameInput}
+                    style={[styles.nameInput, { 
+                      backgroundColor: themeColors.background, 
+                      borderColor: themeColors.border, 
+                      color: themeColors.text 
+                    }]}
                     value={editName.apellido}
                     onChangeText={(text) => setEditName(prev => ({ ...prev, apellido: text }))}
                     placeholder="Ingresa tu apellido"
+                    placeholderTextColor={themeColors.textSecondary}
                     returnKeyType="done"
                   />
                 </View>
@@ -648,14 +811,14 @@ export default function ProfileScreen({ navigation }) {
               
               <View style={styles.editNameButtons}>
                 <TouchableOpacity 
-                  style={styles.cancelButton}
+                  style={[styles.cancelButton, { backgroundColor: themeColors.card }]}
                   onPress={() => setShowEditNameModal(false)}
                 >
-                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                  <Text style={[styles.cancelButtonText, { color: themeColors.textSecondary }]}>Cancelar</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                  style={styles.saveButton}
+                  style={[styles.saveButton, { backgroundColor: themeColors.primary }]}
                   onPress={saveNameChanges}
                 >
                   <Text style={styles.saveButtonText}>Guardar</Text>
@@ -670,83 +833,177 @@ export default function ProfileScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  content: {
-    padding: 20,
-    paddingTop: 10,
-    paddingBottom: 40,
+    backgroundColor: '#1A1A2E',
   },
   header: {
+    backgroundColor: '#1A1A2E',
+    paddingTop: 50,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    paddingTop: 50,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
-  logoutButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
+  sidebarToggle: {
+    backgroundColor: '#2C2C3E',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  logoutButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
+  sidebarToggleIcon: {
+    fontSize: 18,
+    color: '#FFFFFF',
   },
-  backButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 8,
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
-  backButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
+  logoImage: {
+    width: 35,
+    height: 35,
+    marginRight: 12,
   },
-  titleContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    paddingBottom: 5,
-    backgroundColor: '#f5f5f5',
-  },
-  title: {
+  appName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#FFFFFF',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  profileContent: {
+    padding: 1,
+    paddingTop: 10,
+    paddingBottom: 40,
+  },
+  // Sidebar styles
+  sidebar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: screenWidth * 0.75,
+    zIndex: 1000,
+  },
+  sidebarGradient: {
+    flex: 1,
+    paddingTop: 70,
+    paddingHorizontal: 20,
+  },
+  sidebarWelcome: {
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  sidebarAvatarContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  sidebarAvatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  sidebarAvatarText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  sidebarWelcomeTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
+  sidebarUserName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+    opacity: 0.9,
+    textAlign: 'center',
+  },
+  sidebarUserType: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginBottom: 8,
+    opacity: 0.8,
+  },
+  sidebarPointsText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  sidebarPointsValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  sidebarMenu: {
+    flex: 1,
+  },
+  sidebarItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  sidebarIcon: {
+    fontSize: 20,
+    marginRight: 15,
+    width: 24,
+    textAlign: 'center',
+  },
+  sidebarText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 999,
+  },
   profileCard: {
-    backgroundColor: 'white',
-    borderRadius: 15,
+    borderRadius: 16,
     padding: 20,
     marginBottom: 25,
-    shadowColor: '#000',
+    shadowColor: '#4CAF50',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -839,10 +1096,16 @@ const styles = StyleSheet.create({
   },
   editNameIcon: {
     marginLeft: 8,
-    padding: 4,
+    backgroundColor: '#4CAF50',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
   },
   editNameModalContent: {
-    backgroundColor: 'white',
     borderRadius: 15,
     padding: 20,
     width: '85%',
@@ -858,7 +1121,6 @@ const styles = StyleSheet.create({
   editNameModalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
   },
   inputsContainer: {
     marginBottom: 0,
@@ -869,16 +1131,13 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
   nameInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
   },
   editNameButtons: {
     flexDirection: 'row',
@@ -889,20 +1148,17 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
     padding: 12,
     borderRadius: 8,
     marginRight: 10,
     alignItems: 'center',
   },
   cancelButtonText: {
-    color: '#666',
     fontSize: 16,
     fontWeight: '600',
   },
   saveButton: {
     flex: 1,
-    backgroundColor: '#4CAF50',
     padding: 12,
     borderRadius: 8,
     marginLeft: 10,
@@ -969,37 +1225,35 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   actionButton: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#4CAF50',
-    shadowColor: '#000',
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: 'hidden',
+    width: '100%',
+    shadowColor: '#4CAF50',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  actionButtonContent: {
+    padding: 20,
   },
   actionButtonText: {
-    color: '#333',
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 18,
+    fontWeight: 'bold',
     textAlign: 'left',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
   },
   editIconContainerBlocked: {
     backgroundColor: '#FF6B6B',

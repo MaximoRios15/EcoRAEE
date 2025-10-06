@@ -21,6 +21,7 @@ $routes->group('api', function($routes) {
     
     // Public routes
     $routes->get('locations', 'UbicacionController::index');
+    $routes->get('ubicaciones', 'UbicacionController::index'); // Alias para ubicaciones
     $routes->get('locations/(:num)', 'UbicacionController::show/$1');
     $routes->get('locations/municipality/(:segment)', 'UbicacionController::getByMunicipality/$1');
     $routes->get('categories', 'CategoryController::index');
