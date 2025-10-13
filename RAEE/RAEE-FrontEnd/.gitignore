@@ -1,0 +1,13 @@
+# Ignorar dependencias y artefactos de Expo/React Native
+node_modules/
+.expo/
+.expo-shared/
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+
+# Salidas de build (si aparecieran)
+dist/
+build/
+coverage/
