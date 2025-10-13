@@ -1,0 +1,16 @@
+# Ignorar node_modules en todo el proyecto
+node_modules/
+**/node_modules/
+
+# Artefactos de Expo/React Native del FrontEnd
+RAEE-FrontEnd/.expo/
+RAEE-FrontEnd/.expo-shared/
+
+# Logs comunes
+npm-debug.log*
+yarn-error.log*
+
+# Salidas de build (si aparecieran)
+dist/
+build/
+coverage/
