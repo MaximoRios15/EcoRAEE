@@ -1,0 +1,4 @@
+Funcional, 1.00
+Parcialmente funcional, 0.70
+No funcional, 0.20
+Para repuestos, 0.40

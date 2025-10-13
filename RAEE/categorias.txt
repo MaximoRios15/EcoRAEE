@@ -1,0 +1,90 @@
+Heladeras, 200
+Freezers, 200
+Lavarropas, 180
+Secarropas, 160
+Lavavajillas, 160
+Cocinas electricas, 150
+Termotanques electricos, 140
+Calefones electricos, 120
+Aires acondicionados Ventana, 160
+Aires acondicionados Splits, 180
+Calefactores, 100
+Estufas, 100
+
+Microondas, 80
+Licuadoras, 40
+Batidoras, 30
+Procesadoras de alimentos, 50
+Cafeteras, 40
+Tostadoras, 30
+Sandwicheras, 30
+Hornitos electricos, 50
+Pavas electricas, 30
+Extractores de jugo, 40
+
+Secadores de pelo, 30
+Planchitas, 25
+Rizadores, 20
+Afeitadoras electricas, 25
+Depiladoras electricas, 25
+Cepillos de dientes electricos, 15
+
+Lamparas LED, 10
+Lamparas fluorescentes compactas, 15
+Tubos fluorescentes, 20
+Proyectores de luz, 40
+Farolas o luminarias publicas, 100
+
+Televisores, 160
+Parlantes y barras de sonido, 80
+Reproductores de video (DVD, Blu-ray), 60
+Consolas de videojuegos, 120
+Juguetes electronicos interactivos, 40
+Autos electricos para chicos, 100
+Robots educativos, 60
+Drones, 80
+
+Computadoras de escritorio (PCs), 200
+Notebooks, 180
+Laptops, 160
+Tablets, 100
+Monitores, 120
+Impresoras, 80
+Escaneres, 40
+Estabilizadores y UPS, 60
+
+Teclados, 20
+Mouse, 15
+Microfonos, 40
+Cámaras web, 30
+Auriculares, 40
+Joysticks y mandos, 30
+
+Telefonos fijos, 40
+Celulares/Smartphones, 80
+Routers, 40
+Modems, 40
+Switches de red, 50
+Antenas/repetidores WiFi, 60
+
+Taladros electricos, 60
+Sierras electricas, 70
+Amoladoras, 70
+Soldadoras electricas, 100
+Aspiradoras industriales, 100
+Hidrolavadoras, 120
+Compresores electricos, 120
+
+Multimetros, 40
+Termometros digitales, 20
+Camaras de seguridad, 60
+Sensores inteligentes, 30
+Detectores de humo, 25
+
+Cargadores, 20
+Fuentes de poder, 40
+Paneles solares domesticos, 200
+Baterias recargables, 30
+Powerbanks, 25
+Relojes electricos, 20
+Timbres electricos, 15

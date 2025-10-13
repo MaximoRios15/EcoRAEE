@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 class ApiService {
   constructor() {
     // URL base del backend CodeIgniter 4
-    this.baseURL = 'http://192.168.0.13/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
+    this.baseURL = 'http://192.168.0.12/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
   }
 
   // Configurar headers por defecto
@@ -415,9 +415,73 @@ class ApiService {
     return await this.makeRequest('categories', 'GET', null, false);
   }
 
+  // Crear nueva categoría
+  async createCategory(categoryData) {
+    return await this.makeRequest('categories', 'POST', categoryData);
+  }
+
+  // Actualizar categoría
+  async updateCategory(categoryId, categoryData) {
+    return await this.makeRequest(`categories/${categoryId}`, 'PUT', categoryData);
+  }
+
+  // Eliminar categoría
+  async deleteCategory(categoryId) {
+    return await this.makeRequest(`categories/${categoryId}`, 'DELETE');
+  }
+
   // Obtener todos los estados de equipos
   async getStates() {
     return await this.makeRequest('states', 'GET', null, false);
+  }
+
+  // Crear nuevo estado
+  async createState(stateData) {
+    return await this.makeRequest('states', 'POST', stateData);
+  }
+
+  // Actualizar estado
+  async updateState(stateId, stateData) {
+    return await this.makeRequest(`states/${stateId}`, 'PUT', stateData);
+  }
+
+  // Eliminar estado
+  async deleteState(stateId) {
+    return await this.makeRequest(`states/${stateId}`, 'DELETE');
+  }
+
+  // ==================== ADMINISTRACIÓN DE USUARIOS ====================
+
+  // Obtener todos los usuarios (admin)
+  async getAllUsers() {
+    return await this.makeRequest('admin/users', 'GET');
+  }
+
+  // Actualizar usuario (admin)
+  async updateUser(userId, userData) {
+    return await this.makeRequest(`admin/users/${userId}`, 'PUT', userData);
+  }
+
+  // Eliminar usuario (admin)
+  async deleteUser(userId) {
+    return await this.makeRequest(`admin/users/${userId}`, 'DELETE');
+  }
+
+  // ==================== ADMINISTRACIÓN DE UBICACIONES ====================
+
+  // Crear nueva ubicación
+  async createLocation(locationData) {
+    return await this.makeRequest('locations', 'POST', locationData);
+  }
+
+  // Actualizar ubicación
+  async updateLocation(locationId, locationData) {
+    return await this.makeRequest(`locations/${locationId}`, 'PUT', locationData);
+  }
+
+  // Eliminar ubicación
+  async deleteLocation(locationId) {
+    return await this.makeRequest(`locations/${locationId}`, 'DELETE');
   }
 }
 

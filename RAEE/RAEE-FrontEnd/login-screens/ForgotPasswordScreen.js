@@ -6,16 +6,32 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  ScrollView,
   Alert,
+  ActivityIndicator,
   Dimensions,
   Animated,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// Responsive design constants
+const isSmallScreen = screenHeight < 700;
+const isVerySmallScreen = screenHeight < 600;
+
+// Responsive size function
+const getResponsiveSize = (baseSize, smallScreenMultiplier = 0.8, verySmallScreenMultiplier = 0.7) => {
+  if (isVerySmallScreen) return Math.round(baseSize * verySmallScreenMultiplier);
+  if (isSmallScreen) return Math.round(baseSize * smallScreenMultiplier);
+  return baseSize;
+};
 
 // Componente para el efecto rainbow animado horizontal
 const RainbowText = ({ children, style }) => {
@@ -90,53 +106,7 @@ const RainbowText = ({ children, style }) => {
 
 export default function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(true);
-
-  useEffect(() => {
-    loadThemePreference();
-  }, []);
-
-  // Cargar preferencia del tema desde AsyncStorage
-  const loadThemePreference = async () => {
-    try {
-      const savedTheme = await AsyncStorage.getItem('theme_mode');
-      if (savedTheme !== null) {
-        setIsDarkMode(savedTheme === 'dark');
-      }
-    } catch (error) {
-      console.error('Error loading theme preference:', error);
-    }
-  };
-
-  // Guardar preferencia del tema en AsyncStorage
-  const saveThemePreference = async (isDark) => {
-    try {
-      await AsyncStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
-    } catch (error) {
-      console.error('Error saving theme preference:', error);
-    }
-  };
-
-  // Toggle entre modo oscuro y claro
-  const toggleTheme = () => {
-    const newTheme = !isDarkMode;
-    setIsDarkMode(newTheme);
-    saveThemePreference(newTheme);
-  };
-
-  // Definir colores dinámicos según el tema
-  const themeColors = {
-    background: isDarkMode ? '#1A1A2E' : '#FFFFFF',
-    surface: isDarkMode ? '#2C2C3E' : '#F8F9FA',
-    primary: isDarkMode ? '#4CAF50' : '#2E7D32',
-    text: isDarkMode ? '#FFFFFF' : '#212121',
-    textSecondary: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(33, 33, 33, 0.7)',
-    card: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-    border: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)',
-    header: isDarkMode ? '#1A1A2E' : '#FFFFFF',
-    sidebar: isDarkMode ? '#16213E' : '#F8F9FA',
-    overlay: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)',
-  };
+  const { isDarkMode, toggleTheme, themeColors } = useTheme();
 
   const handleResetPassword = () => {
     // Validación básica
@@ -163,26 +133,39 @@ export default function ForgotPasswordScreen({ navigation }) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: themeColors.header }]}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerLeft} />
-          
-          <View style={styles.headerCenter} />
-          
-          <TouchableOpacity 
-            style={[styles.themeToggle, { backgroundColor: isDarkMode ? '#2C2C3E' : '#E9ECEF' }]} 
-            onPress={toggleTheme}
-          >
-            <Text style={[styles.themeToggleIcon, { color: themeColors.text }]}>
-              {isDarkMode ? '☀️' : '🌙'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { backgroundColor: themeColors.background }]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header */}
+          <View style={[styles.header, { backgroundColor: themeColors.header }]}>
+            <View style={styles.headerContent}>
+              <View style={styles.headerLeft} />
+              
+              <View style={styles.headerCenter} />
+              
+              <TouchableOpacity 
+                style={[styles.themeToggle, { backgroundColor: isDarkMode ? '#2C2C3E' : '#E9ECEF' }]} 
+                onPress={toggleTheme}
+              >
+                <Ionicons 
+                  name={isDarkMode ? 'sunny-outline' : 'moon-outline'} 
+                  size={getResponsiveSize(18, 16, 14)} 
+                  color={themeColors.text} 
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
 
-      <View style={styles.content}>
+          <View style={styles.content}>
         {/* Logo y nombre de la app */}
         <View style={styles.logoContainer}>
           <Image 
@@ -244,25 +227,27 @@ export default function ForgotPasswordScreen({ navigation }) {
             ¿Recordaste tu contraseña? 
           </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={[styles.backToLoginLink, { color: themeColors.primary }]}>Iniciar Sesión</Text>
+            <Text style={[styles.backToLoginLink, { color: themeColors.primary }]}> Iniciar Sesión</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <TouchableOpacity>
-            <Text style={[styles.footerLink, { color: themeColors.textSecondary }]}>
-              Términos y Condiciones
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Text style={[styles.footerLink, { color: themeColors.textSecondary }]}>
-              Política de Privacidad
-            </Text>
-          </TouchableOpacity>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <TouchableOpacity>
+              <Text style={[styles.footerLink, { color: themeColors.textSecondary }]}>
+                Términos y Condiciones
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={[styles.footerLink, { color: themeColors.textSecondary }]}>
+                Política de Privacidad
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -270,11 +255,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+
   // Header styles
   header: {
     backgroundColor: '#1A1A2E',
-    paddingTop: 50,
-    paddingBottom: 0,
+    paddingTop: getResponsiveSize(20, 15, 10),
+    paddingBottom: getResponsiveSize(10, 5, 0),
     paddingHorizontal: 20,
   },
   headerContent: {
@@ -291,50 +283,62 @@ const styles = StyleSheet.create({
   },
   themeToggle: {
     backgroundColor: '#2C2C3E',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: getResponsiveSize(40, 35, 30),
+    height: getResponsiveSize(40, 35, 30),
+    borderRadius: getResponsiveSize(20, 17.5, 15),
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+    shadowColor: '#4CAF50',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   themeToggleIcon: {
-    fontSize: 18,
+    fontSize: getResponsiveSize(18, 16, 14),
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 0,
+    paddingTop: getResponsiveSize(10, 5, 0),
+    paddingBottom: getResponsiveSize(20, 15, 10),
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: getResponsiveSize(30, 20, 15),
   },
   logoImage: {
-    width: 125,
-    height: 125,
-    marginBottom: 5,
+    width: getResponsiveSize(125, 100, 80),
+    height: getResponsiveSize(125, 100, 80),
+    marginBottom: getResponsiveSize(5, 3, 2),
   },
   appName: {
-    fontSize: 28,
+    fontSize: getResponsiveSize(28, 24, 20),
     fontWeight: 'bold',
   },
   titleContainer: {
-    marginBottom: 30,
+    marginBottom: getResponsiveSize(30, 20, 15),
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
+    fontSize: getResponsiveSize(28, 24, 20),
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: getResponsiveSize(8, 6, 4),
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: getResponsiveSize(16, 14, 12),
     textAlign: 'center',
+    lineHeight: getResponsiveSize(22, 20, 18),
   },
   formCard: {
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 30,
+    padding: getResponsiveSize(20, 15, 12),
+    marginBottom: getResponsiveSize(30, 20, 15),
     shadowColor: '#4CAF50',
     shadowOffset: {
       width: 0,
@@ -345,22 +349,23 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: getResponsiveSize(20, 15, 12),
   },
   label: {
-    fontSize: 16,
+    fontSize: getResponsiveSize(16, 14, 12),
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: getResponsiveSize(8, 6, 4),
   },
   input: {
     borderWidth: 1,
     borderRadius: 12,
-    padding: 15,
-    fontSize: 16,
+    padding: getResponsiveSize(15, 12, 10),
+    fontSize: getResponsiveSize(16, 14, 12),
+    minHeight: getResponsiveSize(54, 48, 42),
   },
   resetButton: {
     borderRadius: 16,
-    marginBottom: 15,
+    marginBottom: getResponsiveSize(25, 20, 15),
     overflow: 'hidden',
     shadowColor: '#4CAF50',
     shadowOffset: {
@@ -372,34 +377,38 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   resetButtonGradient: {
-    padding: 18,
+    padding: getResponsiveSize(18, 16, 14),
     alignItems: 'center',
+    minHeight: getResponsiveSize(54, 48, 42),
+    justifyContent: 'center',
   },
   resetButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: getResponsiveSize(18, 16, 14),
     fontWeight: 'bold',
   },
   backToLoginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: getResponsiveSize(20, 15, 12),
+    marginTop: 'auto',
+    paddingTop: getResponsiveSize(15, 12, 10),
   },
   backToLoginText: {
-    fontSize: 16,
+    fontSize: getResponsiveSize(16, 14, 12),
   },
   backToLoginLink: {
-    fontSize: 16,
+    fontSize: getResponsiveSize(16, 14, 12),
     fontWeight: 'bold',
   },
   footer: {
     alignItems: 'center',
     marginTop: 'auto',
-    paddingBottom: 50,
+    paddingBottom: getResponsiveSize(50, 40, 30),
   },
   footerLink: {
-    fontSize: 14,
-    marginVertical: 2,
+    fontSize: getResponsiveSize(14, 12, 10),
+    marginVertical: getResponsiveSize(2, 1, 1),
   },
 });

@@ -1,0 +1,6 @@
+ciudadano
+tecnico
+institucion
+recepcion
+administrador
+

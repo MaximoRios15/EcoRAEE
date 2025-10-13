@@ -26,7 +26,7 @@ RAEE-FrontEnd/
 │   ├── LoginScreen.js       # Pantalla de inicio de sesión
 │   ├── RegisterScreen.js    # Pantalla de registro de usuarios
 │   └── ForgotPasswordScreen.js # Pantalla de recuperación de contraseña
-├── citizen-screens/         # Pantallas principales de la aplicación
+├── reception-screens/       # Pantallas principales de la aplicación
 │   ├── HomeScreen.js        # Pantalla principal/dashboard
 │   ├── DonationScreen.js    # Pantalla de donación de RAEE
 │   ├── ProfileScreen.js     # Pantalla de gestión de perfil
@@ -124,7 +124,7 @@ RAEE-FrontEnd/
 - **Diseño consistente**: Mismo estilo que LoginScreen
 
 ### 4. HomeScreen.js
-**Ubicación**: `/citizen-screens/HomeScreen.js`  
+**Ubicación**: `/reception-screens/HomeScreen.js`  
 **Funcionalidad**: Dashboard principal de la aplicación
 
 #### Elementos Principales:
@@ -148,7 +148,7 @@ RAEE-FrontEnd/
 - **Transiciones**: Animaciones suaves entre estados
 
 ### 5. DonationScreen.js
-**Ubicación**: `/citizen-screens/DonationScreen.js`  
+**Ubicación**: `/reception-screens/DonationScreen.js`  
 **Funcionalidad**: Registro de donaciones de RAEE
 
 #### Formulario de Donación:
@@ -171,7 +171,7 @@ RAEE-FrontEnd/
 - **Logo en header**: Consistencia visual
 
 ### 6. ProfileScreen.js
-**Ubicación**: `/citizen-screens/ProfileScreen.js`  
+**Ubicación**: `/reception-screens/ProfileScreen.js`  
 **Funcionalidad**: Gestión completa del perfil de usuario
 
 #### Información Mostrada:
@@ -193,7 +193,7 @@ RAEE-FrontEnd/
 - **Sombras verdes**: Efectos visuales consistentes
 
 ### 7. ExchangeShopScreen.js
-**Ubicación**: `/citizen-screens/ExchangeShopScreen.js`  
+**Ubicación**: `/reception-screens/ExchangeShopScreen.js`  
 **Funcionalidad**: Tienda de canjes de puntos
 
 #### Características Actuales:
@@ -204,7 +204,7 @@ RAEE-FrontEnd/
 - **Preparado para**: Implementación de catálogo de productos
 
 ### 8. StatisticsScreen.js
-**Ubicación**: `/citizen-screens/StatisticsScreen.js`  
+**Ubicación**: `/reception-screens/StatisticsScreen.js`  
 **Funcionalidad**: Visualización de estadísticas del usuario
 
 #### Características:
@@ -409,10 +409,10 @@ El carrusel en HomeScreen implementa:
     "version": "1.0.0",
     "sdkVersion": "54.0.0",
     "orientation": "portrait",
-    "icon": "./logo-EcoRAEE.png",
+    "icon": "./img/logo-EcoRAEE.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./logo-EcoRAEE.png",
+      "image": "./img/logo-EcoRAEE.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     }
@@ -426,7 +426,7 @@ El carrusel en HomeScreen implementa:
 import LoginScreen from './login-screens/LoginScreen';
 import RegisterScreen from './login-screens/RegisterScreen';
 import ForgotPasswordScreen from './login-screens/ForgotPasswordScreen';
-import HomeScreen from './citizen-screens/HomeScreen';
+import HomeScreen from './reception-screens/HomeScreen';
 // ... resto de imports
 ```
 
@@ -469,7 +469,6 @@ expo start
 5. **Ejecutar en Dispositivo/Emulador**:
    - **Android**: `npm run android` o escanear QR con Expo Go
    - **iOS**: `npm run ios` o escanear QR con Expo Go
-   - **Web**: `npm run web`
 
 ### Configuración del Backend:
 Asegúrate de que el backend de EcoRAEE esté ejecutándose y accesible desde la red local. El frontend se conecta a:
@@ -482,7 +481,6 @@ Asegúrate de que el backend de EcoRAEE esté ejecutándose y accesible desde la
 npm start          # Inicia el servidor de desarrollo de Expo
 npm run android    # Ejecuta en emulador/dispositivo Android
 npm run ios        # Ejecuta en emulador/dispositivo iOS
-npm run web        # Ejecuta en navegador web
 ```
 
 ## Flujo de Navegación
@@ -495,11 +493,11 @@ App.js (AuthProvider)
 │   ├── RegisterScreen (/login-screens/)
 │   └── ForgotPasswordScreen (/login-screens/)
 └── Si autenticado:
-    ├── HomeScreen (/citizen-screens/)
-    │   ├── DonationScreen (/citizen-screens/)
-    │   ├── ExchangeShopScreen (/citizen-screens/)
-    │   ├── StatisticsScreen (/citizen-screens/)
-    │   └── ProfileScreen (/citizen-screens/)
+    ├── HomeScreen (/reception-screens/)
+    │   ├── DonationScreen (/reception-screens/)
+    │   ├── ExchangeShopScreen (/reception-screens/)
+    │   ├── StatisticsScreen (/reception-screens/)
+    │   └── ProfileScreen (/reception-screens/)
     └── ProfileScreen (Gestión de perfil)
         ├── Modal de edición de nombre/apellido
         ├── Modal selector de imagen de perfil
@@ -647,7 +645,7 @@ Base de Datos (MySQL)
 
 ### Estructura de Carpetas:
 - **`/login-screens/`**: Todas las pantallas de autenticación
-- **`/citizen-screens/`**: Pantallas principales de la aplicación
+- **`/reception-screens/`**: Pantallas principales de la aplicación
 - **`/contexts/`**: Contextos de React para estado global
 - **`/services/`**: Servicios de comunicación con API
 - **`/img/`**: Todos los recursos de imagen organizados por tipo

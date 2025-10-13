@@ -98,6 +98,7 @@ export const AuthProvider = ({ children }) => {
         if (response.success && response.data && response.data.user) {
           const userData = response.data.user;
           
+          
           // Guardar los datos del usuario en AsyncStorage
           await AsyncStorage.setItem('userData', JSON.stringify(userData));
           
@@ -116,6 +117,29 @@ export const AuthProvider = ({ children }) => {
         return { 
           success: false, 
           message: error.message || 'Error de conexión' 
+        };
+      }
+    },
+
+    // Iniciar sesión con datos simulados (para demo)
+    signInDemo: async (userData) => {
+      dispatch({ type: 'SET_LOADING', isLoading: true });
+      
+      try {
+        // Guardar los datos del usuario simulado en AsyncStorage
+        await AsyncStorage.setItem('userData', JSON.stringify(userData));
+        
+        dispatch({
+          type: 'SIGN_IN',
+          user: userData,
+        });
+        
+        return { success: true, message: 'Login simulado exitoso' };
+      } catch (error) {
+        dispatch({ type: 'SET_LOADING', isLoading: false });
+        return { 
+          success: false, 
+          message: error.message || 'Error en login simulado' 
         };
       }
     },

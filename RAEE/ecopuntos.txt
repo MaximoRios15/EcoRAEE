@@ -1,0 +1,21 @@
+EcoPunto Itaembe Guazu, -27.40819600, -55.98441700
+EcoPunto Itaembe Mini­, -27.41457000, -55.95591100
+EcoPunto Barrio Los Alamos, -27.41469100, -55.93046200
+EcoPunto Dolores Sur, -27.43339000, -55.91475500
+EcoPunto Av. Martin Fierro & Av. Aguado, -27.38124300, -55.92630900
+EcoPunto Parque Sarmiento, 27.36610100, -55.94511700
+EcoPunto Av. Urquiza, -27.36018800, -55.91542800
+EcoPunto Feria Puente Chacabuco, -27.37031600, -55.88513200
+EcoPunto Cascada Artificial, -27.38262500, -55.88797600
+EcoPunto Avenida Juan Domingo Peron & America Latina, -27.43065400, -55.88328100
+
+Av. Los Lirios y Las Golondrinas, NULL, NULL, NULL, Itaembe Guazu, -55.984417, -27.408196, 1
+Av. 147 y Av. 170, NULL, NULL, NULL, Itaembe Mini, -55.955911, -27.414570, 1
+Calle Jerusalen y Calle 132, NULL, NULL, NULL, Barrio Los Alamos, -55.930462, -27.414691, 1
+Av. Cocomarola y Calle 180, NULL, NULL, NULL, Barrio Dolores Sur, -55.914755, -27.433390, 1
+Av. Martin Fierro y Av. Aguado, NULL, NULL, NULL, Barrio Miguel Lanus, -55.926309, -27.381243, 1
+Av. Roque Perez y Av. Rademacher (Plaza Sarmiento), NULL, NULL, NULL, Centro, -55.945117, -27.366101, 1
+Av. Urquiza y San Martin, NULL, NULL, NULL, Centro, -55.915428, -27.360188, 1
+Av. Costanera Oeste y Av. Chacabuco, NULL, NULL, NULL, Barrio Yacyreta, -55.885132, -27.370316, 1
+Av. Costanera Sur, NULL, NULL, NULL, Cascada Artificial, -55.887976, -27.382625, 1
+Av. America Latina y Av. Juan Domingo Peron, NULL, NULL, NULL, Miguel Lanus, -55.883281, -27.430654, 1

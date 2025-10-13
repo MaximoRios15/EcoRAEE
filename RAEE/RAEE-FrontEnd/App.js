@@ -7,16 +7,31 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Import contexts
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
-// Import screens
+// Import login screens
 import LoginScreen from './login-screens/LoginScreen';
 import RegisterScreen from './login-screens/RegisterScreen';
 import ForgotPasswordScreen from './login-screens/ForgotPasswordScreen';
-import HomeScreen from './citizen-screens/HomeScreen';
-import DonationScreen from './citizen-screens/DonationScreen';
-import ProfileScreen from './citizen-screens/ProfileScreen';
-import ExchangeShopScreen from './citizen-screens/ExchangeShopScreen';
-import StatisticsScreen from './citizen-screens/StatisticsScreen';
+
+// Import citizen screens
+import CitizenHomeScreen from './citizen-screens/CitizenHomeScreen';
+import ProfileCitizenScreen from './citizen-screens/ProfileCitizenScreen';
+import ExchangeShopCitizenScreen from './citizen-screens/ExchangeShopCitizenScreen';
+import StatisticsCitizenScreen from './citizen-screens/StatisticsCitizenScreen';
+
+// Import reception screens
+import ReceptionHomeScreen from './reception-screens/ReceptionHomeScreen';
+import AddDeviceReceptionScreen from './reception-screens/AddDeviceReceptionScreen';
+import ProfileReceptionScreen from './reception-screens/ProfileReceptionScreen';
+import ExchangeShopReceptionScreen from './reception-screens/ExchangeShopReceptionScreen';
+
+// Import admin screens
+import AdminHomeScreen from './administration-screens/AdminHomeScreen';
+import CategoriesAdminScreen from './administration-screens/CategoriesAdminScreen';
+import StatesAdminScreen from './administration-screens/StatesAdminScreen';
+import UsersAdminScreen from './administration-screens/UsersAdminScreen';
+import LocationsAdminScreen from './administration-screens/LocationsAdminScreen';
 
 const Stack = createStackNavigator();
 
@@ -26,7 +41,32 @@ function AppNavigator() {
   const navigationRef = useRef();
   const prevUserRef = useRef(user);
 
-  // Efecto para manejar el logout y resetear la navegación
+  // Función para determinar la pantalla inicial según el rol del usuario
+  const getInitialRouteName = (user) => {
+    if (!user || !user.Roles_Usuarios) {
+      return "Login";
+    }
+
+    // Convertir a número para manejar tanto strings como numbers
+    const roleId = parseInt(user.Roles_Usuarios);
+    
+    switch (roleId) {
+      case 1: // Ciudadano
+        return "CitizenHomeScreen";
+      case 2: // tenico
+        return "Home"; // TODO: Crear institution-screens cuando sea necesario
+      case 3: // institucion
+        return "Home"; // TODO: Crear technician-screens cuando sea necesario
+      case 4: // reception
+        return "ReceptionHomeScreen";
+      case 5: // admin
+        return "AdminHomeScreen";
+      default:
+        return "Home"; // Default a reception-screens
+    }
+  };
+
+  // Efecto para manejar cambios de usuario y navegación por roles
   useEffect(() => {
     // Detectar cuando el usuario pasa de estar autenticado a no autenticado
     if (prevUserRef.current !== null && user === null && navigationRef.current) {
@@ -36,6 +76,18 @@ function AppNavigator() {
         routes: [{ name: 'Login' }],
       });
     }
+    
+    // Detectar cuando el usuario cambia (login exitoso) y navegar según el rol
+    if (prevUserRef.current === null && user !== null && navigationRef.current) {
+      const targetScreen = getInitialRouteName(user);
+      
+      // Navegar a la pantalla correcta según el rol
+      navigationRef.current.reset({
+        index: 0,
+        routes: [{ name: targetScreen }],
+      });
+    }
+    
     prevUserRef.current = user;
   }, [user]);
 
@@ -52,7 +104,7 @@ function AppNavigator() {
     <NavigationContainer ref={navigationRef}>
       <StatusBar style="auto" />
       <Stack.Navigator 
-        initialRouteName={user == null ? "Login" : "Home"}
+        initialRouteName={getInitialRouteName(user)}
         screenOptions={{
           headerShown: false,
         }}
@@ -74,12 +126,24 @@ function AppNavigator() {
         ) : (
           // Pantallas para usuarios autenticados
           <>
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="Donation" component={DonationScreen} />
-            <Stack.Screen name="Profile" component={ProfileScreen} />
-            <Stack.Screen name="ExchangeShop" component={ExchangeShopScreen} />
-            <Stack.Screen name="Statistics" component={StatisticsScreen} />
-            {/* Aquí se agregarán más pantallas autenticadas */}
+            {/* Citizen screens */}
+            <Stack.Screen name="CitizenHomeScreen" component={CitizenHomeScreen} />
+            <Stack.Screen name="ProfileCitizenScreen" component={ProfileCitizenScreen} />
+            <Stack.Screen name="ExchangeShopCitizenScreen" component={ExchangeShopCitizenScreen} />
+            <Stack.Screen name="StatisticsCitizenScreen" component={StatisticsCitizenScreen} />
+            
+            {/* Reception screens */}
+            <Stack.Screen name="ReceptionHomeScreen" component={ReceptionHomeScreen} />
+            <Stack.Screen name="DonationReceptionScreen" component={AddDeviceReceptionScreen} />
+            <Stack.Screen name="ProfileReceptionScreen" component={ProfileReceptionScreen} />
+            <Stack.Screen name="ExchangeShopReceptionScreen" component={ExchangeShopReceptionScreen} />
+            
+            {/* Admin screens */}
+            <Stack.Screen name="AdminHomeScreen" component={AdminHomeScreen} />
+            <Stack.Screen name="CategoriesAdminScreen" component={CategoriesAdminScreen} />
+            <Stack.Screen name="StatesAdminScreen" component={StatesAdminScreen} />
+            <Stack.Screen name="UsersAdminScreen" component={UsersAdminScreen} />
+            <Stack.Screen name="LocationsAdminScreen" component={LocationsAdminScreen} />
           </>
         )}
       </Stack.Navigator>
@@ -90,9 +154,11 @@ function AppNavigator() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <AppNavigator />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppNavigator />
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

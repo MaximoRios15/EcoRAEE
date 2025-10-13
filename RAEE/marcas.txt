@@ -1,0 +1,505 @@
+Heladeras, Whirlpool, 200
+Heladeras, LG, 195
+Heladeras, Samsung, 190
+Heladeras, Electrolux, 185
+Heladeras, Bosch, 180
+Heladeras, GE, 175
+Heladeras, Midea, 170
+Heladeras, Philco, 165
+Heladeras, Patrick, 160
+Heladeras, BGH, 155
+
+Freezers, Whirlpool, 200
+Freezers, Gafa, 195
+Freezers, Patrick, 190
+Freezers, Electrolux, 185
+Freezers, Philco, 180
+Freezers, BGH, 175
+
+Lavarropas, Whirlpool, 180
+Lavarropas, LG, 175
+Lavarropas, Samsung, 170
+Lavarropas, Drean, 165
+Lavarropas, Electrolux, 160
+Lavarropas, Bosch, 155
+Lavarropas, BGH, 150
+
+Secarropas, Drean, 160
+Secarropas, Whirlpool, 155
+Secarropas, Electrolux, 150
+Secarropas, BGH, 145
+Secarropas, Philco, 140
+
+Lavavajillas, Bosch, 160
+Lavavajillas, Whirlpool, 155
+Lavavajillas, Electrolux, 150
+Lavavajillas, LG, 145
+Lavavajillas, Samsung, 140
+Lavavajillas, Siemens, 135
+
+Cocinas electricas, Longvie, 150
+Cocinas electricas, Whirlpool, 145
+Cocinas electricas, Patrick, 140
+Cocinas electricas, Tromen, 135
+Cocinas electricas, Orbis, 130
+Cocinas electricas, Ariston, 125
+
+Termotanques electricos, Rheem, 140
+Termotanques electricos, Longvie, 135
+Termotanques electricos, Saiar, 130
+Termotanques electricos, Ecotermo, 125
+Termotanques electricos, Señorial, 120
+
+Calefones electricos, Longvie, 120
+Calefones electricos, Rheem, 115
+Calefones electricos, Ecotermo, 110
+Calefones electricos, Señorial, 105
+Calefones electricos, Orbis, 100
+
+Aires acondicionados Ventana, Surrey, 160
+Aires acondicionados Ventana, BGH, 155
+Aires acondicionados Ventana, Philco, 150
+Aires acondicionados Ventana, Electrolux, 145
+Aires acondicionados Ventana, Samsung, 140
+Aires acondicionados Ventana, LG, 135
+
+Aires acondicionados Splits, LG, 180
+Aires acondicionados Splits, Samsung, 175
+Aires acondicionados Splits, Electrolux, 170
+Aires acondicionados Splits, Daikin, 165
+Aires acondicionados Splits, Carrier, 160
+Aires acondicionados Splits, BGH, 155
+Aires acondicionados Splits, Philco, 150
+
+Calefactores, Longvie, 100
+Calefactores, Orbis, 95
+Calefactores, Eskabe, 90
+Calefactores, Volcan, 85
+Calefactores, Peabody, 80
+Calefactores, Philco, 75
+
+Estufas, Eskabe, 100
+Estufas, Longvie, 95
+Estufas, Peabody, 90
+Estufas, Volcan, 85
+Estufas, Philco, 80
+Estufas, Atma, 75
+
+Microondas, Samsung, 80
+Microondas, LG, 75
+Microondas, Panasonic, 70
+Microondas, Whirlpool, 65
+Microondas, Philco, 60
+Microondas, BGH, 55
+Microondas, Daewoo, 50
+Microondas, Peabody, 45
+
+Licuadoras, Oster, 40
+Licuadoras, Philips, 35
+Licuadoras, Peabody, 30
+Licuadoras, Atma, 25
+Licuadoras, Liliana, 20
+Licuadoras, Moulinex, 15
+Licuadoras, Black+Decker, 10
+Licuadoras, Hamilton Beach, 5
+
+Batidoras, Philips, 30
+Batidoras, Peabody, 25
+Batidoras, Atma, 20
+Batidoras, Liliana, 15
+Batidoras, Oster, 10
+Batidoras, Moulinex, 5
+
+Procesadoras de alimentos, Philips, 50
+Procesadoras de alimentos, Peabody, 45
+Procesadoras de alimentos, Atma, 40
+Procesadoras de alimentos, Moulinex, 35
+Procesadoras de alimentos, Oster, 30
+Procesadoras de alimentos, Black+Decker, 25
+
+Cafeteras, Philips, 40
+Cafeteras, Nespresso, 35
+Cafeteras, Oster, 30
+Cafeteras, Peabody, 25
+Cafeteras, Atma, 20
+Cafeteras, Electrolux, 15
+Cafeteras, DeLonghi, 10
+
+Tostadoras, Philips, 30
+Tostadoras, Peabody, 25
+Tostadoras, Atma, 20
+Tostadoras, Liliana, 15
+Tostadoras, Oster, 10
+Tostadoras, Electrolux, 5
+
+Sandwicheras, Philips, 30
+Sandwicheras, Peabody, 25
+Sandwicheras, Atma, 20
+Sandwicheras, Liliana, 15
+Sandwicheras, Oster, 10
+
+Hornitos electricos, Peabody, 50
+Hornitos electricos, Atma, 45
+Hornitos electricos, Liliana, 40
+Hornitos electricos, Philips, 35
+Hornitos electricos, Oster, 30
+
+Pavas electricas, Peabody, 30
+Pavas electricas, Atma, 25
+Pavas electricas, Liliana, 20
+Pavas electricas, Philips, 15
+Pavas electricas, Electrolux, 10
+Pavas electricas, Oster, 5
+
+Extractores de jugo, Philips, 40
+Extractores de jugo, Peabody, 35
+Extractores de jugo, Oster, 30
+Extractores de jugo, Moulinex, 25
+Extractores de jugo, Liliana, 20
+Extractores de jugo, Hamilton Beach, 15
+
+Secadores de pelo, Philips, 30
+Secadores de pelo, Remington, 25
+Secadores de pelo, Gama Italy, 20
+Secadores de pelo, Babyliss, 15
+Secadores de pelo, Peabody, 10
+Secadores de pelo, Atma, 5
+
+Planchitas, Gama Italy, 25
+Planchitas, Philips, 20
+Planchitas, Remington, 15
+Planchitas, Babyliss, 10
+Planchitas, Peabody, 5
+Planchitas, Atma, 0
+
+Rizadores, Gama Italy, 20
+Rizadores, Philips, 15
+Rizadores, Remington, 10
+Rizadores, Babyliss, 5
+Rizadores, Peabody, 0
+
+Afeitadoras electricas, Philips, 25
+Afeitadoras electricas, Braun, 20
+Afeitadoras electricas, Remington, 15
+Afeitadoras electricas, Panasonic, 10
+
+Depiladoras electricas, Philips, 25
+Depiladoras electricas, Braun, 20
+Depiladoras electricas, Remington, 15
+
+Cepillos de dientes electricos, Philips Sonicare, 15
+Cepillos de dientes electricos, Oral-B, 10
+Cepillos de dientes electricos, Colgate, 5
+
+Lamparas LED, Philips, 50
+Lamparas LED, Osram, 45
+Lamparas LED, GE Lighting, 40
+Lamparas LED, TBC, 35
+Lamparas LED, Sica, 30
+
+Lamparas fluorescentes compactas, Philips, 50
+Lamparas fluorescentes compactas, Osram, 45
+Lamparas fluorescentes compactas, GE Lighting, 40
+Lamparas fluorescentes compactas, Sica, 35
+
+Tubos fluorescentes, Philips, 50
+Tubos fluorescentes, Osram, 45
+Tubos fluorescentes, GE Lighting, 40
+Tubos fluorescentes, TBC, 35
+
+Proyectores de luz, Philips, 50
+Proyectores de luz, Osram, 45
+Proyectores de luz, Sica, 40
+Proyectores de luz, TBC, 35
+
+Farolas o luminarias publicas, Philips, 50
+Farolas o luminarias publicas, Osram, 45
+Farolas o luminarias publicas, Sica, 40
+Farolas o luminarias publicas, TBC, 35
+
+Televisores, Samsung, 200
+Televisores, LG, 195
+Televisores, Sony, 190
+Televisores, Philips, 180
+Televisores, TCL, 170
+Televisores, Hisense, 160
+Televisores, Noblex, 150
+Televisores, BGH, 140
+Televisores, Philco, 130
+
+Parlantes y barras de sonido, JBL, 200
+Parlantes y barras de sonido, Sony, 195
+Parlantes y barras de sonido, LG, 190
+Parlantes y barras de sonido, Samsung, 185
+Parlantes y barras de sonido, Bose, 180
+Parlantes y barras de sonido, Philco, 170
+Parlantes y barras de sonido, Noblex, 160
+Parlantes y barras de sonido, Panasonic, 150
+Parlantes y barras de sonido, Harman Kardon, 145
+
+Reproductores de video (DVD, Blu-ray), Sony, 200
+Reproductores de video (DVD, Blu-ray), LG, 190
+Reproductores de video (DVD, Blu-ray), Philips, 180
+Reproductores de video (DVD, Blu-ray), Panasonic, 170
+Reproductores de video (DVD, Blu-ray), Samsung, 160
+
+Consolas de videojuegos, Sony PlayStation, 200
+Consolas de videojuegos, Microsoft Xbox, 190
+Consolas de videojuegos, Nintendo, 180
+
+Juguetes electronicos interactivos, VTech, 200
+Juguetes electronicos interactivos, Fisher Price, 190
+Juguetes electronicos interactivos, Hasbro, 180
+Juguetes electronicos interactivos, Clementoni, 170
+
+Autos electricos para chicos, Peg Perego, 200
+Autos electricos para chicos, Rondi, 190
+Autos electricos para chicos, Audi Kids, 180
+Autos electricos para chicos, Ford Kids, 170
+
+Robots educativos, LEGO Mindstorms, 200
+Robots educativos, Sphero, 190
+Robots educativos, UBTech, 180
+Robots educativos, Makeblock, 170
+
+Drones, DJI, 200
+Drones, Parrot, 190
+Drones, Syma, 180
+Drones, Potensic, 170
+Drones, Xiaomi, 160
+
+Computadoras de escritorio (PCs), HP, 200
+Computadoras de escritorio (PCs), Dell, 190
+Computadoras de escritorio (PCs), Lenovo, 180
+Computadoras de escritorio (PCs), Acer, 170
+Computadoras de escritorio (PCs), Asus, 160
+Computadoras de escritorio (PCs), Banghó, 150
+Computadoras de escritorio (PCs), EXO, 140
+
+Notebooks, HP, 200
+Notebooks, Dell, 190
+Notebooks, Lenovo, 180
+Notebooks, Asus, 170
+Notebooks, Acer, 160
+Notebooks, Banghó, 150
+Notebooks, EXO, 140
+
+Laptops, HP, 200
+Laptops, Dell, 190
+Laptops, Lenovo, 180
+Laptops, Asus, 170
+Laptops, Acer, 160
+Laptops, Apple, 150
+Laptops, MSI, 140
+
+Tablets, Samsung, 200
+Tablets, Apple, 190
+Tablets, Lenovo, 180
+Tablets, Huawei, 170
+Tablets, Amazon, 160
+Tablets, EXO, 150
+
+Monitores, Samsung, 200
+Monitores, LG, 190
+Monitores, Dell, 180
+Monitores, Acer, 170
+Monitores, Asus, 160
+Monitores, AOC, 150
+Monitores, BenQ, 140
+
+Impresoras, HP, 200
+Impresoras, Canon, 190
+Impresoras, Epson, 180
+Impresoras, Brother, 170
+Impresoras, Lexmark, 160
+Impresoras, Ricoh, 150
+
+Escaneres, Epson, 200
+Escaneres, Canon, 190
+Escaneres, HP, 180
+Escaneres, Brother, 170
+Escaneres, Fujitsu, 160
+
+Estabilizadores y UPS, APC, 200
+Estabilizadores y UPS, Forza, 190
+Estabilizadores y UPS, CyberPower, 180
+Estabilizadores y UPS, Tripp Lite, 170
+Estabilizadores y UPS, Eaton, 160
+Estabilizadores y UPS, Sentey, 150
+
+Teclados, Logitech, 200
+Teclados, Redragon, 190
+Teclados, Razer, 180
+Teclados, HyperX, 170
+Teclados, Corsair, 160
+Teclados, HP, 150
+
+Mouse, Logitech, 200
+Mouse, Redragon, 190
+Mouse, Razer, 180
+Mouse, HyperX, 170
+Mouse, Corsair, 160
+Mouse, HP, 150
+
+Microfonos, Blue Yeti, 200
+Microfonos, Shure, 190
+Microfonos, Audio-Technica, 180
+Microfonos, Rode, 170
+Microfonos, HyperX, 160
+Microfonos, Samson, 150
+
+Camaras web, Logitech, 200
+Camaras web, Microsoft, 190
+Camaras web, Razer, 180
+Camaras web, Genius, 170
+
+Auriculares, Sony, 200
+Auriculares, JBL, 190
+Auriculares, Sennheiser, 180
+Auriculares, Bose, 170
+Auriculares, Razer, 160
+Auriculares, HyperX, 150
+
+Joysticks y mandos, Sony, 200
+Joysticks y mandos, Microsoft, 190
+Joysticks y mandos, Nintendo, 180
+Joysticks y mandos, Logitech, 170
+Joysticks y mandos, Razer, 160
+
+Telefonos fijos, Panasonic, 200
+Telefonos fijos, Motorola, 190
+Telefonos fijos, Philips, 180
+Telefonos fijos, Gigaset, 170
+
+Celulares/Smartphones, Samsung, 200
+Celulares/Smartphones, Apple, 190
+Celulares/Smartphones, Motorola, 180
+Celulares/Smartphones, Xiaomi, 170
+Celulares/Smartphones, Huawei, 160
+Celulares/Smartphones, LG, 150
+Celulares/Smartphones, Nokia, 140
+
+Routers, TP-Link, 200
+Routers, D-Link, 190
+Routers, Netgear, 180
+Routers, Cisco, 170
+Routers, Ubiquiti, 160
+
+Modems, TP-Link, 200
+Modems, D-Link, 190
+Modems, Huawei, 180
+Modems, Motorola, 170
+Modems, ZTE, 160
+
+Switches de red, TP-Link, 200
+Switches de red, Cisco, 190
+Switches de red, D-Link, 180
+Switches de red, Netgear, 170
+
+Antenas/repetidores WiFi, TP-Link, 200
+Antenas/repetidores WiFi, Ubiquiti, 190
+Antenas/repetidores WiFi, Netgear, 180
+Antenas/repetidores WiFi, Mercusys, 170
+Antenas/repetidores WiFi, Tenda, 160
+
+Taladros electricos, Bosch, 200
+Taladros electricos, Black+Decker, 190
+Taladros electricos, Makita, 180
+Taladros electricos, DeWalt, 170
+Taladros electricos, Stanley, 160
+
+Sierras electricas, Bosch, 200
+Sierras electricas, Makita, 190
+Sierras electricas, DeWalt, 180
+Sierras electricas, Black+Decker, 170
+
+Amoladoras, Bosch, 200
+Amoladoras, Makita, 190
+Amoladoras, DeWalt, 180
+Amoladoras, Stanley, 170
+Amoladoras, Black+Decker, 160
+
+Soldadoras electricas, Lincoln Electric, 200
+Soldadoras electricas, Gamma, 190
+Soldadoras electricas, Lusqtoff, 180
+Soldadoras electricas, Esab, 170
+
+Aspiradoras industriales, Kärcher, 200
+Aspiradoras industriales, Bosch, 190
+Aspiradoras industriales, Electrolux, 180
+Aspiradoras industriales, Gamma, 170
+
+Hidrolavadoras, Kärcher, 200
+Hidrolavadoras, Bosch, 190
+Hidrolavadoras, Black+Decker, 180
+Hidrolavadoras, Gamma, 170
+
+Compresores electricos, Gamma, 200
+Compresores electricos, Lusqtoff, 190
+Compresores electricos, Dewalt, 180
+Compresores electricos, Stanley, 170
+
+Multimetros, Fluke, 200
+Multimetros, UNI-T, 190
+Multimetros, Tektronix, 180
+Multimetros, Sanwa, 170
+
+Termometros digitales, Fluke, 200
+Termometros digitales, Testo, 190
+Termometros digitales, Beurer, 180
+Termometros digitales, Xiaomi, 170
+
+Camaras de seguridad, Hikvision, 200
+Camaras de seguridad, Dahua, 190
+Camaras de seguridad, Ezviz, 180
+Camaras de seguridad, TP-Link, 170
+Camaras de seguridad, Ring, 160
+
+Sensores inteligentes, Xiaomi, 200
+Sensores inteligentes, Philips Hue, 190
+Sensores inteligentes, Aqara, 180
+Sensores inteligentes, Tuya, 170
+
+Detectores de humo, Kidde, 200
+Detectores de humo, First Alert, 190
+Detectores de humo, Honeywell, 180
+Detectores de humo, Nest Protect, 170
+
+Cargadores, Anker, 200
+Cargadores, Aukey, 190
+Cargadores, Samsung, 180
+Cargadores, Xiaomi, 170
+Cargadores, Belkin, 160
+
+Fuentes de poder, Corsair, 200
+Fuentes de poder, EVGA, 190
+Fuentes de poder, Cooler Master, 180
+Fuentes de poder, Thermaltake, 170
+Fuentes de poder, Seasonic, 160
+
+Paneles solares domesticos, LG Solar, 200
+Paneles solares domesticos, JA Solar, 190
+Paneles solares domesticos, Trina Solar, 180
+Paneles solares domesticos, Canadian Solar, 170
+
+Baterias recargables, Duracell, 200
+Baterias recargables, Energizer, 190
+Baterias recargables, Panasonic, 180
+Baterias recargables, Sony, 170
+Baterias recargables, Samsung, 160
+
+Powerbanks, Anker, 200
+Powerbanks, Xiaomi, 190
+Powerbanks, Samsung, 180
+Powerbanks, Romoss, 170
+Powerbanks, Aukey, 160
+
+Relojes electricos, Casio, 200
+Relojes electricos, Seiko, 190
+Relojes electricos, Citizen, 180
+Relojes electricos, Orient, 170
+
+Timbres electricos, Ring, 200
+Timbres electricos, Honeywell, 190
+Timbres electricos, Aiphone, 180
+Timbres electricos, TBC, 170

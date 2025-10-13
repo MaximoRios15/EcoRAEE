@@ -5,10 +5,10 @@
     "version": "1.0.0",
     "sdkVersion": "54.0.0",
     "orientation": "portrait",
-    "icon": "./logo-EcoRAEE.png",
+    "icon": "./img/logo-EcoRAEE.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./logo-EcoRAEE.png",
+      "image": "./img/logo-EcoRAEE.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -20,12 +20,12 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./logo-EcoRAEE.png",
+        "foregroundImage": "./img/logo-EcoRAEE.png",
         "backgroundColor": "#ffffff"
       }
     },
-    "web": {
-      "favicon": "./logo-EcoRAEE.png"
-    }
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
