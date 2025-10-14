@@ -22,10 +22,21 @@
       "adaptiveIcon": {
         "foregroundImage": "./img/logo-EcoRAEE.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.CAMERA"
+      ],
+      "package": "com.anonymous.ecoraee"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permitir $(PRODUCT_NAME) acceder a tu cámara para escanear códigos QR."
+        }
+      ]
     ]
   }
 }

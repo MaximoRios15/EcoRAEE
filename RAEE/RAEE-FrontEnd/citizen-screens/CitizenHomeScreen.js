@@ -16,29 +16,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ApiService from '../services/ApiService';
+import { useAuth } from '../contexts/AuthContext';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }) {
-  // Datos simulados del usuario
-  const user = {
-    idUsuarios: 1,
-    Nombres_Usuarios: 'Juan',
-    Apellidos_Usuarios: 'Pérez',
-    ImagenPerfil_Usuarios: 'perfil1animal.png',
-    Puntos_Usuarios: 250
-  };
-
-  // Funciones simuladas
-  const signOut = async () => {
-    console.log('Simulando cierre de sesión...');
-    navigation.navigate('Login');
-  };
-
-  const refreshProfile = async () => {
-    console.log('Simulando actualización de perfil...');
-    await new Promise(resolve => setTimeout(resolve, 500));
-  };
+  // Usuario y acciones reales desde AuthContext
+  const { user, signOut, refreshProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [userPoints, setUserPoints] = useState(0);
@@ -66,7 +51,7 @@ export default function HomeScreen({ navigation }) {
     const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
     console.log(`[SCREEN] EL USUARIO ENTRO A LA PANTALLA HOME - ${time} ${date}`);
     
-    // Cargar perfil del usuario al entrar
+    // Cargar perfil del usuario al entrar (real)
     loadUserProfile();
     // Cargar puntos solo una vez al entrar
     loadUserPoints();
@@ -120,7 +105,7 @@ export default function HomeScreen({ navigation }) {
 
   // Cargar imagen de perfil cuando el usuario esté disponible y el perfil esté cargado
   useEffect(() => {
-    if (user && user.ImagenPerfil_Usuarios && !imageLoaded) {
+    if (user && (user.ImagenPerfil_Usuarios || user.imagenPerfil_Usuarios) && !imageLoaded) {
       loadProfileImage();
     }
   }, [user?.idUsuarios]); // Solo reaccionar cuando cambie el usuario
@@ -150,7 +135,8 @@ export default function HomeScreen({ navigation }) {
     }
     
     // Verificar que el usuario tenga imagen de perfil
-    if (!user?.ImagenPerfil_Usuarios) {
+    const filename = user?.ImagenPerfil_Usuarios || user?.imagenPerfil_Usuarios;
+    if (!filename) {
       setProfileImage(null);
       setImageLoaded(true);
       return;
@@ -182,12 +168,16 @@ export default function HomeScreen({ navigation }) {
         'perfil5animal.png': require('../img/profile/perfil5animal.png'),
         'perfil5flores.png': require('../img/profile/perfil5flores.png')
       };
-
-      const imageSource = imageMap[user.ImagenPerfil_Usuarios];
+      const normalized = typeof filename === 'string' 
+        ? filename.replace(/^\/?(?:img\/)?profile\//i, '') 
+        : filename;
+      const imageSource = imageMap[normalized];
       if (imageSource) {
         setProfileImage(imageSource);
+      } else if (typeof filename === 'string' && (filename.startsWith('http://') || filename.startsWith('https://'))) {
+        setProfileImage({ uri: filename });
       } else {
-        setProfileImage(null);
+        setProfileImage({ uri: ApiService.getImageUrl(normalized) });
       }
       setImageLoaded(true);
     } catch (error) {
@@ -205,8 +195,7 @@ export default function HomeScreen({ navigation }) {
         return;
       }
 
-      // Simulando carga de puntos
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Cargar puntos desde los datos del usuario disponibles
       setUserPoints(user.Puntos_Usuarios || 0);
       setPointsLoaded(true);
       console.log(`[POINTS] Puntos cargados: ${user.Puntos_Usuarios}`);
@@ -220,42 +209,22 @@ export default function HomeScreen({ navigation }) {
   const loadLocations = async () => {
     try {
       setLocationsLoading(true);
-      
-      // Simulando carga de ubicaciones
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Datos simulados de ubicaciones
-      const mockLocations = [
-        {
-          idUbicaciones: 1,
-          Direccion_Ubicaciones: 'Av. Corrientes 1234',
-          NroCalle_Ubicaciones: '1234',
-          Municipios_Ubicaciones: 'CABA',
-          Provincia_Ubicaciones: 'Buenos Aires',
-          Estado_Ubicaciones: '1'
-        },
-        {
-          idUbicaciones: 2,
-          Direccion_Ubicaciones: 'Av. Santa Fe 5678',
-          NroCalle_Ubicaciones: '5678',
-          Municipios_Ubicaciones: 'CABA',
-          Provincia_Ubicaciones: 'Buenos Aires',
-          Estado_Ubicaciones: '1'
-        },
-        {
-          idUbicaciones: 3,
-          Direccion_Ubicaciones: 'Av. Rivadavia 9012',
-          NroCalle_Ubicaciones: '9012',
-          Municipios_Ubicaciones: 'CABA',
-          Provincia_Ubicaciones: 'Buenos Aires',
-          Estado_Ubicaciones: '1'
-        }
-      ];
-      
-      setLocations(mockLocations);
-      
-      // Iniciar animación del carrusel si hay ubicaciones
-      if (mockLocations.length > 0) {
+      const result = await ApiService.getEcopoints();
+      const ecopoints = Array.isArray(result?.ecopoints) ? result.ecopoints : [];
+
+      // Mapear datos del backend a la estructura usada por el carrusel
+      const mapped = ecopoints.map((row) => ({
+        idUbicaciones: row.idPuntoEntrega,
+        Direccion_Ubicaciones: `${row.Calle_Direcciones || ''} ${row.Numero_Direcciones || ''}`.trim(),
+        NroCalle_Ubicaciones: row.Numero_Direcciones || '',
+        Municipios_Ubicaciones: row.Municipio || '',
+        Provincia_Ubicaciones: 'Misiones',
+        Estado_Ubicaciones: '1',
+      }));
+
+      setLocations(mapped);
+
+      if (mapped.length > 0) {
         startInfiniteCarousel();
       }
     } catch (error) {
@@ -386,6 +355,7 @@ export default function HomeScreen({ navigation }) {
     
     setIsLoading(true);
     try {
+      // Actualiza el perfil real desde el backend
       await refreshProfile();
       console.log(`[FUNCTION] EL USUARIO COMPLETO LA CARGA DEL PERFIL - ${time} ${date}`);
       
@@ -449,6 +419,10 @@ export default function HomeScreen({ navigation }) {
     const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
     
     switch (action) {
+      case 'scanqr':
+        console.log(`[BUTTON] EL USUARIO APRETO EL BOTON ESCANEAR QR - ${time} ${date}`);
+        navigation.navigate('ScanQRCitizenScreen');
+        break;
       case 'donations':
         console.log(`[BUTTON] EL USUARIO APRETO EL BOTON MIS DONACIONES - ${time} ${date}`);
         Alert.alert('Próximamente', 'Esta función estará disponible pronto', [
@@ -616,6 +590,10 @@ export default function HomeScreen({ navigation }) {
 
             {/* Sidebar Menu Items */}
             <View style={styles.sidebarMenu}>
+              {renderSidebarItem('Escanear QR', 'qr-code-outline', '#4CAF50', () => {
+                setSidebarVisible(false);
+                handleActionPress('scanqr');
+              })}
               {renderSidebarItem('Tienda de Canjes', 'cart-outline', '#FF9800', () => {
                 setSidebarVisible(false);
                 handleActionPress('deliveries');
@@ -715,6 +693,14 @@ export default function HomeScreen({ navigation }) {
 
         {/* Action Cards */}
         <View style={styles.actionsSection}>
+          {renderActionCard(
+            'Escanear QR',
+            'Escanea códigos QR de dispositivos',
+            'qr-code-outline',
+            () => handleActionPress('scanqr'),
+            true,
+            '#4CAF50'
+          )}
           {renderActionCard(
             'Tienda de Canjes',
             'Intercambia tus puntos por recompensas',

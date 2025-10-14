@@ -16,19 +16,16 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../contexts/AuthContext';
+import ApiService from '../services/ApiService';
 
 
 const { width: screenWidth } = Dimensions.get('window');
 const cardWidth = (screenWidth - 60) / 2; // 2 columnas con margen
 
 export default function ExchangeShopScreen({ navigation }) {
-  // Datos simulados del usuario
-  const user = {
-    idUsuarios: 1,
-    Nombres_Usuarios: 'Juan',
-    Apellidos_Usuarios: 'Pérez',
-    Puntos_Usuarios: 250
-  };
+  // Datos reales desde AuthContext
+  const { user, signOut, refreshProfile } = useAuth();
   const [searchText, setSearchText] = useState('');
   const [equipment, setEquipment] = useState([]);
   const [allEquipment, setAllEquipment] = useState([]); // Equipos originales sin filtrar
@@ -40,13 +37,16 @@ export default function ExchangeShopScreen({ navigation }) {
 
   const [categories, setCategories] = useState([]);
   const [states, setStates] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(true); // true = modo oscuro (actual), false = modo claro
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
   
   // Filtros
   const [filters, setFilters] = useState({
     selectedCategory: null,
     selectedState: null,
+    selectedBrand: null,
     minPoints: '',
     maxPoints: '',
     minWeight: '',
@@ -64,8 +64,28 @@ export default function ExchangeShopScreen({ navigation }) {
     loadEquipment();
     loadCategories();
     loadStates();
+    loadBrands();
     loadThemePreference();
+    loadUserPoints();
   }, []);
+
+  // Cargar datos del usuario cuando esté disponible
+  useEffect(() => {
+    if (user && user.idUsuarios) {
+      loadProfileImage();
+      loadUserPoints();
+    }
+  }, [user]);
+
+  // Al cambiar de categoría, limpiar marca si no pertenece a la categoría seleccionada
+  useEffect(() => {
+    if (filters.selectedBrand !== null) {
+      const brand = brands.find(b => b.id === filters.selectedBrand);
+      if (!brand || (filters.selectedCategory !== null && brand.categoryId !== filters.selectedCategory)) {
+        setFilters(prev => ({ ...prev, selectedBrand: null }));
+      }
+    }
+  }, [filters.selectedCategory, brands]);
 
   // Cargar preferencia del tema desde AsyncStorage
   const loadThemePreference = async () => {
@@ -95,6 +115,69 @@ export default function ExchangeShopScreen({ navigation }) {
     saveThemePreference(newTheme);
   };
 
+  const loadProfileImage = async () => {
+    try {
+      // Verificar si hay imagen personalizada del usuario actual
+      const savedImage = await AsyncStorage.getItem('profileImage');
+      const savedUserId = await AsyncStorage.getItem('profileImageUserId');
+      
+      // Solo usar imagen personalizada si es del usuario actual
+      if (savedImage && savedUserId && savedUserId === user?.idUsuarios?.toString()) {
+        const imageData = JSON.parse(savedImage);
+        setProfileImage(imageData);
+        return;
+      }
+
+      // Si no hay imagen personalizada del usuario actual, cargar imagen de la base de datos
+      const filename = user?.ImagenPerfil_Usuarios || user?.imagenPerfil_Usuarios;
+      if (filename) {
+        const imageMap = {
+          'perfil1animal.png': require('../img/profile/perfil1animal.png'),
+          'perfil1flores.png': require('../img/profile/perfil1flores.png'),
+          'perfil2animal.png': require('../img/profile/perfil2animal.png'),
+          'perfil2flores.png': require('../img/profile/perfil2flores.png'),
+          'perfil3animal.png': require('../img/profile/perfil3animal.png'),
+          'perfil3flores.png': require('../img/profile/perfil3flores.png'),
+          'perfil4animal.png': require('../img/profile/perfil4animal.png'),
+          'perfil4flores.png': require('../img/profile/perfil4flores.png'),
+          'perfil5animal.png': require('../img/profile/perfil5animal.png'),
+          'perfil5flores.png': require('../img/profile/perfil5flores.png')
+        };
+        const normalized = typeof filename === 'string' 
+          ? filename.replace(/^\/?(?:img\/)?profile\//i, '') 
+          : filename;
+        const imageSource = imageMap[normalized];
+        if (imageSource) {
+          setProfileImage(imageSource);
+        } else if (typeof filename === 'string' && (filename.startsWith('http://') || filename.startsWith('https://'))) {
+          // Si viene una URL completa desde el backend
+          setProfileImage({ uri: filename });
+        } else {
+          // Fallback: construir URL pública del backend para imágenes
+          setProfileImage({ uri: ApiService.getImageUrl(normalized) });
+        }
+      } else {
+        setProfileImage(null);
+      }
+    } catch (error) {
+      console.error('Error loading profile image:', error);
+      setProfileImage(null);
+    }
+  };
+
+  const loadUserPoints = async () => {
+    try {
+      setUserPoints(user?.Puntos_Usuarios || 0);
+    } catch (error) {
+      setUserPoints(0);
+    }
+  };
+
+  const handleLogout = () => {
+    setSidebarVisible(false);
+    signOut();
+  };
+
   // Definir colores dinámicos según el tema
   const themeColors = {
     background: isDarkMode ? '#1A1A2E' : '#FFFFFF',
@@ -107,6 +190,32 @@ export default function ExchangeShopScreen({ navigation }) {
     header: isDarkMode ? '#1A1A2E' : '#FFFFFF',
     sidebar: isDarkMode ? '#16213E' : '#F8F9FA',
     overlay: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)',
+  };
+
+  // Etiqueta de rol dinámica según datos del usuario
+  const getRoleLabel = (userObj) => {
+    try {
+      // Si viene texto explícito desde backend
+      const type = userObj?.TipoUsuario_Usuarios;
+      if (typeof type === 'string' && type.trim()) {
+        return type.trim();
+      }
+
+      // Mapear valores numéricos de Roles_Usuarios
+      const role = userObj?.Roles_Usuarios;
+      switch (role) {
+        case 0:
+          return 'Ciudadano';
+        case 1:
+          return 'Recepción';
+        case 2:
+          return 'Administrador';
+        default:
+          return 'Ciudadano';
+      }
+    } catch (e) {
+      return 'Ciudadano';
+    }
   };
 
   // Función para renderizar elementos del sidebar con Ionicons
@@ -125,59 +234,38 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
   // Función para manejar acciones del sidebar
   const handleActionPress = (action) => {
     switch (action) {
+      case 'scanqr':
+        navigation.navigate('ScanQRCitizenScreen');
+        break;
       case 'stats':
-        // Navegar a estadísticas
         navigation.navigate('StatisticsCitizenScreen');
         break;
       case 'profile':
-        // Navegar a perfil
         navigation.navigate('ProfileCitizenScreen');
         break;
       case 'home':
-    navigation.navigate('CitizenHomeScreen');
+        navigation.navigate('CitizenHomeScreen');
         break;
       case 'exchange':
         // Ya estamos en la tienda; cerramos el sidebar
         setSidebarVisible(false);
         break;
       default:
-        console.log('Acción no reconocida:', action);
+        break;
     }
   };
 
-  // Función para cerrar sesión
-  const handleLogout = () => {
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro de que quieres cerrar sesión?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Cerrar Sesión', 
-          style: 'destructive',
-          onPress: () => {
-            // Aquí implementarías la lógica de logout
-            console.log('Cerrando sesión');
-          }
-        }
-      ]
-    );
-  };
+
 
   const loadCategories = async () => {
     try {
-      // Simulando carga de categorías
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const mockCategories = [
-        { id: 1, name: 'Computadoras' },
-        { id: 2, name: 'Teléfonos' },
-        { id: 3, name: 'Tablets' },
-        { id: 4, name: 'Electrodomésticos' },
-        { id: 5, name: 'Otros' }
-      ];
-      
-      setCategories(mockCategories);
+      const result = await ApiService.getCategories();
+      const cats = (result?.categories || []).map(c => ({
+        id: c.idCategorias,
+        name: c.Nombres_Categorias,
+        puntosBase: Number(c.PuntosBase_Categorias) || 0
+      }));
+      setCategories(cats);
     } catch (error) {
       console.error('Error loading categories:', error);
     }
@@ -185,19 +273,30 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
 
   const loadStates = async () => {
     try {
-      // Simulando carga de estados
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const mockStates = [
-        { id: 1, name: 'Excelente' },
-        { id: 2, name: 'Bueno' },
-        { id: 3, name: 'Regular' },
-        { id: 4, name: 'Malo' }
-      ];
-      
-      setStates(mockStates);
+      const result = await ApiService.getStates();
+      const sts = (result?.states || []).map(s => ({
+        id: s.idEstadosEquipos,
+        name: s.Nombres_EstadosEquipos,
+        multiplier: Number(s.MultiplicadorPuntos_EstadosEquipos) || 1
+      }));
+      setStates(sts);
     } catch (error) {
       console.error('Error loading states:', error);
+    }
+  };
+
+  const loadBrands = async () => {
+    try {
+      const result = await ApiService.getBrands();
+      const brs = (result?.brands || []).map(b => ({
+        id: b.idMarcas,
+        name: b.Nombres_Marcas,
+        categoryId: b.idCategorias_Marcas,
+        puntosBase: Number(b.PuntosBase_Marcas) || 0
+      }));
+      setBrands(brs);
+    } catch (error) {
+      console.error('Error loading brands:', error);
     }
   };
 
@@ -256,6 +355,7 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
     
     if (filters.selectedCategory !== null) count++;
     if (filters.selectedState !== null) count++;
+    if (filters.selectedBrand !== null) count++;
     if (filters.minPoints !== '') count++;
     if (filters.maxPoints !== '') count++;
     if (filters.minWeight !== '') count++;
@@ -281,6 +381,14 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
       const state = states.find(st => st.id === filters.selectedState);
       if (state) {
         activeFilters.push(`Estado: ${state.name}`);
+      }
+    }
+
+    // Marca
+    if (filters.selectedBrand !== null) {
+      const brand = brands.find(br => br.id === filters.selectedBrand);
+      if (brand) {
+        activeFilters.push(`Marca: ${brand.name}`);
       }
     }
     
@@ -438,77 +546,37 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
   const loadEquipment = async () => {
     setIsLoading(true);
     try {
-      // Simulando carga de equipos
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockEquipment = [
-        {
-          id: 1,
-          title: 'Laptop HP Pavilion',
-          brand: 'HP',
-          pointsPrice: 150,
-          image: getImageByCategory(1),
-          category: 'computadoras',
-          categoryId: 1,
-          stateId: 1,
-          shipping: 'Calle 123, Medellín',
-          installments: '',
-          description: 'Laptop en excelente estado, ideal para trabajo y estudio',
-          weight: 2.5,
-          dimensions: '35x25x2 cm',
-          accessories: 'Cargador incluido',
-          state: 'Excelente',
-          categoryName: 'Computadoras',
-          owner: 'María García',
-          dateAdded: '2024-01-15'
-        },
-        {
-          id: 2,
-          title: 'iPhone 12',
-          brand: 'Apple',
-          pointsPrice: 200,
-          image: getImageByCategory(2),
-          category: 'teléfonos',
-          categoryId: 2,
-          stateId: 2,
-          shipping: 'Carrera 45, Bogotá',
-          installments: '',
-          description: 'iPhone en buen estado, batería al 85%',
-          weight: 0.2,
-          dimensions: '15x7x1 cm',
-          accessories: 'Cargador y audífonos',
-          state: 'Bueno',
-          categoryName: 'Teléfonos',
-          owner: 'Carlos López',
-          dateAdded: '2024-01-20'
-        },
-        {
-          id: 3,
-          title: 'Tablet Samsung Galaxy',
-          brand: 'Samsung',
-          pointsPrice: 120,
-          image: getImageByCategory(3),
-          category: 'tablets',
-          categoryId: 3,
-          stateId: 1,
-          shipping: 'Avenida 80, Cali',
-          installments: '',
-          description: 'Tablet perfecta para entretenimiento',
-          weight: 0.5,
-          dimensions: '25x17x1 cm',
-          accessories: 'Cargador y funda',
-          state: 'Excelente',
-          categoryName: 'Tablets',
-          owner: 'Ana Rodríguez',
-          dateAdded: '2024-01-25'
-        }
-      ];
-      
-      setAllEquipment(mockEquipment);
-      setEquipment(mockEquipment);
+      // Cargar publicaciones reales desde el backend
+      const response = await ApiService.getAllEquipment();
+      const publications = response?.publications || [];
+
+      // Mapear publicaciones a la estructura esperada por la UI
+      const mappedItems = publications.map(pub => ({
+        id: pub.idPublicacion,
+        title: pub.Titulo_Publicacion || 'Sin título',
+        brand: '',
+        pointsPrice: Number(pub.PuntosDonados_Publicacion) || 0,
+        image: require('../img/logo-EcoRAEE.png'),
+        category: 'publicación',
+        categoryId: null,
+        stateId: null,
+        shipping: '',
+        installments: '',
+        description: pub.Descripcion_Publicacion || '',
+        weight: null,
+        dimensions: '',
+        accessories: '',
+        state: '',
+        categoryName: 'Publicación',
+        owner: '',
+        dateAdded: pub.FechaIngreso_Publicacion || ''
+      }));
+
+      setAllEquipment(mappedItems);
+      setEquipment(mappedItems);
     } catch (error) {
-      console.error('Error loading equipment:', error);
-      Alert.alert('Error', 'Error de conexión. Verifica tu conexión a internet.');
+      console.error('Error loading publications:', error);
+      Alert.alert('Error', error?.message || 'No se pudieron cargar las publicaciones.');
     } finally {
       setIsLoading(false);
     }
@@ -550,6 +618,13 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
     if (filters.selectedState !== null) {
       filteredEquipment = filteredEquipment.filter(item => 
         item.stateId === filters.selectedState
+      );
+    }
+
+    // Filtrar por marca
+    if (filters.selectedBrand !== null) {
+      filteredEquipment = filteredEquipment.filter(item => 
+        item.brandId === filters.selectedBrand
       );
     }
     
@@ -615,6 +690,7 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
     setFilters({
       selectedCategory: null,
       selectedState: null,
+      selectedBrand: null,
       minPoints: '',
       maxPoints: '',
       minWeight: '',
@@ -711,11 +787,8 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
             {/* Welcome Section in Sidebar */}
             <View style={styles.sidebarWelcome}>
               <View style={styles.sidebarAvatarContainer}>
-                {user?.ImagenPerfil_Usuarios ? (
-                  <Image 
-                    source={{ uri: user.ImagenPerfil_Usuarios }} 
-                    style={styles.sidebarAvatarImage}
-                  />
+                {profileImage ? (
+                  <Image source={profileImage} style={styles.sidebarAvatarImage} />
                 ) : (
                   <Text style={styles.sidebarAvatarText}>
                     {user?.Nombres_Usuarios?.charAt(0)}{user?.Apellidos_Usuarios?.charAt(0)}
@@ -725,7 +798,7 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
               <Text style={[styles.sidebarWelcomeTitle, { color: themeColors.text }]}>¡Bienvenido a EcoRAEE!</Text>
               <Text style={[styles.sidebarUserName, { color: themeColors.text }]}>{user?.Nombres_Usuarios} {user?.Apellidos_Usuarios}</Text>
               <Text style={[styles.sidebarUserType, { color: themeColors.textSecondary }]}>
-                Recepción EcoRAEE
+                {getRoleLabel(user)} EcoRAEE
               </Text>
               <Text style={[styles.sidebarPointsText, { color: themeColors.text }]}>
                 Puntos: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{userPoints}</Text>
@@ -737,6 +810,14 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
               {renderSidebarItem('Inicio', 'home-outline', undefined, () => {
                 setSidebarVisible(false);
                 handleActionPress('home');
+              })}
+              {renderSidebarItem('Escanear QR', 'qr-code-outline', '#4CAF50', () => {
+                setSidebarVisible(false);
+                handleActionPress('scanqr');
+              })}
+              {renderSidebarItem('Tienda de Canjes', 'cart-outline', '#FF9800', () => {
+                setSidebarVisible(false);
+                handleActionPress('exchange');
               })}
               {renderSidebarItem('Ver Estadísticas', 'bar-chart-outline', undefined, () => {
                 setSidebarVisible(false);
@@ -934,6 +1015,53 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
                           filters.selectedCategory === category.id && [styles.selectedOptionText, { color: 'white' }]
                         ]}>
                           {category.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+
+              {/* Marca */}
+              <View style={styles.filterSection}>
+                <Text style={[styles.filterLabel, { color: themeColors.text }]}>Marca</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={styles.optionsContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.optionButton,
+                        { backgroundColor: themeColors.card, borderColor: themeColors.border },
+                        filters.selectedBrand === null && [styles.selectedOption, { backgroundColor: themeColors.primary, borderColor: themeColors.primary }]
+                      ]}
+                      onPress={() => setFilters({...filters, selectedBrand: null})}
+                    >
+                      <Text style={[
+                        styles.optionText,
+                        { color: themeColors.text },
+                        filters.selectedBrand === null && [styles.selectedOptionText, { color: 'white' }]
+                      ]}>
+                        Todas
+                      </Text>
+                    </TouchableOpacity>
+                    {(filters.selectedCategory === null
+                      ? brands
+                      : brands.filter(b => b.categoryId === filters.selectedCategory)
+                    ).map((brand) => (
+                      <TouchableOpacity
+                        key={brand.id}
+                        style={[
+                          styles.optionButton,
+                          { backgroundColor: themeColors.card, borderColor: themeColors.border },
+                          filters.selectedBrand === brand.id && [styles.selectedOption, { backgroundColor: themeColors.primary, borderColor: themeColors.primary }]
+                        ]}
+                        onPress={() => setFilters({...filters, selectedBrand: brand.id})}
+                      >
+                        <Text style={[
+                          styles.optionText,
+                          { color: themeColors.text },
+                          filters.selectedBrand === brand.id && [styles.selectedOptionText, { color: 'white' }]
+                        ]}>
+                          {brand.name}
                         </Text>
                       </TouchableOpacity>
                     ))}

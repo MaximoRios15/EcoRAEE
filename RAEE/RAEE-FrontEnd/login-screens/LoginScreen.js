@@ -115,10 +115,8 @@ export default function LoginScreen({ navigation }) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [sidebarVisible, setSidebarVisible] = useState(false);
   const { isDarkMode, toggleTheme, themeColors } = useTheme();
-  const { signInDemo } = useAuth();
-  const sidebarAnimation = useRef(new Animated.Value(-screenWidth * 0.8)).current;
+  const { signIn, signInDemo } = useAuth();
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -127,122 +125,24 @@ export default function LoginScreen({ navigation }) {
     }));
   };
 
-  const handleLogin = () => {
-    Alert.alert('Inicio de Sesión', 'Funcionalidad de inicio de sesión temporalmente deshabilitada');
-  };
-
-  const toggleSidebar = () => {
-    const toValue = sidebarVisible ? -screenWidth * 0.8 : 0;
-    
-    Animated.timing(sidebarAnimation, {
-      toValue,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-    
-    setSidebarVisible(!sidebarVisible);
-  };
-
-  const navigateToHome = async (screenName, roleName) => {
-    console.log(`[SIDEBAR] Navegando a ${screenName} - Rol: ${roleName}`);
-    setSidebarVisible(false);
-    Animated.timing(sidebarAnimation, {
-      toValue: -screenWidth * 0.8,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-
-    // Simular login automático con datos de usuario correspondientes al rol
-    let mockUserData = {};
-    
-    switch (screenName) {
-      case 'CitizenHomeScreen':
-        mockUserData = {
-          ID_Usuario: 1,
-          DNI: '12345678',
-          Nombres: 'Juan Demo',
-          Apellidos: 'Ciudadano',
-          Email: 'ciudadano@demo.com',
-          Telefono: '987654321',
-          Direccion: 'Av. Demo 123',
-          Roles_Usuarios: 1, // Rol Ciudadano
-          Estado: 'Activo'
-        };
-        break;
-      case 'ReceptionHomeScreen':
-        mockUserData = {
-          ID_Usuario: 2,
-          DNI: '87654321',
-          Nombres: 'María Demo',
-          Apellidos: 'Recepción',
-          Email: 'recepcion@demo.com',
-          Telefono: '123456789',
-          Direccion: 'Av. Recepción 456',
-          Roles_Usuarios: 4, // Rol Recepción
-          Estado: 'Activo'
-        };
-        break;
-      case 'AdminHomeScreen':
-        mockUserData = {
-          ID_Usuario: 3,
-          DNI: '11223344',
-          Nombres: 'Admin Demo',
-          Apellidos: 'Administrador',
-          Email: 'admin@demo.com',
-          Telefono: '555666777',
-          Direccion: 'Av. Admin 789',
-          Roles_Usuarios: 5, // Rol Administrador
-          Estado: 'Activo'
-        };
-        break;
-      default:
-        console.warn('Rol no reconocido:', screenName);
-        return;
+  const handleLogin = async () => {
+    if (!formData.DNI_Usuarios || !formData.Password_Usuarios) {
+      Alert.alert('Datos incompletos', 'Ingresa tu DNI y contraseña.');
+      return;
     }
 
-    // Simular el proceso de login usando signInDemo
+    setIsLoading(true);
     try {
-      const result = await signInDemo(mockUserData);
-      
-      if (result.success) {
-        console.log(`[SIDEBAR] Login simulado exitoso para ${roleName}:`, mockUserData);
-        // La navegación se manejará automáticamente por el useEffect en App.js
-        // cuando detecte el cambio de usuario
-      } else {
-        console.error('Error en login simulado:', result.message);
+      const result = await signIn(formData);
+      if (!result.success) {
+        Alert.alert('Error de inicio de sesión', result.message || 'Credenciales inválidas');
       }
-      
     } catch (error) {
-      console.error('Error simulando login:', error);
+      Alert.alert('Error de conexión', error.message || 'No se pudo conectar con el servidor');
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const sidebarItems = [
-    {
-      id: 1,
-      title: 'Recepción',
-      subtitle: 'Panel de Recepción',
-      icon: 'business-outline',
-      screen: 'ReceptionHomeScreen',
-      color: '#4CAF50'
-    },
-    {
-      id: 2,
-      title: 'Ciudadano',
-      subtitle: 'Panel de Ciudadano',
-      icon: 'person-outline',
-      screen: 'CitizenHomeScreen',
-      color: '#2196F3'
-    },
-    {
-      id: 3,
-      title: 'Administrador',
-      subtitle: 'Panel de Administración',
-      icon: 'settings-outline',
-      screen: 'AdminHomeScreen',
-      color: '#FF9800'
-    }
-  ];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -260,17 +160,6 @@ export default function LoginScreen({ navigation }) {
           {/* Header */}
           <View style={[styles.header, { backgroundColor: themeColors.header }]}>
             <View style={styles.headerContent}>
-              <TouchableOpacity 
-                style={[styles.menuButton, { backgroundColor: isDarkMode ? '#2C2C3E' : '#E9ECEF' }]}
-                onPress={toggleSidebar}
-              >
-                <Ionicons 
-                  name="menu" 
-                  size={24} 
-                  color={themeColors.text} 
-                />
-              </TouchableOpacity>
-              
               <View style={styles.headerCenter} />
               
               <TouchableOpacity 
@@ -384,9 +273,12 @@ export default function LoginScreen({ navigation }) {
 
         {/* Botón de inicio de sesión */}
         <TouchableOpacity 
-          style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} 
+          style={[
+            styles.loginButton,
+            (isLoading || !formData.DNI_Usuarios || !formData.Password_Usuarios) && styles.loginButtonDisabled
+          ]} 
           onPress={handleLogin}
-          disabled={isLoading}
+          disabled={isLoading || !formData.DNI_Usuarios || !formData.Password_Usuarios}
         >
           <LinearGradient
             colors={isDarkMode ? ['#4CAF50', '#2E7D32'] : ['#2E7D32', '#4CAF50']}
@@ -448,100 +340,6 @@ export default function LoginScreen({ navigation }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Overlay para cerrar sidebar */}
-      {sidebarVisible && (
-        <TouchableOpacity 
-          style={styles.overlay}
-          onPress={toggleSidebar}
-          activeOpacity={1}
-        />
-      )}
-
-      {/* Sidebar */}
-      <Animated.View 
-        style={[
-          styles.sidebar, 
-          { 
-            backgroundColor: themeColors.background,
-            transform: [{ translateX: sidebarAnimation }]
-          }
-        ]}
-      >
-        <LinearGradient
-          colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
-          style={styles.sidebarContent}
-        >
-          {/* Header del sidebar */}
-          <View style={styles.sidebarHeader}>
-            <View style={styles.sidebarHeaderContent}>
-              <Image 
-                source={require('../img/logo-EcoRAEE.png')} 
-                style={styles.sidebarLogo}
-                resizeMode="contain"
-              />
-              <Text style={[styles.sidebarTitle, { color: themeColors.text }]}>
-                EcoRAEE
-              </Text>
-            </View>
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={toggleSidebar}
-            >
-              <Ionicons 
-                name="close" 
-                size={24} 
-                color={themeColors.text} 
-              />
-            </TouchableOpacity>
-          </View>
-
-          {/* Separador */}
-          <View style={[styles.separator, { backgroundColor: themeColors.border }]} />
-
-          {/* Título de sección */}
-          <Text style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>
-            Acceso Rápido a Paneles
-          </Text>
-
-          {/* Items del sidebar */}
-          <View style={styles.sidebarItems}>
-            {sidebarItems.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={[styles.sidebarItem, { borderColor: themeColors.border }]}
-                onPress={() => navigateToHome(item.screen, item.title)}
-              >
-                <View style={[styles.sidebarItemIcon, { backgroundColor: item.color + '20' }]}>
-                  <Ionicons 
-                    name={item.icon} 
-                    size={24} 
-                    color={item.color} 
-                  />
-                </View>
-                <View style={styles.sidebarItemContent}>
-                  <Text style={[styles.sidebarItemTitle, { color: themeColors.text }]}>
-                    {item.title}
-                  </Text>
-                  {/* Subtitle removido para alinear con diseño de Recepción */}
-              </View>
-                <Ionicons 
-                  name="chevron-forward" 
-                  size={20} 
-                  color={themeColors.textSecondary} 
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Footer del sidebar */}
-          <View style={styles.sidebarFooter}>
-            <Text style={[styles.sidebarFooterText, { color: themeColors.textSecondary }]}>
-              Versión 1.0.0
-            </Text>
-          </View>
-        </LinearGradient>
-      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -613,111 +411,6 @@ const styles = StyleSheet.create({
   },
 
   // Sidebar styles
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 998,
-  },
-  sidebar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    width: screenWidth * 0.8,
-    zIndex: 999,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 2,
-      height: 0,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  sidebarContent: {
-    flex: 1,
-    paddingTop: 50,
-  },
-  sidebarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  sidebarHeaderContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sidebarLogo: {
-    width: 40,
-    height: 40,
-    marginRight: 12,
-  },
-  sidebarTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  closeButton: {
-    padding: 5,
-  },
-  separator: {
-    height: 1,
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginHorizontal: 20,
-    marginBottom: 15,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  sidebarItems: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  sidebarItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    marginBottom: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  sidebarItemIcon: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  sidebarItemContent: {
-    flex: 1,
-  },
-  sidebarItemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  sidebarItemSubtitle: {
-    fontSize: 12,
-  },
-  sidebarFooter: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-    alignItems: 'center',
-  },
-  sidebarFooterText: {
-    fontSize: 12,
-  },
   content: {
     flex: 1,
     paddingHorizontal: 20,

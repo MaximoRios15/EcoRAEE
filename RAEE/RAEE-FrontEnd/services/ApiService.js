@@ -15,8 +15,7 @@ class ApiService {
 
     return headers;
   }
-
-
+  
   // Verificar conectividad con el servidor
   async checkServerConnection() {
     try {
@@ -53,6 +52,7 @@ class ApiService {
         const result = await response.json();
         
         if (!response.ok) {
+          
           // Manejar errores específicos por código de estado
           if (response.status === 401) {
             throw new Error('Credenciales incorrectas. Verifica tu DNI y contraseña.');
@@ -99,7 +99,7 @@ class ApiService {
 
   // Registro de usuario
   async register(userData) {
-    return await this.makeRequest('register', 'POST', userData, false);
+    return await this.makeRequest('register', 'POST', userData);
   }
 
   // Inicio de sesión
@@ -150,6 +150,20 @@ class ApiService {
     const result = await this.makeRequest('ubicaciones', 'GET');
     return result;
   }
+
+  // Obtener ecopuntos reales (puntos de entrega)
+  async getEcopoints() {
+    const result = await this.makeRequest('puntos-entrega', 'GET');
+    return result;
+  }
+
+  // Listar municipios (opcionalmente por provincia)
+  async getMunicipios(idProvincia = null) {
+    const query = idProvincia ? `?id_provincia=${idProvincia}` : '';
+    const result = await this.makeRequest(`municipios${query}`, 'GET');
+    return result?.municipios || [];
+  }
+
 
   // ==================== PUBLICACIONES/DONACIONES ====================
   async getUserPublications(userId, page = 1, perPage = 10) {
@@ -433,6 +447,11 @@ class ApiService {
   // Obtener todos los estados de equipos
   async getStates() {
     return await this.makeRequest('states', 'GET', null, false);
+  }
+
+  // Obtener todas las marcas de equipos
+  async getBrands() {
+    return await this.makeRequest('brands', 'GET', null, false);
   }
 
   // Crear nuevo estado

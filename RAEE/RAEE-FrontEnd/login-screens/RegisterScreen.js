@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,45 +6,41 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  ScrollView,
   Alert,
-  ActivityIndicator,
   Dimensions,
-  Animated,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 import { useTheme } from '../contexts/ThemeContext';
+import ApiService from '../services/ApiService';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
-// Constantes para diseño responsivo
 const isSmallScreen = screenHeight < 700;
 const isVerySmallScreen = screenHeight < 600;
 
-// Función para obtener tamaños responsivos
 const getResponsiveSize = (baseSize, smallScreenMultiplier = 0.8, verySmallScreenMultiplier = 0.7) => {
   if (isVerySmallScreen) return Math.round(baseSize * verySmallScreenMultiplier);
   if (isSmallScreen) return Math.round(baseSize * smallScreenMultiplier);
   return baseSize;
 };
 
-// Componente para el efecto rainbow animado horizontal
+// Componente RainbowText replicado de LoginScreen para el nombre de la app
 const RainbowText = ({ children, style }) => {
   const animationValue = useRef(new Animated.Value(0)).current;
-  
-  // Colores exactos que me diste + colores adicionales
   const colors = ['#066c34', '#319417', '#51b003', '#319417', '#066c34'];
   const text = children;
-  
+
   useEffect(() => {
+    let animationLoop;
     const animateColors = () => {
-      Animated.loop(
+      animationLoop = Animated.loop(
         Animated.sequence([
           Animated.timing(animationValue, {
             toValue: 1,
@@ -57,46 +53,38 @@ const RainbowText = ({ children, style }) => {
             useNativeDriver: false,
           }),
         ])
-      ).start();
+      );
+      animationLoop.start();
     };
-    
     animateColors();
-  }, []);
-  
+    
+    // Cleanup function para detener la animación
+    return () => {
+      if (animationLoop) {
+        animationLoop.stop();
+      }
+    };
+  }, [animationValue]);
+
   return (
     <View style={{ flexDirection: 'row', overflow: 'hidden' }}>
-      {text.split('').map((char, index) => {
-        // Crea un efecto de onda que se mueve de izquierda a derecha
+      {String(text).split('').map((char, index) => {
         const wavePosition = animationValue.interpolate({
           inputRange: [0, 1],
-          outputRange: [-0.2, 1.2], // Va de -0.2 a 1.2 para reiniciar justo después de la última E
+          outputRange: [-0.2, 1.2],
         });
-
-        // Calcula la posición del carácter en el texto (0 a 1)
-        const charPosition = index / (text.length - 1);
-
-        // Crea el índice de color usando la diferencia entre la onda y la posición del carácter
+        const charPosition = index / (String(text).length - 1 || 1);
         const colorIndex = wavePosition.interpolate({
-          inputRange: [charPosition - 0.2, charPosition + 0.2], // Rango alrededor de la posición del carácter
-          outputRange: [0, colors.length - 1], // Va del primer color al último
+          inputRange: [charPosition - 0.2, charPosition + 0.2],
+          outputRange: [0, colors.length - 1],
         });
-
         const interpolatedColor = colorIndex.interpolate({
-          inputRange: colors.map((_, i) => i), // Mapea 0, 1, 2, 3, 4 a los colores
+          inputRange: colors.map((_, i) => i),
           outputRange: colors,
-          extrapolate: 'clamp', // Limita para evitar colores fuera del rango definido
+          extrapolate: 'clamp',
         });
-        
         return (
-          <Animated.Text
-            key={index}
-            style={[
-              style,
-              {
-                color: interpolatedColor,
-              },
-            ]}
-          >
+          <Animated.Text key={`${char}-${index}`} style={[style, { color: interpolatedColor }]}>
             {char}
           </Animated.Text>
         );
@@ -106,788 +94,553 @@ const RainbowText = ({ children, style }) => {
 };
 
 export default function RegisterScreen({ navigation }) {
+  const { isDarkMode, toggleTheme, themeColors } = useTheme();
+
   const [formData, setFormData] = useState({
     DNI_Usuarios: '',
     Nombres_Usuarios: '',
     Apellidos_Usuarios: '',
-    Roles_Usuarios: 1, // 1=ciudadano, 2=institucion, 3=tecnico
+    Roles_Usuarios: '1',
     Email_Usuarios: '',
     Telefono_Usuarios: '',
-    Direccion_Usuarios: '',
-    NroCalle_Usuarios: '',
-    Piso_Usuarios: '',
-    Departamento_Usuarios: '',
-    Barrio_Usuarios: '',
+    Calle_Direcciones: '',
+    Numero_Direcciones: '',
+    Piso_Direcciones: '',
+    Departamento_Direcciones: '',
+    Barrio_Direcciones: '',
     Provincia_Usuarios: 'Misiones',
-    Municipios_Usuarios: '',
+    idMunicipios_Direcciones: '',
     Password_Usuarios: '',
-    confirmPassword: '',
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
+
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [validationErrors, setValidationErrors] = useState({});
-  const [isValidating, setIsValidating] = useState(false);
-  const [selectedProfileImage, setSelectedProfileImage] = useState(null);
-  // Estados para flujo por secciones y verificaciones
-  const [currentStep, setCurrentStep] = useState(1);
-  const [phoneVerified, setPhoneVerified] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
-  const { isDarkMode, toggleTheme, themeColors } = useTheme();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [municipios, setMunicipios] = useState([]);
+  const [isLoadingMunicipios, setIsLoadingMunicipios] = useState(true);
 
-  // Seleccionar imagen aleatoria al cargar el componente
-  React.useEffect(() => {
-    selectRandomProfileImage();
+  // Coincidencia y validez de contraseña en tiempo real
+  const passwordsMatch = formData.Password_Usuarios === confirmPassword;
+  const isPasswordValid = (formData.Password_Usuarios || '').length >= 6;
+
+  // Función para resetear el formulario
+  const resetForm = () => {
+    setFormData({
+      DNI_Usuarios: '',
+      Nombres_Usuarios: '',
+      Apellidos_Usuarios: '',
+      Roles_Usuarios: '1',
+      Email_Usuarios: '',
+      Telefono_Usuarios: '',
+      Calle_Direcciones: '',
+      Numero_Direcciones: '',
+      Piso_Direcciones: '',
+      Departamento_Direcciones: '',
+      Barrio_Direcciones: '',
+      Provincia_Usuarios: 'Misiones',
+      idMunicipios_Direcciones: '',
+      Password_Usuarios: '',
+    });
+    setConfirmPassword('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  useEffect(() => {
+    const loadMunicipios = async () => {
+      try {
+        const list = await ApiService.getMunicipios();
+        setMunicipios(Array.isArray(list) ? list : []);
+      } catch (err) {
+        setMunicipios([]);
+      } finally {
+        setIsLoadingMunicipios(false);
+      }
+    };
+    loadMunicipios();
   }, []);
 
-  // Imágenes de perfil disponibles
-  const profileImages = [
-    'perfil1animal.png',
-    'perfil1flores.png',
-    'perfil2animal.png',
-    'perfil2flores.png',
-    'perfil3animal.png',
-    'perfil3flores.png',
-    'perfil4animal.png',
-    'perfil4flores.png',
-    'perfil5animal.png',
-    'perfil5flores.png'
-  ];
-
-  // Mapeo de nombres de imágenes a require
-  const getProfileImageSource = (imageName) => {
-    const imageMap = {
-      'perfil1animal.png': require('../img/profile/perfil1animal.png'),
-      'perfil1flores.png': require('../img/profile/perfil1flores.png'),
-      'perfil2animal.png': require('../img/profile/perfil2animal.png'),
-      'perfil2flores.png': require('../img/profile/perfil2flores.png'),
-      'perfil3animal.png': require('../img/profile/perfil3animal.png'),
-      'perfil3flores.png': require('../img/profile/perfil3flores.png'),
-      'perfil4animal.png': require('../img/profile/perfil4animal.png'),
-      'perfil4flores.png': require('../img/profile/perfil4flores.png'),
-      'perfil5animal.png': require('../img/profile/perfil5animal.png'),
-      'perfil5flores.png': require('../img/profile/perfil5flores.png')
-    };
-    return imageMap[imageName] || require('../img/profile/perfil1animal.png');
+  const updateField = (key, value) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
   };
 
-  // Función para seleccionar una imagen de perfil aleatoria
-  const selectRandomProfileImage = () => {
-    const randomIndex = Math.floor(Math.random() * profileImages.length);
-    const selectedImage = profileImages[randomIndex];
-    setSelectedProfileImage(selectedImage);
-    return selectedImage;
+  const validate = () => {
+    // Validaciones básicas
+    if (!formData.DNI_Usuarios?.trim() || !/^\d{7,8}$/.test(formData.DNI_Usuarios.trim())) {
+      Alert.alert('Error', 'DNI inválido (7-8 dígitos)');
+      return false;
+    }
+    if (!formData.Nombres_Usuarios?.trim()) {
+      Alert.alert('Error', 'Nombre requerido');
+      return false;
+    }
+    if (!formData.Apellidos_Usuarios?.trim()) {
+      Alert.alert('Error', 'Apellido requerido');
+      return false;
+    }
+    if (!formData.Email_Usuarios?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.Email_Usuarios)) {
+      Alert.alert('Error', 'Email inválido');
+      return false;
+    }
+    if (!formData.Telefono_Usuarios?.trim() || formData.Telefono_Usuarios.replace(/\D/g, '').length < 6) {
+      Alert.alert('Error', 'Teléfono inválido');
+      return false;
+    }
+    if (!formData.Calle_Direcciones?.trim()) {
+      Alert.alert('Error', 'Calle requerida');
+      return false;
+    }
+    if (!formData.Numero_Direcciones?.trim() || !/^\d+$/.test(formData.Numero_Direcciones)) {
+      Alert.alert('Error', 'Número de calle inválido');
+      return false;
+    }
+    if (!formData.Barrio_Direcciones?.trim()) {
+      Alert.alert('Error', 'Barrio requerido');
+      return false;
+    }
+    if (!formData.idMunicipios_Direcciones || formData.idMunicipios_Direcciones === '' || formData.idMunicipios_Direcciones === null) {
+      Alert.alert('Error', 'Debe seleccionar un municipio');
+      return false;
+    }
+    // Verificar que el municipio sea un número válido
+    const municipioId = Number(formData.idMunicipios_Direcciones);
+    if (isNaN(municipioId) || municipioId <= 0) {
+      Alert.alert('Error', 'Debe seleccionar un municipio válido');
+      return false;
+    }
+    if (!formData.Password_Usuarios || formData.Password_Usuarios.length < 6) {
+      Alert.alert('Error', 'Contraseña mínimo 6 caracteres');
+      return false;
+    }
+    if (formData.Password_Usuarios !== confirmPassword) {
+      Alert.alert('Error', 'Las contraseñas no coinciden');
+      return false;
+    }
+    return true;
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleRegister = async () => {
+    if (!validate()) return;
 
-    // Validación en tiempo real de contraseñas
-    if (field === 'Password_Usuarios' || field === 'confirmPassword') {
-      const newFormData = { ...formData, [field]: value };
+    setIsSubmitting(true);
+    try {
+      // Validación server-side limitada a endpoints disponibles
+
+      const direccion = {
+        Calle_Direcciones: formData.Calle_Direcciones,
+        Numero_Direcciones: formData.Numero_Direcciones,
+        Piso_Direcciones: formData.Piso_Direcciones || null,
+        Departamento_Direcciones: formData.Departamento_Direcciones || null,
+        Barrio_Direcciones: formData.Barrio_Direcciones,
+        idMunicipios_Direcciones: Number(formData.idMunicipios_Direcciones),
+      };
+      const payload = {
+        DNI_Usuarios: formData.DNI_Usuarios,
+        Nombres_Usuarios: formData.Nombres_Usuarios,
+        Apellidos_Usuarios: formData.Apellidos_Usuarios,
+        Roles_Usuarios: formData.Roles_Usuarios,
+        Email_Usuarios: formData.Email_Usuarios,
+        Telefono_Usuarios: formData.Telefono_Usuarios,
+        Password_Usuarios: formData.Password_Usuarios,
+        direccion,
+      };
       
-      if (newFormData.confirmPassword && newFormData.Password_Usuarios !== newFormData.confirmPassword) {
-        setPasswordError('Las contraseñas no coinciden');
+      const res = await ApiService.register(payload);
+      if (res && (res.success === true || res.status === 'success')) {
+        Alert.alert('Registro exitoso', 'Tu cuenta fue creada correctamente.', [
+          { 
+            text: 'Ir a Login', 
+            onPress: () => {
+              resetForm();
+              navigation.navigate('Login');
+            }
+          },
+        ]);
       } else {
-        setPasswordError('');
+        const msg = res?.message || 'No se pudo completar el registro.';
+        Alert.alert('Error', msg);
       }
+    } catch (err) {
+      console.error('Error en registro:', err);
+      Alert.alert('Error', 'Ocurrió un problema al registrar.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Limpiar errores de validación cuando el usuario empiece a escribir
-    if (validationErrors[field]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
-    }
-  };
-
-  const handleRegister = () => {
-    Alert.alert('Registro', 'Funcionalidad de registro temporalmente deshabilitada');
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <KeyboardAvoidingView 
-        style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Header */}
-          <View style={[styles.header, { backgroundColor: themeColors.header }]}>
-            <View style={styles.headerContent}>
-              <View style={styles.headerLeft} />
-              
-              <View style={styles.headerCenter} />
-              
-              <TouchableOpacity 
-                style={[styles.themeToggle, { backgroundColor: isDarkMode ? '#2C2C3E' : '#E9ECEF' }]} 
-                onPress={toggleTheme}
-              >
-                <Ionicons 
-                  name={isDarkMode ? 'sunny-outline' : 'moon-outline'} 
-                  size={getResponsiveSize(18, 16, 14)} 
-                  color={themeColors.text} 
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: themeColors.header }]}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerCenter} />
 
-          <View style={styles.content}>
-        {/* Logo y nombre de la app */}
-        <View style={styles.logoContainer}>
-          <Image 
-            source={require('../img/logo-EcoRAEE.png')} 
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-          <RainbowText style={styles.appName}>EcoRAEE</RainbowText>
-        </View>
-
-        {/* Imagen de perfil seleccionada (solo Sección 1) */}
-        {currentStep === 1 && selectedProfileImage && (
-          <LinearGradient
-            colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
-            style={styles.profileImageContainer}
+          <TouchableOpacity 
+            style={[styles.themeToggle, { backgroundColor: isDarkMode ? '#2C2C3E' : '#E9ECEF' }]} 
+            onPress={toggleTheme}
           >
-            <Text style={[styles.profileImageLabel, { color: themeColors.text }]}>Tu imagen de perfil será:</Text>
-            <Image 
-              source={getProfileImageSource(selectedProfileImage)}
-              style={styles.selectedProfileImage}
-              resizeMode="cover"
+            <Ionicons 
+              name={isDarkMode ? 'sunny-outline' : 'moon-outline'} 
+              size={22} 
+              color={themeColors.text} 
             />
-            <Text style={[styles.profileImageName, { color: themeColors.textSecondary }]}>{selectedProfileImage}</Text>
-            <TouchableOpacity 
-              style={styles.changeImageButton}
-              onPress={() => {
-                const now = new Date();
-                const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                console.log(`[BUTTON] EL USUARIO CAMBIO LA IMAGEN DE PERFIL - ${time} ${date}`);
-                selectRandomProfileImage();
-              }}
-            >
-              <LinearGradient
-                colors={isDarkMode ? ['#4CAF50', '#2E7D32'] : ['#2E7D32', '#4CAF50']}
-                style={styles.changeImageButtonGradient}
-              >
-                <Text style={styles.changeImageButtonText}>Cambiar Imagen</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </LinearGradient>
-        )}
-
-        {/* Título */}
-        <View style={styles.titleContainer}>
-          <Text style={[styles.title, { color: themeColors.text }]}>Registro de Usuario</Text>
-          <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
-            Completa los datos para crear tu cuenta
-          </Text>
+          </TouchableOpacity>
         </View>
+      </View>
 
-        {/* Formulario */}
-        <LinearGradient
-          colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
-          style={styles.formCard}
-        >
-          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>{`Sección ${currentStep} de 3`}</Text>
-          {currentStep === 1 && (
-            <>
+      <KeyboardAvoidingView style={styles.keyboardAvoidingView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
+        <ScrollView style={[styles.scrollView, { backgroundColor: themeColors.background }]} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <View style={styles.content}>
+            {/* Logo y nombre de la app */}
+            <View style={styles.logoContainer}>
+              <Image source={require('../img/logo-EcoRAEE.png')} style={styles.logoImageLarge} resizeMode="contain" />
+              <RainbowText style={styles.appNameLarge}>EcoRAEE</RainbowText>
+            </View>
+
+            {/* Título */}
+            <View style={styles.titleContainer}>
+              <Text style={[styles.title, { color: themeColors.text }]}>Crear cuenta</Text>
+              <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>Completa tus datos para registrarte</Text>
+            </View>
+
+            {/* Formulario con gradient como en LoginScreen */}
+            <LinearGradient
+              colors={isDarkMode ? ['#2C2C3E', '#1A1A2E'] : ['#F8F9FA', '#E9ECEF']}
+              style={styles.formCard}
+            >
               {/* DNI */}
-              <Text style={[styles.label, { color: themeColors.text }]}>DNI *</Text>
-              <TextInput
-                style={[
-                  styles.input, 
-                  validationErrors.DNI_Usuarios ? styles.inputError : null,
-                  { 
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>DNI *</Text>
+                <TextInput
+                  style={[styles.input, { 
                     backgroundColor: themeColors.background, 
                     borderColor: themeColors.border, 
                     color: themeColors.text 
-                  }
-                ]}
-                placeholder="Ingresa tu DNI (7-8 dígitos)"
-                placeholderTextColor={themeColors.textSecondary}
-                value={formData.DNI_Usuarios}
-                onChangeText={(value) => {
-                  const numericValue = value.replace(/[^0-9]/g, '').slice(0, 8);
-                  handleInputChange('DNI_Usuarios', numericValue);
-                }}
-                onFocus={() => {
-                  const now = new Date();
-                  const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                  const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                  console.log(`[TEXTINPUT] EL USUARIO APRETO EN EL CAMPO DNI - ${time} ${date}`);
-                }}
-                keyboardType="numeric"
-                maxLength={8}
-                autoComplete="off"
-              />
-              {validationErrors.DNI_Usuarios ? (
-                <Text style={styles.errorText}>{validationErrors.DNI_Usuarios}</Text>
-              ) : null}
-
-              {/* Nombre */}
-              <Text style={[styles.label, { color: themeColors.text }]}>Nombre/s *</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { 
-                    backgroundColor: themeColors.background, 
-                    borderColor: themeColors.border, 
-                    color: themeColors.text 
-                  }
-                ]}
-                placeholder="Ingresa tu nombre"
-                placeholderTextColor={themeColors.textSecondary}
-                value={formData.Nombres_Usuarios}
-                onChangeText={(value) => handleInputChange('Nombres_Usuarios', value)}
-                onFocus={() => {
-                  const now = new Date();
-                  const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                  const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                  console.log(`[TEXTINPUT] EL USUARIO APRETO EN EL CAMPO NOMBRE - ${time} ${date}`);
-                }}
-              />
-
-              {/* Apellido */}
-              <Text style={[styles.label, { color: themeColors.text }]}>Apellido/s *</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { 
-                    backgroundColor: themeColors.background, 
-                    borderColor: themeColors.border, 
-                    color: themeColors.text 
-                  }
-                ]}
-                placeholder="Ingresa tu apellido"
-                placeholderTextColor={themeColors.textSecondary}
-                value={formData.Apellidos_Usuarios}
-                onChangeText={(value) => handleInputChange('Apellidos_Usuarios', value)}
-                onFocus={() => {
-                  const now = new Date();
-                  const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                  const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                  console.log(`[TEXTINPUT] EL USUARIO APRETO EN EL CAMPO APELLIDO - ${time} ${date}`);
-                }}
-              />
-
-              {/* Tipo de Usuario (fijo: Ciudadano) */}
-              <Text style={[styles.label, { color: themeColors.text }]}>Tipo de Usuario *</Text>
-              <View style={styles.readOnlyInput}>
-                <Text style={styles.readOnlyText}>Ciudadano</Text>
+                  }]}
+                  placeholder="Ej: 12345678"
+                  placeholderTextColor={themeColors.textSecondary}
+                  keyboardType="number-pad"
+                  value={formData.DNI_Usuarios}
+                  onChangeText={(t) => updateField('DNI_Usuarios', t)}
+                  maxLength={8}
+                />
               </View>
 
-              {/* Siguiente 1/3 */}
-              <TouchableOpacity
-                style={[styles.registerButton, styles.registerButtonSection1]}
-                onPress={() => {
-                  // Fija el rol como Ciudadano y avanza a la Sección 2
-                  setFormData(prev => ({ ...prev, Roles_Usuarios: 1 }));
-                  setCurrentStep(2);
-                }}
-              >
-                <LinearGradient
-                  colors={isDarkMode ? ['#4CAF50', '#2E7D32'] : ['#2E7D32', '#4CAF50']}
-                  style={styles.registerButtonGradient}
-                >
-                  <Text style={styles.registerButtonText}>Siguiente 1/3</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </>
-          )}
-
-          {currentStep === 3 && (
-            <>
-          {/* Correo Electrónico */}
-          <Text style={[styles.label, { color: themeColors.text }]}>Correo Electrónico *</Text>
-          <TextInput
-            style={[
-              styles.input, 
-              validationErrors.Email_Usuarios ? styles.inputError : null,
-              { 
-                backgroundColor: themeColors.background, 
-                borderColor: themeColors.border, 
-                color: themeColors.text 
-              }
-            ]}
-            placeholder="ejemplo@correo.com"
-            placeholderTextColor={themeColors.textSecondary}
-            value={formData.Email_Usuarios}
-            onChangeText={(value) => {
-              handleInputChange('Email_Usuarios', value);
-            }}
-            onFocus={() => {
-              const now = new Date();
-              const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-              const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-              console.log(`[TEXTINPUT] EL USUARIO APRETO EN EL CAMPO EMAIL - ${time} ${date}`);
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            textContentType="emailAddress"
-          />
-          {validationErrors.Email_Usuarios ? (
-            <Text style={styles.errorText}>{validationErrors.Email_Usuarios}</Text>
-          ) : null}
-          {/* Validar/Omitir Correo */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
-            <TouchableOpacity
-              style={[styles.registerButton, { flex: 1, marginRight: 8 }]}
-              onPress={() => {
-                setIsValidating(true);
-                setTimeout(() => {
-                  setIsValidating(false);
-                  setEmailVerified(true);
-                  Alert.alert('Verificación', 'Se envió un código a tu correo.');
-                }, 800);
-              }}
-            >
-              <LinearGradient
-                colors={isDarkMode ? ['#4CAF50', '#2E7D32'] : ['#2E7D32', '#4CAF50']}
-                style={styles.registerButtonGradient}
-              >
-                <Text style={styles.registerButtonText}>Validar</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.registerButton, { flex: 1, marginLeft: 8 }]}
-              onPress={() => setEmailVerified(true)}
-            >
-              <LinearGradient
-                colors={isDarkMode ? ['#9E9E9E', '#757575'] : ['#757575', '#9E9E9E']}
-                style={styles.registerButtonGradient}
-              >
-                <Text style={styles.registerButtonText}>Omitir</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-
-          {/* Teléfono */}
-          <Text style={[styles.label, { color: themeColors.text }]}>Teléfono *</Text>
-          <TextInput
-            style={[
-              styles.input, 
-              validationErrors.Telefono_Usuarios ? styles.inputError : null,
-              { 
-                backgroundColor: themeColors.background, 
-                borderColor: themeColors.border, 
-                color: themeColors.text 
-              }
-            ]}
-            placeholder="Ingresa tu teléfono (ej: 3764123456)"
-            placeholderTextColor={themeColors.textSecondary}
-            value={formData.Telefono_Usuarios}
-            onChangeText={(value) => {
-              // Solo permitir números y limitar a 15 caracteres
-              const numericValue = value.replace(/[^0-9]/g, '').slice(0, 15);
-              handleInputChange('Telefono_Usuarios', numericValue);
-
-            }}
-            onFocus={() => {
-              const now = new Date();
-              const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-              const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-              console.log(`[TEXTINPUT] EL USUARIO APRETO EN EL CAMPO TELEFONO - ${time} ${date}`);
-            }}
-            keyboardType="phone-pad"
-            maxLength={15}
-            autoComplete="tel"
-            textContentType="telephoneNumber"
-          />
-          {validationErrors.Telefono_Usuarios ? (
-            <Text style={styles.errorText}>{validationErrors.Telefono_Usuarios}</Text>
-          ) : null}
-          {/* Validar/Omitir Teléfono */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
-            <TouchableOpacity
-              style={[styles.registerButton, { flex: 1, marginRight: 8 }]}
-              onPress={() => {
-                setIsValidating(true);
-                setTimeout(() => {
-                  setIsValidating(false);
-                  setPhoneVerified(true);
-                  Alert.alert('Verificación', 'Se envió un código a tu teléfono.');
-                }, 800);
-              }}
-            >
-              <LinearGradient
-                colors={isDarkMode ? ['#4CAF50', '#2E7D32'] : ['#2E7D32', '#4CAF50']}
-                style={styles.registerButtonGradient}
-              >
-                <Text style={styles.registerButtonText}>Validar</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.registerButton, { flex: 1, marginLeft: 8 }]}
-              onPress={() => setPhoneVerified(true)}
-            >
-              <LinearGradient
-                colors={isDarkMode ? ['#9E9E9E', '#757575'] : ['#757575', '#9E9E9E']}
-                style={styles.registerButtonGradient}
-              >
-                <Text style={styles.registerButtonText}>Omitir</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-          </>
-          )}
-
-          {currentStep === 2 && (
-            <>
-              {/* Dirección */}
-              <Text style={[styles.label, { color: themeColors.text }]}>Calle *</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { 
+              {/* Nombre */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Nombre/s *</Text>
+                <TextInput
+                  style={[styles.input, { 
                     backgroundColor: themeColors.background, 
                     borderColor: themeColors.border, 
                     color: themeColors.text 
-                  }
-                ]}
-                placeholder="Ingresa tu calle"
-                placeholderTextColor={themeColors.textSecondary}
-                value={formData.Direccion_Usuarios}
-                onChangeText={(value) => handleInputChange('Direccion_Usuarios', value)}
-                onFocus={() => {
-                  const now = new Date();
-                  const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                  const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                  console.log(`[TEXTINPUT] EL USUARIO APRETO EN EL CAMPO DIRECCION - ${time} ${date}`);
-                }}
-                autoComplete="street-address"
-                textContentType="fullStreetAddress"
-              />
+                  }]}
+                  placeholder="Tu nombre"
+                  placeholderTextColor={themeColors.textSecondary}
+                  value={formData.Nombres_Usuarios}
+                  onChangeText={(t) => updateField('Nombres_Usuarios', t)}
+                  maxLength={50}
+                />
+              </View>
 
-              {/* Número de Calle */}
-              <Text style={[styles.label, { color: themeColors.text }]}>Número *</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { 
+              {/* Apellido */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Apellido/s *</Text>
+                <TextInput
+                  style={[styles.input, { 
                     backgroundColor: themeColors.background, 
                     borderColor: themeColors.border, 
                     color: themeColors.text 
-                  }
-                ]}
-                placeholder="Número de calle"
-                placeholderTextColor={themeColors.textSecondary}
-                value={formData.NroCalle_Usuarios}
-                onChangeText={(value) => handleInputChange('NroCalle_Usuarios', value)}
-                onFocus={() => {
-                  const now = new Date();
-                  const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                  const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                  console.log(`[TEXTINPUT] EL USUARIO APRETO EN EL CAMPO NUMERO DE CALLE - ${time} ${date}`);
-                }}
-                keyboardType="numeric"
-                autoComplete="off"
-              />
+                  }]}
+                  placeholder="Tu apellido"
+                  placeholderTextColor={themeColors.textSecondary}
+                  value={formData.Apellidos_Usuarios}
+                  onChangeText={(t) => updateField('Apellidos_Usuarios', t)}
+                  maxLength={50}
+                />
+              </View>
+
+              {/* Email */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Email *</Text>
+                <TextInput
+                  style={[styles.input, { 
+                    backgroundColor: themeColors.background, 
+                    borderColor: themeColors.border, 
+                    color: themeColors.text 
+                  }]}
+                  placeholder="tu@email.com"
+                  placeholderTextColor={themeColors.textSecondary}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={formData.Email_Usuarios}
+                  onChangeText={(t) => updateField('Email_Usuarios', t)}
+                  maxLength={100}
+                />
+              </View>
+
+              {/* Teléfono */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Teléfono *</Text>
+                <TextInput
+                  style={[styles.input, { 
+                    backgroundColor: themeColors.background, 
+                    borderColor: themeColors.border, 
+                    color: themeColors.text 
+                  }]}
+                  placeholder="Ej: 3704 123456"
+                  placeholderTextColor={themeColors.textSecondary}
+                  keyboardType="phone-pad"
+                  value={formData.Telefono_Usuarios}
+                  onChangeText={(t) => updateField('Telefono_Usuarios', t)}
+                  maxLength={14}
+                />
+              </View>
+
+              {/* Calle */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Calle *</Text>
+                <TextInput
+                  style={[styles.input, { 
+                    backgroundColor: themeColors.background, 
+                    borderColor: themeColors.border, 
+                    color: themeColors.text 
+                  }]}
+                  placeholder="Calle"
+                  placeholderTextColor={themeColors.textSecondary}
+                  value={formData.Calle_Direcciones}
+                  onChangeText={(t) => updateField('Calle_Direcciones', t)}
+                  maxLength={50}
+                />
+              </View>
+
+              {/* Número de calle */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Número Calle *</Text>
+                <TextInput
+                  style={[styles.input, { 
+                    backgroundColor: themeColors.background, 
+                    borderColor: themeColors.border, 
+                    color: themeColors.text 
+                  }]}
+                  placeholder="Ej: 1234"
+                  placeholderTextColor={themeColors.textSecondary}
+                  keyboardType="number-pad"
+                  value={formData.Numero_Direcciones}
+                  onChangeText={(t) => updateField('Numero_Direcciones', t)}
+                  maxLength={10}
+                />
+              </View>
 
               {/* Piso (opcional) */}
-              <Text style={[styles.label, { color: themeColors.text }]}>Piso (opcional)</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { 
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Piso (opcional)</Text>
+                <TextInput
+                  style={[styles.input, { 
                     backgroundColor: themeColors.background, 
                     borderColor: themeColors.border, 
                     color: themeColors.text 
-                  }
-                ]}
-                placeholder="Piso"
-                placeholderTextColor={themeColors.textSecondary}
-                value={formData.Piso_Usuarios}
-                onChangeText={(value) => handleInputChange('Piso_Usuarios', value)}
-              />
+                  }]}
+                  placeholder="Ej: 3"
+                  placeholderTextColor={themeColors.textSecondary}
+                  keyboardType="number-pad"
+                  value={formData.Piso_Direcciones}
+                  onChangeText={(t) => updateField('Piso_Direcciones', t)}
+                  maxLength={10}
+                />
+              </View>
 
               {/* Departamento (opcional) */}
-              <Text style={[styles.label, { color: themeColors.text }]}>Departamento (opcional)</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { 
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Departamento (opcional)</Text>
+                <TextInput
+                  style={[styles.input, { 
                     backgroundColor: themeColors.background, 
                     borderColor: themeColors.border, 
                     color: themeColors.text 
-                  }
-                ]}
-                placeholder="Departamento"
-                placeholderTextColor={themeColors.textSecondary}
-                value={formData.Departamento_Usuarios}
-                onChangeText={(value) => handleInputChange('Departamento_Usuarios', value)}
-              />
+                  }]}
+                  placeholder="Ej: A"
+                  placeholderTextColor={themeColors.textSecondary}
+                  value={formData.Departamento_Direcciones}
+                  onChangeText={(t) => updateField('Departamento_Direcciones', t)}
+                  maxLength={10}
+                />
+              </View>
 
               {/* Barrio */}
-              <Text style={[styles.label, { color: themeColors.text }]}>Barrio *</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { 
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Barrio *</Text>
+                <TextInput
+                  style={[styles.input, { 
                     backgroundColor: themeColors.background, 
                     borderColor: themeColors.border, 
                     color: themeColors.text 
-                  }
-                ]}
-                placeholder="Ingresa tu barrio"
-                placeholderTextColor={themeColors.textSecondary}
-                value={formData.Barrio_Usuarios}
-                onChangeText={(value) => handleInputChange('Barrio_Usuarios', value)}
-              />
+                  }]}
+                  placeholder="Tu barrio"
+                  placeholderTextColor={themeColors.textSecondary}
+                  value={formData.Barrio_Direcciones}
+                  onChangeText={(t) => updateField('Barrio_Direcciones', t)}
+                  maxLength={50}
+                />
+              </View>
 
-              {/* Provincia */}
-              <Text style={[styles.label, { color: themeColors.text }]}>Provincia *</Text>
-              <View style={[styles.readOnlyInput, { backgroundColor: themeColors.background, borderColor: themeColors.border }]}>
-                <Text style={[styles.readOnlyText, { color: themeColors.textSecondary }]}>{formData.Provincia_Usuarios || 'Misiones'}</Text>
+              {/* Provincia (fija Misiones) */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Provincia *</Text>
+                <TextInput
+                  editable={false}
+                  style={[styles.input, { 
+                    backgroundColor: isDarkMode ? '#2E2E3E' : '#E9ECEF',
+                    borderColor: isDarkMode ? '#3A3A4A' : '#CFD3D8',
+                    color: isDarkMode ? '#B0B3B8' : '#495057' 
+                  }]}
+                  value={formData.Provincia_Usuarios}
+                />
               </View>
 
               {/* Municipio */}
-              <Text style={[styles.label, { color: themeColors.text }]}>Municipio *</Text>
-              <View style={[styles.pickerContainer, { backgroundColor: themeColors.background, borderColor: themeColors.border }]}>
-                <Picker
-                  selectedValue={formData.Municipios_Usuarios}
-                  onValueChange={(value) => handleInputChange('Municipios_Usuarios', value)}
-                  style={[styles.picker, { color: themeColors.text }]}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Municipio *</Text>
+                {isLoadingMunicipios ? (
+                  <View style={[styles.input, styles.pickerLoading, { borderColor: themeColors.border, backgroundColor: themeColors.background }]}>
+                    <ActivityIndicator size="small" color={themeColors.textSecondary} />
+                    <Text style={[styles.loadingText, { color: themeColors.textSecondary }]}>Cargando municipios...</Text>
+                  </View>
+                ) : (
+                  <View style={[styles.pickerInput, { 
+                    backgroundColor: themeColors.background, 
+                    borderColor: themeColors.border 
+                  }]}>
+                    <Picker
+                      selectedValue={formData.idMunicipios_Direcciones}
+                      onValueChange={(value) => updateField('idMunicipios_Direcciones', String(value || ''))}
+                      style={{ 
+                        backgroundColor: 'transparent', 
+                        color: themeColors.text,
+                        flex: 1
+                      }}
+                      dropdownIconColor={themeColors.text}
+                      itemStyle={{ color: '#000000' }}
+                    >
+                      <Picker.Item
+                        label="Selecciona un municipio"
+                        value=""
+                        color={themeColors.textSecondary}
+                      />
+                      {municipios
+                        .filter(m => m && (m.Nombres_Municipios || m.nombre)) // Filtrar elementos válidos
+                        .map((m) => {
+                          const label = m.Nombres_Municipios || m.nombre || 'Municipio sin nombre';
+                          const value = String(m.idMunicipios || m.id || '');
+                          return (
+                            <Picker.Item
+                              key={value}
+                              label={label}
+                              value={value}
+                              color="#000000"
+                            />
+                          );
+                        })}
+                    </Picker>
+                  </View>
+                )}
+              </View>
+
+              {/* Tipo de Rol (predeterminado) */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Tipo de Rol *</Text>
+                <TextInput
+                  editable={false}
+                  style={[styles.input, { 
+                    backgroundColor: isDarkMode ? '#2E2E3E' : '#E9ECEF',
+                    borderColor: isDarkMode ? '#3A3A4A' : '#CFD3D8',
+                    color: isDarkMode ? '#B0B3B8' : '#495057' 
+                  }]}
+                  value="Ciudadano"
+                />
+              </View>
+
+              {/* Contraseña */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Contraseña *</Text>
+                <View style={[styles.passwordContainer, { borderColor: themeColors.border, backgroundColor: themeColors.background }]}>
+                  <TextInput
+                    style={[styles.passwordInput, { color: themeColors.text }]}
+                    placeholder="Mínimo 6 caracteres"
+                    placeholderTextColor={themeColors.textSecondary}
+                    secureTextEntry={!showPassword}
+                    value={formData.Password_Usuarios}
+                    onChangeText={(t) => updateField('Password_Usuarios', t)}
+                    maxLength={255}
+                  />
+                  <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(prev => !prev)}>
+                    <Ionicons name={showPassword ? 'eye' : 'eye-off'} size={24} color={themeColors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Confirmación de contraseña */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: themeColors.text }]}>Confirmar Contraseña *</Text>
+                <View style={[styles.passwordContainer, { borderColor: themeColors.border, backgroundColor: themeColors.background }]}> 
+                  <TextInput
+                    style={[styles.passwordInput, { color: themeColors.text }]} 
+                    placeholder="Repetir contraseña"
+                    placeholderTextColor={themeColors.textSecondary}
+                    secureTextEntry={!showConfirmPassword}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    maxLength={255}
+                  />
+                  <TouchableOpacity style={styles.eyeButton} onPress={() => setShowConfirmPassword(prev => !prev)}>
+                    <Ionicons name={showConfirmPassword ? 'eye' : 'eye-off'} size={24} color={themeColors.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+                {confirmPassword.length > 0 && !passwordsMatch && (
+                  <Text style={[styles.errorText, { color: isDarkMode ? '#ff6b6b' : '#d32f2f' }]}>Las contraseñas no coinciden.</Text>
+                )}
+              </View>
+
+              {/* Botón de registro */}
+              <TouchableOpacity 
+                style={[
+                  styles.loginButton,
+                  (isSubmitting || !passwordsMatch || !isPasswordValid) && styles.loginButtonDisabled,
+                ]} 
+                onPress={handleRegister}
+                disabled={isSubmitting || !passwordsMatch || !isPasswordValid}
+              >
+                <LinearGradient
+                  colors={isDarkMode ? ['#4CAF50', '#2E7D32'] : ['#2E7D32', '#4CAF50']}
+                  style={styles.loginButtonGradient}
                 >
-                  <Picker.Item label="Selecciona tu municipio..." value="" />
-                  <Picker.Item label="25 de Mayo" value="25 de Mayo" />
-              <Picker.Item label="Alba Posse" value="Alba Posse" />
-              <Picker.Item label="Almafuerte" value="Almafuerte" />
-              <Picker.Item label="Apostoles" value="Apostoles" />
-              <Picker.Item label="Aristobulo del Valle" value="Aristobulo del Valle" />
-              <Picker.Item label="Arroyo del Medio" value="Arroyo del Medio" />
-              <Picker.Item label="Azara" value="Azara" />
-              <Picker.Item label="Bernardo de Irigoyen" value="Bernardo de Irigoyen" />
-              <Picker.Item label="Bonpland" value="Bonpland" />
-              <Picker.Item label="Caa Yari" value="Caa Yari" />
-              <Picker.Item label="Campo Grande" value="Campo Grande" />
-              <Picker.Item label="Campo Ramon" value="Campo Ramon" />
-              <Picker.Item label="Campo Viera" value="Campo Viera" />
-              <Picker.Item label="Candelaria" value="Candelaria" />
-              <Picker.Item label="Capiovi" value="Capiovi" />
-              <Picker.Item label="Caraguatay" value="Caraguatay" />
-              <Picker.Item label="Cerro Azul" value="Cerro Azul" />
-              <Picker.Item label="Colonia Alberdi" value="Colonia Alberdi" />
-              <Picker.Item label="Colonia Aurora" value="Colonia Aurora" />
-              <Picker.Item label="Colonia Delicia" value="Colonia Delicia" />
-              <Picker.Item label="Colonia Polana" value="Colonia Polana" />
-              <Picker.Item label="Colonia Victoria" value="Colonia Victoria" />
-              <Picker.Item label="Comandante Andresito" value="Comandante Andresito" />
-              <Picker.Item label="Concepcion de la Sierra" value="Concepcion de la Sierra" />
-              <Picker.Item label="Corpus" value="Corpus" />
-              <Picker.Item label="Dos Arroyos" value="Dos Arroyos" />
-              <Picker.Item label="Dos de Mayo" value="Dos de Mayo" />
-              <Picker.Item label="El Alcazar" value="El Alcazar" />
-              <Picker.Item label="El Soberbio" value="El Soberbio" />
-              <Picker.Item label="Fachinal" value="Fachinal" />
-              <Picker.Item label="Florentino Ameghino" value="Florentino Ameghino" />
-              <Picker.Item label="Garuhape" value="Garuhape" />
-              <Picker.Item label="Garupa" value="Garupa" />
-              <Picker.Item label="General Alvear" value="General Alvear" />
-              <Picker.Item label="General Urquiza" value="General Urquiza" />
-              <Picker.Item label="Gobernador Lopez" value="Gobernador Lopez" />
-              <Picker.Item label="Gobernador Roca" value="Gobernador Roca" />
-              <Picker.Item label="Guarani" value="Guarani" />
-              <Picker.Item label="Hipolito Yrigoyen" value="Hipolito Yrigoyen" />
-              <Picker.Item label="Iguazu (Puerto Iguazu)" value="Iguazu (Puerto Iguazu)" />
-              <Picker.Item label="Itacaruare" value="Itacaruare" />
-              <Picker.Item label="Jardin America" value="Jardin America" />
-              <Picker.Item label="Leandro N. Alem" value="Leandro N. Alem" />
-              <Picker.Item label="Loreto" value="Loreto" />
-              <Picker.Item label="Los Helechos" value="Los Helechos" />
-              <Picker.Item label="Martires" value="Martires" />
-              <Picker.Item label="Mojon Grande" value="Mojon Grande" />
-              <Picker.Item label="Montecarlo" value="Montecarlo" />
-              <Picker.Item label="Nueve de Julio" value="Nueve de Julio" />
-              <Picker.Item label="Obera" value="Obera" />
-              <Picker.Item label="Olegario V. Andrade" value="Olegario V. Andrade" />
-              <Picker.Item label="Panambi" value="Panambi" />
-              <Picker.Item label="Posadas" value="Posadas" />
-              <Picker.Item label="Profundidad" value="Profundidad" />
-              <Picker.Item label="Puerto Esperanza" value="Puerto Esperanza" />
-              <Picker.Item label="Puerto Leoni" value="Puerto Leoni" />
-              <Picker.Item label="Puerto Libertad" value="Puerto Libertad" />
-              <Picker.Item label="Puerto Piray" value="Puerto Piray" />
-              <Picker.Item label="Puerto Rico" value="Puerto Rico" />
-              <Picker.Item label="Ruiz de Montoya" value="Ruiz de Montoya" />
-              <Picker.Item label="San Antonio" value="San Antonio" />
-              <Picker.Item label="San Ignacio" value="San Ignacio" />
-              <Picker.Item label="San Javier" value="San Javier" />
-              <Picker.Item label="San Jose" value="San Jose" />
-              <Picker.Item label="San Martin" value="San Martin" />
-              <Picker.Item label="San Pedro" value="San Pedro" />
-              <Picker.Item label="San Vicente" value="San Vicente" />
-              <Picker.Item label="Santa Ana" value="Santa Ana" />
-              <Picker.Item label="Santiago de Liniers" value="Santiago de Liniers" />
-              <Picker.Item label="Santo Pipo" value="Santo Pipo" />
-              <Picker.Item label="Tres Capones" value="Tres Capones" />
-              <Picker.Item label="Villa Libertad" value="Villa Libertad" />
-              <Picker.Item label="Wanda" value="Wanda" />
-            </Picker>
-          </View>
-
-          {/* Siguiente 2/3 */}
-          <TouchableOpacity
-            style={[styles.registerButton, styles.registerButtonSection2]}
-            onPress={() => setCurrentStep(3)}
-          >
-            <LinearGradient
-              colors={isDarkMode ? ['#4CAF50', '#2E7D32'] : ['#2E7D32', '#4CAF50']}
-              style={styles.registerButtonGradient}
-            >
-              <Text style={styles.registerButtonText}>Siguiente 2/3</Text>
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.loginButtonText}>Registrarse</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
             </LinearGradient>
-          </TouchableOpacity>
-        </>
-      )}
-      {currentStep === 3 && (
-        <>
-          {/* Contraseña */}
-          <Text style={[styles.label, { color: themeColors.text }]}>Contraseña *</Text>
-          <View style={[styles.passwordContainer, { backgroundColor: themeColors.background, borderColor: themeColors.border }]}>
-            <TextInput
-              style={[styles.passwordInput, { color: themeColors.text }]}
-              placeholder="Mínimo 6 caracteres"
-              placeholderTextColor={themeColors.textSecondary}
-              value={formData.Password_Usuarios}
-              onChangeText={(value) => handleInputChange('Password_Usuarios', value)}
-              onFocus={() => {
-                const now = new Date();
-                const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                console.log(`[TEXTINPUT] EL USUARIO APRETO EN EL CAMPO CONTRASEÑA - ${time} ${date}`);
-              }}
-              secureTextEntry={!showPassword}
-              autoComplete="new-password"
-              textContentType="newPassword"
-            />
-            <TouchableOpacity
-              style={styles.eyeButton}
-              onPress={() => {
-                const now = new Date();
-                const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                console.log(`[EYEBUTTON] EL USUARIO APRETO EL BOTON VER/OCULTAR CONTRASEÑA - ${time} ${date}`);
-                setShowPassword(!showPassword);
-              }}
-            >
-              <Ionicons
-                name={showPassword ? 'eye-off' : 'eye'}
-                size={24}
-                color={themeColors.textSecondary}
-              />
-            </TouchableOpacity>
-          </View>
 
-          {/* Confirmar Contraseña */}
-          <Text style={[styles.label, { color: themeColors.text }]}>Confirmar Contraseña *</Text>
-          <View style={[
-            styles.passwordContainer, 
-            passwordError !== '' ? styles.passwordContainerError : null,
-            { backgroundColor: themeColors.background, borderColor: themeColors.border }
-          ]}>
-            <TextInput
-              style={[styles.passwordInput, { color: themeColors.text }]}
-              placeholder="Repite tu contraseña"
-              placeholderTextColor={themeColors.textSecondary}
-              value={formData.confirmPassword}
-              onChangeText={(value) => handleInputChange('confirmPassword', value)}
-              onFocus={() => {
-                const now = new Date();
-                const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                console.log(`[TEXTINPUT] EL USUARIO APRETO EN EL CAMPO CONFIRMAR CONTRASEÑA - ${time} ${date}`);
-              }}
-              secureTextEntry={!showConfirmPassword}
-              autoComplete="new-password"
-              textContentType="newPassword"
-            />
-            <TouchableOpacity
-              style={styles.eyeButton}
-              onPress={() => {
-                const now = new Date();
-                const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-                const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-                console.log(`[EYEBUTTON] EL USUARIO APRETO EL BOTON VER/OCULTAR CONFIRMAR CONTRASEÑA - ${time} ${date}`);
-                setShowConfirmPassword(!showConfirmPassword);
-              }}
-            >
-              <Ionicons
-                name={showConfirmPassword ? 'eye-off' : 'eye'}
-                size={24}
-                color={themeColors.textSecondary}
-              />
-            </TouchableOpacity>
-          </View>
-        </>
-      )}
-          {passwordError !== '' ? (
-            <Text style={styles.errorText}>{passwordError}</Text>
-          ) : null}
+            {/* Link a login */}
+            <View style={styles.loginLinkContainer}>
+              <Text style={[styles.loginLinkText, { color: themeColors.textSecondary }]}>¿Ya tienes cuenta?</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={[styles.loginLink, { color: themeColors.primary }]}> Inicia sesión</Text>
+              </TouchableOpacity>
+            </View>
 
-          
-        </LinearGradient>
-
-        {/* Botón de registro */}
-        {currentStep === 3 && (
-          <>
-        <TouchableOpacity 
-          style={[
-            styles.registerButton, 
-            (isLoading || passwordError !== '' || isValidating || Object.values(validationErrors).some(error => error !== '')) && styles.registerButtonDisabled
-          ]} 
-          onPress={() => {
-            const now = new Date();
-            const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-            const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-            console.log(`[BUTTON] EL USUARIO ENTRO A REGISTRARSE - ${time} ${date}`);
-            handleRegister();
-          }}
-          disabled={isLoading || passwordError !== '' || isValidating || Object.values(validationErrors).some(error => error !== '')}
-        >
-          <LinearGradient
-            colors={isDarkMode ? ['#4CAF50', '#2E7D32'] : ['#2E7D32', '#4CAF50']}
-            style={styles.registerButtonGradient}
-          >
-            {isLoading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : isValidating ? (
-              <Text style={styles.registerButtonText}>Validando...</Text>
-            ) : (
-              <Text style={styles.registerButtonText}>Registrarse</Text>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
-          </>
-        )}
-
-        {/* Link a login */}
-        <View style={styles.loginLinkContainer}>
-          <Text style={[styles.loginLinkText, { color: themeColors.textSecondary }]}>¿Ya tienes una cuenta? </Text>
-          <TouchableOpacity 
-            onPress={() => {
-              const now = new Date();
-              const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-              const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-              console.log(`[BUTTON] EL USUARIO ENTRO A INICIAR SESION - ${time} ${date}`);
-              navigation.navigate('Login');
-            }}
-          >
-            <Text style={[styles.loginLink, { color: themeColors.primary }]}>Iniciar Sesión</Text>
-          </TouchableOpacity>
-        </View>
+            {/* Footer */}
+            <View style={styles.footer}>
+              <TouchableOpacity>
+                <Text style={[styles.footerLink, { color: themeColors.textSecondary }]}>Términos y Condiciones</Text>
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <Text style={[styles.footerLink, { color: themeColors.textSecondary }]}>Política de Privacidad</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -905,8 +658,9 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-
-  // Header styles
+  scrollContent: {
+    flexGrow: 1,
+  },
   header: {
     backgroundColor: '#1A1A2E',
     paddingTop: getResponsiveSize(20, 15, 10),
@@ -919,8 +673,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 0,
   },
-  headerLeft: {
-    width: 50,
+  menuButton: {
+    width: getResponsiveSize(40, 35, 30),
+    height: getResponsiveSize(40, 35, 30),
+    borderRadius: getResponsiveSize(20, 17.5, 15),
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#4CAF50',
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   headerCenter: {
     flex: 1,
@@ -935,10 +700,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#4CAF50',
     shadowColor: '#4CAF50',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
@@ -956,12 +718,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: getResponsiveSize(30, 20, 15),
   },
-  logoImage: {
+  logoImageLarge: {
     width: getResponsiveSize(125, 100, 80),
     height: getResponsiveSize(125, 100, 80),
     marginBottom: getResponsiveSize(5, 3, 2),
   },
-  appName: {
+  appNameLarge: {
     fontSize: getResponsiveSize(28, 24, 20),
     fontWeight: 'bold',
   },
@@ -982,26 +744,20 @@ const styles = StyleSheet.create({
   formCard: {
     borderRadius: 16,
     padding: getResponsiveSize(20, 15, 12),
-    // Reducimos el padding superior para acercar el título a la parte alta del card
-    paddingTop: getResponsiveSize(12, 10, 8),
     marginBottom: getResponsiveSize(30, 20, 15),
     shadowColor: '#4CAF50',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
   inputGroup: {
-    marginBottom: getResponsiveSize(25, 20, 16),
+    marginBottom: getResponsiveSize(20, 15, 12),
   },
   label: {
     fontSize: getResponsiveSize(16, 14, 12),
     fontWeight: 'bold',
-    marginTop: getResponsiveSize(16, 12, 10),
-    marginBottom: getResponsiveSize(12, 10, 8),
+    marginBottom: getResponsiveSize(8, 6, 4),
   },
   input: {
     borderWidth: 1,
@@ -1010,119 +766,56 @@ const styles = StyleSheet.create({
     fontSize: getResponsiveSize(16, 14, 12),
     minHeight: getResponsiveSize(54, 48, 42),
   },
-  inputError: {
-    borderColor: '#f44336',
-  },
   passwordContainer: {
-    borderWidth: 1,
-    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: 15,
-    minHeight: 54,
-  },
-  passwordContainerError: {
-    borderColor: '#f44336',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingRight: getResponsiveSize(15, 12, 10),
+    minHeight: getResponsiveSize(54, 48, 42),
   },
   passwordInput: {
     flex: 1,
-    paddingVertical: 15,
-    paddingLeft: 15,
-    fontSize: 16,
-    color: '#333',
+    paddingVertical: getResponsiveSize(15, 12, 10),
+    paddingLeft: getResponsiveSize(15, 12, 10),
+    fontSize: getResponsiveSize(16, 14, 12),
   },
   eyeButton: {
-    padding: 5,
+    padding: getResponsiveSize(5, 4, 3),
   },
   errorText: {
-    color: '#f44336',
-    fontSize: 14,
-    marginTop: 5,
-    marginLeft: 5,
+    fontSize: getResponsiveSize(12, 11, 10),
+    marginTop: getResponsiveSize(6, 5, 4),
+    fontWeight: '500',
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    // Movemos el título más arriba reduciendo el margen superior
-    marginTop: getResponsiveSize(8, 6, 4),
-    marginBottom: 15,
-    textAlign: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: '#4CAF50',
-    paddingBottom: 5,
-  },
-  readOnlyInput: {
-    backgroundColor: '#f0f0f0',
-    borderWidth: 2,
-    borderColor: '#cccccc',
-    borderRadius: 8,
-    padding: 15,
-  },
-  readOnlyText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#4CAF50',
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  picker: {
-    height: 50,
-    justifyContent: 'center',
-    borderRadius: 12,
-  },
-  registerButton: {
+  loginButton: {
     borderRadius: 16,
-    marginBottom: getResponsiveSize(15, 12, 10),
+    marginBottom: getResponsiveSize(20, 15, 12),
     overflow: 'hidden',
     shadowColor: '#4CAF50',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
-  registerButtonGradient: {
-    padding: getResponsiveSize(18, 16, 14),
+  loginButtonGradient: {
+    padding: getResponsiveSize(18, 15, 12),
     alignItems: 'center',
     minHeight: getResponsiveSize(54, 48, 42),
     justifyContent: 'center',
   },
-  // Espaciado extra para el botón de Siguiente 2/3 en Sección 2
-  registerButtonSection2: {
-    marginTop: getResponsiveSize(24, 20, 16),
-  },
-  // Espaciado extra para el botón de Siguiente 1/3 en Sección 1
-  registerButtonSection1: {
-    marginTop: getResponsiveSize(24, 20, 16),
-  },
-  registerButtonText: {
+  loginButtonText: {
     color: '#fff',
     fontSize: getResponsiveSize(18, 16, 14),
     fontWeight: 'bold',
   },
-  registerButtonDisabled: {
+  loginButtonDisabled: {
     opacity: 0.6,
   },
   loginLinkContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: getResponsiveSize(20, 15, 12),
-    marginTop: 'auto',
-    paddingTop: getResponsiveSize(20, 15, 12),
   },
   loginLinkText: {
     fontSize: getResponsiveSize(16, 14, 12),
@@ -1131,49 +824,47 @@ const styles = StyleSheet.create({
     fontSize: getResponsiveSize(16, 14, 12),
     fontWeight: 'bold',
   },
-  profileImageContainer: {
+  footer: {
     alignItems: 'center',
-    marginBottom: 20,
-    padding: 15,
-    borderRadius: 16,
-    shadowColor: '#4CAF50',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    marginTop: 'auto',
+    paddingBottom: getResponsiveSize(50, 30, 20),
+    paddingTop: getResponsiveSize(20, 15, 10),
   },
-  profileImageLabel: {
-    fontSize: 14,
-    marginBottom: 10,
-    fontWeight: 'bold',
+  footerLink: {
+    fontSize: getResponsiveSize(14, 12, 10),
+    marginVertical: getResponsiveSize(2, 1.5, 1),
   },
-  selectedProfileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 3,
-    borderColor: '#4CAF50',
+  pickerLoading: {
+    height: getResponsiveSize(54, 48, 42),
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
   },
-  profileImageName: {
-    fontSize: 12,
-    marginTop: 5,
-    textAlign: 'center',
+  loadingText: {
+    marginLeft: 10,
+    fontSize: getResponsiveSize(14, 12, 10),
   },
-  changeImageButton: {
-    borderRadius: 20,
-    marginTop: 10,
-    overflow: 'hidden',
+  pickerContainer: {
+    borderWidth: 1,
+    borderRadius: 12,
+    minHeight: getResponsiveSize(54, 48, 42),
+    justifyContent: 'center',
   },
-  changeImageButtonGradient: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+  picker: {
+    height: getResponsiveSize(54, 48, 42),
+    justifyContent: 'center',
+    borderRadius: 12,
+    paddingHorizontal: getResponsiveSize(15, 12, 10),
+    fontSize: getResponsiveSize(16, 14, 12),
   },
-  changeImageButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
+  pickerInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    height: getResponsiveSize(54, 48, 42),
+    paddingLeft: getResponsiveSize(8, 6, 4),
+    paddingRight: getResponsiveSize(8, 6, 4),
+    paddingVertical: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

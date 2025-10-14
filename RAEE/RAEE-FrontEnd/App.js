@@ -19,12 +19,12 @@ import CitizenHomeScreen from './citizen-screens/CitizenHomeScreen';
 import ProfileCitizenScreen from './citizen-screens/ProfileCitizenScreen';
 import ExchangeShopCitizenScreen from './citizen-screens/ExchangeShopCitizenScreen';
 import StatisticsCitizenScreen from './citizen-screens/StatisticsCitizenScreen';
+import ScanQRCitizenScreen from './citizen-screens/ScanQRCitizen';
 
 // Import reception screens
 import ReceptionHomeScreen from './reception-screens/ReceptionHomeScreen';
 import AddDeviceReceptionScreen from './reception-screens/AddDeviceReceptionScreen';
 import ProfileReceptionScreen from './reception-screens/ProfileReceptionScreen';
-import ExchangeShopReceptionScreen from './reception-screens/ExchangeShopReceptionScreen';
 
 // Import admin screens
 import AdminHomeScreen from './administration-screens/AdminHomeScreen';
@@ -131,12 +131,12 @@ function AppNavigator() {
             <Stack.Screen name="ProfileCitizenScreen" component={ProfileCitizenScreen} />
             <Stack.Screen name="ExchangeShopCitizenScreen" component={ExchangeShopCitizenScreen} />
             <Stack.Screen name="StatisticsCitizenScreen" component={StatisticsCitizenScreen} />
+            <Stack.Screen name="ScanQRCitizenScreen" component={ScanQRCitizenScreen} />
             
             {/* Reception screens */}
             <Stack.Screen name="ReceptionHomeScreen" component={ReceptionHomeScreen} />
-            <Stack.Screen name="DonationReceptionScreen" component={AddDeviceReceptionScreen} />
+            <Stack.Screen name="AddDeviceReceptionScreen" component={AddDeviceReceptionScreen} />
             <Stack.Screen name="ProfileReceptionScreen" component={ProfileReceptionScreen} />
-            <Stack.Screen name="ExchangeShopReceptionScreen" component={ExchangeShopReceptionScreen} />
             
             {/* Admin screens */}
             <Stack.Screen name="AdminHomeScreen" component={AdminHomeScreen} />

@@ -95,10 +95,10 @@ export const AuthProvider = ({ children }) => {
       try {
         const response = await ApiService.login(credentials);
         
-        if (response.success && response.data && response.data.user) {
-          const userData = response.data.user;
-          
-          
+        // El backend devuelve { message, user } en login exitoso
+        if (response && response.user) {
+          const userData = response.user;
+
           // Guardar los datos del usuario en AsyncStorage
           await AsyncStorage.setItem('userData', JSON.stringify(userData));
           
@@ -107,10 +107,10 @@ export const AuthProvider = ({ children }) => {
             user: userData,
           });
           
-          return { success: true, message: response.message };
+          return { success: true, message: response.message || 'Inicio de sesión exitoso' };
         } else {
           dispatch({ type: 'SET_LOADING', isLoading: false });
-          return { success: false, message: response.message };
+          return { success: false, message: response?.message || 'Credenciales inválidas' };
         }
       } catch (error) {
         dispatch({ type: 'SET_LOADING', isLoading: false });

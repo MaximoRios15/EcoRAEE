@@ -17,31 +17,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ApiService from '../services/ApiService';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }) {
-  // Datos simulados del usuario
-  const user = {
-    idUsuarios: 1,
-    nombres: 'Juan',
-    apellidos: 'Pérez',
-    ImagenPerfil_Usuarios: 'perfil1animal.png',
-    Puntos_Usuarios: 150
-  };
-  
-  // Función simulada de cerrar sesión
-  const { signOut } = useAuth();
-  
-  // Función simulada de refrescar perfil
-  const refreshProfile = async () => {
-    console.log('Refrescando perfil...');
-    return Promise.resolve();
-  };
+  // Obtener datos del usuario del contexto de autenticación
+  const { user, signOut, refreshProfile } = useAuth();
   
   const [isLoading, setIsLoading] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [userPoints, setUserPoints] = useState(0);
+  const [userPublicationsCount, setUserPublicationsCount] = useState(0);
   const [pointsLoaded, setPointsLoaded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -58,6 +45,10 @@ export default function HomeScreen({ navigation }) {
   const autoScrollInterval = useRef(null);
   const currentScrollPosition = useRef(0);
   const isUserScrolling = useRef(false);
+  
+  // Refs para evitar llamadas duplicadas de carga de imagen
+  const isLoadingImageRef = useRef(false);
+  const loadedImageRef = useRef(false);
 
   useEffect(() => {
     // Log screen load
@@ -70,25 +61,11 @@ export default function HomeScreen({ navigation }) {
     setUserPoints(user.Puntos_Usuarios || 150);
     setPointsLoaded(true);
     
-    // Simular ubicaciones de ecopuntos
-    const simulatedLocations = [
-      {
-        idUbicaciones: 1,
-        Direccion_Ubicaciones: 'Calle 123 #45-67',
-        Numero_Ubicaciones: '001',
-        Ciudad_Ubicaciones: 'Bogotá',
-        Estado_Ubicaciones: '1'
-      },
-      {
-        idUbicaciones: 2,
-        Direccion_Ubicaciones: 'Carrera 45 #12-34',
-        Numero_Ubicaciones: '002',
-        Ciudad_Ubicaciones: 'Medellín',
-        Estado_Ubicaciones: '1'
-      }
-    ];
-    setLocations(simulatedLocations);
-    setLocationsLoading(false);
+    // Cargar contador de publicaciones
+    loadUserPublicationsCount();
+    
+    // Cargar ubicaciones de ecopuntos
+    loadLocations();
     
     // Cargar preferencia del tema
     loadThemePreference();
@@ -136,12 +113,14 @@ export default function HomeScreen({ navigation }) {
     overlay: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)',
   };
 
-  // Cargar imagen de perfil cuando el usuario esté disponible y el perfil esté cargado
+  // Cargar imagen de perfil cuando el usuario esté disponible
   useEffect(() => {
-    if (user && user.ImagenPerfil_Usuarios && !imageLoaded) {
+    if (user && user.idUsuarios && !isLoadingImageRef.current && !loadedImageRef.current) {
+      // Limpiar cache si es un usuario diferente
+      clearImageCacheIfDifferentUser();
       loadProfileImage();
     }
-  }, [user?.idUsuarios]); // Solo reaccionar cuando cambie el usuario
+  }, [user]);
 
   // Recargar imagen cuando se enfoque la pantalla (desde ProfileScreen)
   // Comentado temporalmente para debug del logout
@@ -161,19 +140,26 @@ export default function HomeScreen({ navigation }) {
   );
   */
 
+  const clearImageCacheIfDifferentUser = async () => {
+    try {
+      const savedUserId = await AsyncStorage.getItem('profileImageUserId');
+      if (savedUserId && savedUserId !== user?.idUsuarios?.toString()) {
+        // Es un usuario diferente, limpiar cache
+        await AsyncStorage.removeItem('profileImage');
+        await AsyncStorage.removeItem('profileImageUserId');
+        setProfileImage(null);
+        loadedImageRef.current = false;
+      }
+    } catch (error) {
+      console.error('Error clearing image cache:', error);
+    }
+  };
+
   const loadProfileImage = async () => {
     // Evitar llamadas duplicadas
-    if (imageLoaded) {
-      return;
-    }
+    if (isLoadingImageRef.current || loadedImageRef.current) return;
     
-    // Verificar que el usuario tenga imagen de perfil
-    if (!user?.ImagenPerfil_Usuarios) {
-      setProfileImage(null);
-      setImageLoaded(true);
-      return;
-    }
-    
+    isLoadingImageRef.current = true;
     try {
       // Verificar si hay imagen personalizada del usuario actual
       const savedImage = await AsyncStorage.getItem('profileImage');
@@ -183,35 +169,53 @@ export default function HomeScreen({ navigation }) {
       if (savedImage && savedUserId && savedUserId === user?.idUsuarios?.toString()) {
         const imageData = JSON.parse(savedImage);
         setProfileImage(imageData);
-        setImageLoaded(true);
+        loadedImageRef.current = true;
         return;
       }
 
-      // Cargar imagen de la base de datos
-      const imageMap = {
-        'perfil1animal.png': require('../img/profile/perfil1animal.png'),
-        'perfil1flores.png': require('../img/profile/perfil1flores.png'),
-        'perfil2animal.png': require('../img/profile/perfil2animal.png'),
-        'perfil2flores.png': require('../img/profile/perfil2flores.png'),
-        'perfil3animal.png': require('../img/profile/perfil3animal.png'),
-        'perfil3flores.png': require('../img/profile/perfil3flores.png'),
-        'perfil4animal.png': require('../img/profile/perfil4animal.png'),
-        'perfil4flores.png': require('../img/profile/perfil4flores.png'),
-        'perfil5animal.png': require('../img/profile/perfil5animal.png'),
-        'perfil5flores.png': require('../img/profile/perfil5flores.png')
-      };
+      // Si no hay imagen personalizada del usuario actual, cargar imagen de la base de datos
+      if (user?.ImagenPerfil_Usuarios) {
+        const imageMap = {
+          'perfil1animal.png': require('../img/profile/perfil1animal.png'),
+          'perfil1flores.png': require('../img/profile/perfil1flores.png'),
+          'perfil2animal.png': require('../img/profile/perfil2animal.png'),
+          'perfil2flores.png': require('../img/profile/perfil2flores.png'),
+          'perfil3animal.png': require('../img/profile/perfil3animal.png'),
+          'perfil3flores.png': require('../img/profile/perfil3flores.png'),
+          'perfil4animal.png': require('../img/profile/perfil4animal.png'),
+          'perfil4flores.png': require('../img/profile/perfil4flores.png'),
+          'perfil5animal.png': require('../img/profile/perfil5animal.png'),
+          'perfil5flores.png': require('../img/profile/perfil5flores.png'),
+          // Mapeo para rutas con prefijo 'profile/'
+          'profile/perfil1animal.png': require('../img/profile/perfil1animal.png'),
+          'profile/perfil1flores.png': require('../img/profile/perfil1flores.png'),
+          'profile/perfil2animal.png': require('../img/profile/perfil2animal.png'),
+          'profile/perfil2flores.png': require('../img/profile/perfil2flores.png'),
+          'profile/perfil3animal.png': require('../img/profile/perfil3animal.png'),
+          'profile/perfil3flores.png': require('../img/profile/perfil3flores.png'),
+          'profile/perfil4animal.png': require('../img/profile/perfil4animal.png'),
+          'profile/perfil4flores.png': require('../img/profile/perfil4flores.png'),
+          'profile/perfil5animal.png': require('../img/profile/perfil5animal.png'),
+          'profile/perfil5flores.png': require('../img/profile/perfil5flores.png')
+        };
 
-      const imageSource = imageMap[user.ImagenPerfil_Usuarios];
-      if (imageSource) {
-        setProfileImage(imageSource);
+        const imageSource = imageMap[user.ImagenPerfil_Usuarios];
+        if (imageSource) {
+          setProfileImage(imageSource);
+        } else {
+          setProfileImage(null);
+        }
+        loadedImageRef.current = true;
       } else {
         setProfileImage(null);
+        loadedImageRef.current = true;
       }
-      setImageLoaded(true);
     } catch (error) {
       console.error('Error loading profile image:', error);
       setProfileImage(null);
-      setImageLoaded(true);
+      loadedImageRef.current = true;
+    } finally {
+      isLoadingImageRef.current = false;
     }
   };
 
@@ -221,44 +225,59 @@ export default function HomeScreen({ navigation }) {
     setPointsLoaded(true);
   };
 
-  const loadLocations = async () => {
-    console.log('[LOCATIONS] Simulando carga de ubicaciones...');
-    setLocationsLoading(true);
+  const loadUserPublicationsCount = async () => {
+    // Temporalmente deshabilitado para evitar errores de API
+    // El endpoint user/statistics no está disponible actualmente
+    setUserPublicationsCount(0);
     
-    // Simular delay de carga
-    setTimeout(() => {
-      const simulatedLocations = [
-        {
-          idUbicaciones: 1,
-          Direccion_Ubicaciones: 'Calle 123 #45-67',
-          Numero_Ubicaciones: '001',
-          Ciudad_Ubicaciones: 'Bogotá',
-          Estado_Ubicaciones: '1'
-        },
-        {
-          idUbicaciones: 2,
-          Direccion_Ubicaciones: 'Carrera 45 #12-34',
-          Numero_Ubicaciones: '002',
-          Ciudad_Ubicaciones: 'Medellín',
-          Estado_Ubicaciones: '1'
-        },
-        {
-          idUbicaciones: 3,
-          Direccion_Ubicaciones: 'Avenida 67 #89-12',
-          Numero_Ubicaciones: '003',
-          Ciudad_Ubicaciones: 'Cali',
-          Estado_Ubicaciones: '1'
-        }
-      ];
-      
-      setLocations(simulatedLocations);
-      setLocationsLoading(false);
-      
-      // Iniciar animación del carrusel si hay ubicaciones
-      if (simulatedLocations.length > 0) {
+    /* TODO: Habilitar cuando el endpoint esté disponible
+    try {
+      // Cargar contador real de donaciones desde el backend
+      if (!user?.idUsuarios) {
+        setUserPublicationsCount(0);
+        return;
+      }
+      const stats = await ApiService.getUserStatistics(user.idUsuarios);
+      const total = 
+        stats?.statistics?.totalDonations ??
+        stats?.statistics?.total_donations ??
+        stats?.totalDonations ??
+        stats?.total_donations ??
+        stats?.donations ?? 0;
+      setUserPublicationsCount(Number.isFinite(total) ? total : 0);
+    } catch (error) {
+      setUserPublicationsCount(0);
+    }
+    */
+  };
+
+  const loadLocations = async () => {
+    try {
+      setLocationsLoading(true);
+      const result = await ApiService.getEcopoints();
+      const ecopoints = Array.isArray(result?.ecopoints) ? result.ecopoints : [];
+
+      // Mapear datos del backend a la estructura usada por el carrusel
+      const mapped = ecopoints.map((row) => ({
+        idUbicaciones: row.idPuntoEntrega,
+        Direccion_Ubicaciones: `${row.Calle_Direcciones || ''} ${row.Numero_Direcciones || ''}`.trim(),
+        NroCalle_Ubicaciones: row.Numero_Direcciones || '',
+        Municipios_Ubicaciones: row.Municipio || '',
+        Provincia_Ubicaciones: 'Misiones',
+        Estado_Ubicaciones: '1',
+      }));
+
+      setLocations(mapped);
+
+      if (mapped.length > 0) {
         startInfiniteCarousel();
       }
-    }, 1000);
+    } catch (error) {
+      console.error('[LOCATIONS] Error loading locations:', error);
+      setLocations([]);
+    } finally {
+      setLocationsLoading(false);
+    }
   };
 
   // Sistema de carrusel continuo con pausa manual
@@ -382,6 +401,10 @@ export default function HomeScreen({ navigation }) {
     setIsLoading(true);
     console.log('[PROFILE] Simulando carga del perfil...');
     
+    // Reset de las referencias de imagen para permitir recarga
+    isLoadingImageRef.current = false;
+    loadedImageRef.current = false;
+    
     // Simular delay de carga
     setTimeout(() => {
       console.log(`[FUNCTION] EL USUARIO COMPLETO LA CARGA DEL PERFIL - ${time} ${date}`);
@@ -442,51 +465,30 @@ export default function HomeScreen({ navigation }) {
     const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
     
     switch (action) {
-      case 'donate':
-console.log(`[BUTTON] EL USUARIO APRETO EL BOTON AÑADIR DISPOSITIVOS - ${time} ${date}`);
-        navigation.navigate('DonationReceptionScreen');
-        break;
-      case 'donations':
-        console.log(`[BUTTON] EL USUARIO APRETO EL BOTON MIS DONACIONES - ${time} ${date}`);
-        Alert.alert('Próximamente', 'Esta función estará disponible pronto', [
-          {
-            text: 'OK',
-            onPress: () => {
-              const now = new Date();
-              const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-              const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-              console.log(`[ALERT] EL USUARIO CERRÓ LA ALERTA MIS DONACIONES - ${time} ${date}`);
-            }
-          }
-        ]);
-        break;
-      case 'deliveries':
-        console.log(`[BUTTON] EL USUARIO APRETO EL BOTON TIENDA DE CANJES - ${time} ${date}`);
-        navigation.navigate('ExchangeShopReceptionScreen');
-        break;
-      case 'points':
-        console.log(`[BUTTON] EL USUARIO APRETO EL BOTON PUNTOS - ${time} ${date}`);
-        Alert.alert('Próximamente', 'Esta función estará disponible pronto', [
-          {
-            text: 'OK',
-            onPress: () => {
-              const now = new Date();
-              const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-              const date = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
-              console.log(`[ALERT] EL USUARIO CERRÓ LA ALERTA PUNTOS - ${time} ${date}`);
-            }
-          }
-        ]);
+      case 'home':
+        console.log(`[BUTTON] EL USUARIO APRETO EL BOTON INICIO - ${time} ${date}`);
+        // Ya estamos en home, no hacer nada
         break;
       case 'profile':
         console.log(`[BUTTON] EL USUARIO APRETO EL BOTON MI PERFIL - ${time} ${date}`);
         navigation.navigate('ProfileReceptionScreen');
         break;
-      case 'shop':
-        console.log(`[BUTTON] EL USUARIO APRETO EL BOTON TIENDA DE CANJES - ${time} ${date}`);
-        navigation.navigate('ExchangeShopReceptionScreen');
+      case 'add_device':
+        console.log(`[BUTTON] EL USUARIO APRETO EL BOTON AÑADIR DISPOSITIVOS - ${time} ${date}`);
+        navigation.navigate('AddDeviceReceptionScreen');
         break;
-
+      case 'verify_email':
+        console.log(`[BUTTON] EL USUARIO APRETO EL BOTON VERIFICAR CORREO - ${time} ${date}`);
+        Alert.alert('Próximamente', 'La verificación de correo estará disponible pronto');
+        break;
+      case 'verify_phone':
+        console.log(`[BUTTON] EL USUARIO APRETO EL BOTON VERIFICAR CELULAR - ${time} ${date}`);
+        Alert.alert('Próximamente', 'La verificación de celular estará disponible pronto');
+        break;
+      case 'change_password':
+        console.log(`[BUTTON] EL USUARIO APRETO EL BOTON CAMBIAR CONTRASEÑA - ${time} ${date}`);
+        Alert.alert('Próximamente', 'El cambio de contraseña estará disponible pronto');
+        break;
       default:
         break;
     }
@@ -608,7 +610,7 @@ console.log(`[BUTTON] EL USUARIO APRETO EL BOTON AÑADIR DISPOSITIVOS - ${time} 
                 Recepción EcoRAEE
               </Text>
               <Text style={[styles.sidebarPointsText, { color: themeColors.text }]}>
-                Puntos: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{userPoints}</Text>
+                Donaciones: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{userPublicationsCount}</Text>
               </Text>
             </View>
 
@@ -620,14 +622,9 @@ console.log(`[BUTTON] EL USUARIO APRETO EL BOTON AÑADIR DISPOSITIVOS - ${time} 
                 handleActionPress('profile');
               })}
 
-              {renderSidebarItem('Añadir Dispositivos', 'phone-portrait-outline', '#4CAF50', () => {
+              {renderSidebarItem('Añadir Dispositivos', 'add-circle-outline', '#FF9800', () => {
                 setSidebarVisible(false);
-                handleActionPress('donate');
-              })}
-
-              {renderSidebarItem('Tienda de Canjes', 'cart-outline', '#FF9800', () => {
-                setSidebarVisible(false);
-                handleActionPress('shop');
+                handleActionPress('add_device');
               })}
 
               {renderSidebarItem(
@@ -715,23 +712,14 @@ console.log(`[BUTTON] EL USUARIO APRETO EL BOTON AÑADIR DISPOSITIVOS - ${time} 
           )}
         </View>
 
-        {/* Action Cards */}
+        {/* Actions Section */}
         <View style={styles.actionsSection}>
           {renderActionCard(
             'Añadir Dispositivos',
-            'Contribuye al reciclaje responsable',
-            'phone-portrait-outline',
-            () => handleActionPress('donate'),
-            true,
-            '#4CAF50'
-          )}
-          
-          {renderActionCard(
-            'Tienda de Canjes',
-            'Intercambia tus puntos por recompensas',
-            'cart-outline',
-            () => handleActionPress('deliveries'),
-            true,
+            'Registra nuevos dispositivos RAEE',
+            'add-circle-outline',
+            () => handleActionPress('add_device'),
+            false,
             '#FF9800'
           )}
         </View>
@@ -1171,6 +1159,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#4CAF50',
+  },
+  sidebarStatsContainer: {
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  sidebarPublicationsText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    opacity: 0.9,
+    marginTop: 4,
+  },
+  sidebarPublicationsValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF9800',
   },
   sidebarMenu: {
     flex: 1,

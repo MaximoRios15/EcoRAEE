@@ -13,25 +13,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../contexts/AuthContext';
+import ApiService from '../services/ApiService';
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function StatisticsScreen({ navigation }) {
-  // Datos simulados del usuario
-  const user = {
-    idUsuarios: 1,
-    Nombres_Usuarios: 'Juan',
-    Apellidos_Usuarios: 'Pérez',
-    Correo_Usuarios: 'juan.perez@email.com',
-    Puntos_Usuarios: 250,
-    ImagenPerfil_Usuarios: null
-  };
-
-  // Función simulada de signOut
-  const signOut = () => {
-    console.log('Cerrando sesión...');
-    navigation.navigate('Login');
-  };
+  // Usuario real desde AuthContext
+  const { user, signOut, refreshProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [userPoints, setUserPoints] = useState(0);
@@ -47,9 +36,85 @@ export default function StatisticsScreen({ navigation }) {
   });
 
   useEffect(() => {
-    loadStatistics();
     loadThemePreference();
   }, []);
+
+  useEffect(() => {
+    // Cargar estadísticas cuando haya usuario
+    loadStatistics();
+  }, [user?.idUsuarios]);
+
+  const loadStatistics = async () => {
+    try {
+      // Si no hay usuario, mantener valores por defecto
+      if (!user?.idUsuarios) {
+        setStatistics((prev) => ({
+          ...prev,
+          currentPoints: user?.Puntos_Usuarios || 0,
+        }));
+        return;
+      }
+
+      const stats = await ApiService.getUserStatistics(user.idUsuarios);
+      const totalDonations =
+        stats?.statistics?.totalDonations ??
+        stats?.statistics?.total_donations ??
+        stats?.totalDonations ??
+        stats?.total_donations ??
+        stats?.donations ?? 0;
+
+      const totalPointsEarned =
+        stats?.statistics?.totalPointsEarned ??
+        stats?.statistics?.total_points_earned ??
+        stats?.totalPointsEarned ??
+        stats?.total_points_earned ?? 0;
+
+      const totalPointsRedeemed =
+        stats?.statistics?.totalPointsRedeemed ??
+        stats?.statistics?.total_points_redeemed ??
+        stats?.totalPointsRedeemed ??
+        stats?.total_points_redeemed ?? 0;
+
+      const currentPoints =
+        user?.Puntos_Usuarios ??
+        stats?.statistics?.currentPoints ??
+        stats?.statistics?.current_points ??
+        stats?.currentPoints ??
+        stats?.current_points ?? 0;
+
+      const categoriesDonated =
+        stats?.statistics?.categoriesDonated ??
+        stats?.statistics?.categories_donated ??
+        stats?.categoriesDonated ??
+        stats?.categories_donated ?? [];
+
+      const monthlyStats =
+        stats?.statistics?.monthlyStats ??
+        stats?.statistics?.monthly_stats ??
+        stats?.monthlyStats ??
+        stats?.monthly_stats ?? [];
+
+      setStatistics({
+        totalDonations: Number.isFinite(totalDonations) ? Number(totalDonations) : 0,
+        totalPointsEarned: Number.isFinite(totalPointsEarned) ? Number(totalPointsEarned) : 0,
+        totalPointsRedeemed: Number.isFinite(totalPointsRedeemed) ? Number(totalPointsRedeemed) : 0,
+        currentPoints: Number.isFinite(currentPoints) ? Number(currentPoints) : 0,
+        categoriesDonated: Array.isArray(categoriesDonated) ? categoriesDonated : [],
+        monthlyStats: Array.isArray(monthlyStats) ? monthlyStats : [],
+      });
+    } catch (error) {
+      // Fallback seguro si el endpoint devuelve error
+      setStatistics((prev) => ({
+        ...prev,
+        totalDonations: 0,
+        totalPointsEarned: 0,
+        totalPointsRedeemed: 0,
+        currentPoints: user?.Puntos_Usuarios || 0,
+        categoriesDonated: [],
+        monthlyStats: [],
+      }));
+    }
+  };
 
   // Cargar preferencia del tema desde AsyncStorage
   const loadThemePreference = async () => {
@@ -109,6 +174,9 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
   // Función para manejar acciones del sidebar
   const handleActionPress = (action) => {
     switch (action) {
+      case 'scanqr':
+        navigation.navigate('ScanQRCitizenScreen');
+        break;
       case 'home':
         navigation.navigate('CitizenHomeScreen');
         break;
@@ -134,7 +202,7 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
     );
   };
 
-  const loadStatistics = async () => {
+  const loadStatisticsLegacy = async () => {
     setIsLoading(true);
     try {
       // Simular carga de estadísticas
@@ -299,22 +367,45 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
             {/* Welcome Section in Sidebar */}
             <View style={styles.sidebarWelcome}>
               <View style={styles.sidebarAvatarContainer}>
-                {user?.ImagenPerfil_Usuarios ? (
-                  <Image 
-                    source={{ uri: user.ImagenPerfil_Usuarios }} 
-                    style={styles.sidebarAvatarImage}
-                  />
-                ) : (
-                  <Text style={styles.sidebarAvatarText}>
-                    {user?.Nombres_Usuarios?.charAt(0)}{user?.Apellidos_Usuarios?.charAt(0)}
-                  </Text>
-                )}
+                {(() => {
+                  const filename = user?.ImagenPerfil_Usuarios || user?.imagenPerfil_Usuarios;
+                  const imageMap = {
+                    'perfil1animal.png': require('../img/profile/perfil1animal.png'),
+                    'perfil1flores.png': require('../img/profile/perfil1flores.png'),
+                    'perfil2animal.png': require('../img/profile/perfil2animal.png'),
+                    'perfil2flores.png': require('../img/profile/perfil2flores.png'),
+                    'perfil3animal.png': require('../img/profile/perfil3animal.png'),
+                    'perfil3flores.png': require('../img/profile/perfil3flores.png'),
+                    'perfil4animal.png': require('../img/profile/perfil4animal.png'),
+                    'perfil4flores.png': require('../img/profile/perfil4flores.png'),
+                    'perfil5animal.png': require('../img/profile/perfil5animal.png'),
+                    'perfil5flores.png': require('../img/profile/perfil5flores.png')
+                  };
+                  const normalized = typeof filename === 'string'
+                    ? filename.replace(/^\/?(?:img\/)?profile\//i, '')
+                    : filename;
+                  const mapped = normalized ? imageMap[normalized] : null;
+                  const source = mapped 
+                    ? mapped 
+                    : (typeof filename === 'string' && (filename.startsWith('http://') || filename.startsWith('https://'))) 
+                      ? { uri: filename } 
+                      : null;
+
+                  if (source) {
+                    return <Image source={source} style={styles.sidebarAvatarImage} />;
+                  }
+                  return (
+                    <Text style={styles.sidebarAvatarText}>
+                      {user?.Nombres_Usuarios?.charAt(0)}{user?.Apellidos_Usuarios?.charAt(0)}
+                    </Text>
+                  );
+                })()}
               </View>
               <Text style={[styles.sidebarWelcomeTitle, { color: themeColors.text }]}>¡Bienvenido a EcoRAEE!</Text>
               <Text style={[styles.sidebarUserName, { color: themeColors.text }]}>{user?.Nombres_Usuarios} {user?.Apellidos_Usuarios}</Text>
               <Text style={[styles.sidebarUserType, { color: themeColors.textSecondary }]}>Ciudadano EcoRAEE</Text>
               <Text style={[styles.sidebarPointsText, { color: themeColors.text }]}>
-                Puntos: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{user?.Puntos_Usuarios || 0}</Text>
+                Puntos: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{statistics?.currentPoints || 0}</Text>
               </Text>
             </View>
 
@@ -323,6 +414,10 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
             {renderSidebarItem('Inicio', 'home-outline', undefined, () => {
               setSidebarVisible(false);
               handleActionPress('home');
+            })}
+            {renderSidebarItem('Escanear QR', 'qr-code-outline', '#4CAF50', () => {
+              setSidebarVisible(false);
+              handleActionPress('scanqr');
             })}
             {renderSidebarItem('Tienda de Canjes', 'cart-outline', '#FF9800', () => {
               setSidebarVisible(false);

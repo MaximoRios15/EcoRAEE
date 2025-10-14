@@ -1,13 +1,128 @@
-# Ignorar dependencias y artefactos de Expo/React Native
+# ===================================
+# DEPENDENCIAS Y MÓDULOS DE NODE.JS
+# ===================================
+# Directorio principal de dependencias
 node_modules/
+# Archivos de bloqueo de dependencias (opcional, algunos equipos los incluyen)
+# package-lock.json
+# yarn.lock
+
+# ===================================
+# EXPO Y REACT NATIVE
+# ===================================
+# Directorio de configuración y cache de Expo
 .expo/
 .expo-shared/
+# Archivos temporales de Expo
+.expo-shared/
+expo-env.d.ts
+# Archivos de configuración local de Expo
+.expo/settings.json
+.expo/packager-info.json
+.expo/README.md
+# Cache de Metro bundler
+.metro-health-check*
+# Archivos de desarrollo de React Native
+.react-native/
 
-# Logs
+# ===================================
+# LOGS Y ARCHIVOS DE DEBUG
+# ===================================
+# Logs de npm
 npm-debug.log*
+npm-error.log*
+# Logs de yarn
+yarn-debug.log*
 yarn-error.log*
+# Logs de pnpm
+pnpm-debug.log*
+# Logs generales
+*.log
+lerna-debug.log*
 
-# Salidas de build (si aparecieran)
+# ===================================
+# ARCHIVOS DE BUILD Y DISTRIBUCIÓN
+# ===================================
+# Directorios de build
 dist/
 build/
 coverage/
+# Archivos de bundle
+*.bundle.*
+*.bundle.js
+*.bundle.map
+# Archivos de sourcemap
+*.map
+
+# ===================================
+# ARCHIVOS TEMPORALES Y CACHE
+# ===================================
+# Cache de npm
+.npm
+# Cache de yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+# Cache de ESLint
+.eslintcache
+# Cache de Prettier
+.prettiercache
+# Archivos temporales del sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ===================================
+# ARCHIVOS DE CONFIGURACIÓN LOCAL
+# ===================================
+# Variables de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Configuración local de VS Code
+.vscode/
+# Configuración de IDEs
+.idea/
+*.swp
+*.swo
+*~
+
+# ===================================
+# ARCHIVOS DE DESARROLLO MÓVIL
+# ===================================
+# Android
+android/app/build/
+android/.gradle/
+android/gradle/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+*.keystore
+# iOS
+ios/build/
+ios/Pods/
+ios/*.xcworkspace
+ios/*.xcuserdata
+# Archivos de simulador
+*.app.dSYM.zip
+*.app.dSYM
+
+# ===================================
+# OTROS ARCHIVOS A IGNORAR
+# ===================================
+# Archivos de respaldo
+*.bak
+*.backup
+*.tmp
+# Archivos comprimidos
+*.zip
+*.tar.gz
+*.rar

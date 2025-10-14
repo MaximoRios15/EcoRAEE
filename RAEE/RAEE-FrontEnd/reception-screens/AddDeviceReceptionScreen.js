@@ -207,15 +207,6 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
       case 'profile':
         navigation.navigate('ProfileReceptionScreen');
         break;
-      case 'exchange':
-        navigation.navigate('ExchangeShopReceptionScreen');
-        break;
-      case 'donate':
-        navigation.navigate('DonationReceptionScreen');
-        break;
-      case 'shop':
-        navigation.navigate('ExchangeShopReceptionScreen');
-        break;
       default:
         break;
     }
@@ -477,14 +468,6 @@ const renderSidebarItem = (title, iconName, color, onPress) => (
 {renderSidebarItem('Inicio', 'home-outline', '#4CAF50', () => {
   setSidebarVisible(false);
   handleActionPress('home');
-})}
-{renderSidebarItem('Añadir Dispositivos', 'phone-portrait-outline', '#4CAF50', () => {
-  setSidebarVisible(false);
-  handleActionPress('donate');
-})}
-{renderSidebarItem('Tienda de Canjes', 'cart-outline', '#FF9800', () => {
-  setSidebarVisible(false);
-  handleActionPress('shop');
 })}
 {renderSidebarItem('Mi Perfil', 'person-outline', '#2196F3', () => {
   setSidebarVisible(false);

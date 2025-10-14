@@ -18,33 +18,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../contexts/AuthContext';
+import ApiService from '../services/ApiService';
 
 
 const { width: screenWidth } = Dimensions.get('window');
 
 export default function ProfileScreen({ navigation }) {
-  // Datos simulados del usuario
-  const user = {
-    idUsuarios: 1,
-    Nombres_Usuarios: 'Juan',
-    Apellidos_Usuarios: 'Pérez',
-    Correo_Usuarios: 'juan.perez@email.com',
-    Puntos_Usuarios: 250,
-    ImagenPerfil_Usuarios: 'perfil1animal.png'
-  };
-  
-  // Funciones simuladas
-  const signOut = () => {
-    Alert.alert('Cerrar sesión', '¿Estás seguro de que quieres cerrar sesión?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Cerrar sesión', onPress: () => navigation.navigate('Login') }
-    ]);
-  };
-  
-  const refreshProfile = async () => {
-    // Simulación de actualización del perfil
-    await new Promise(resolve => setTimeout(resolve, 500));
-  };
+  // Datos reales desde AuthContext
+  const { user, signOut, refreshProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -128,6 +110,32 @@ export default function ProfileScreen({ navigation }) {
     overlay: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)',
   };
 
+  // Etiqueta de rol dinámica según datos del usuario
+  const getRoleLabel = (userObj) => {
+    try {
+      // Si viene texto explícito desde backend
+      const type = userObj?.TipoUsuario_Usuarios;
+      if (typeof type === 'string' && type.trim()) {
+        return type.trim();
+      }
+
+      // Mapear valores numéricos de Roles_Usuarios
+      const role = userObj?.Roles_Usuarios;
+      switch (role) {
+        case 0:
+          return 'Ciudadano';
+        case 1:
+          return 'Recepción';
+        case 2:
+          return 'Administrador';
+        default:
+          return 'Ciudadano';
+      }
+    } catch (e) {
+      return 'Ciudadano';
+    }
+  };
+
   // Cargar imagen de perfil cuando el usuario esté disponible
   useEffect(() => {
     if (user && user.idUsuarios && !isLoadingImageRef.current && !loadedImageRef.current) {
@@ -194,7 +202,8 @@ export default function ProfileScreen({ navigation }) {
       }
 
       // Si no hay imagen personalizada del usuario actual, cargar imagen de la base de datos
-      if (user?.ImagenPerfil_Usuarios) {
+      const filename = user?.ImagenPerfil_Usuarios || user?.imagenPerfil_Usuarios;
+      if (filename) {
         const imageMap = {
           'perfil1animal.png': require('../img/profile/perfil1animal.png'),
           'perfil1flores.png': require('../img/profile/perfil1flores.png'),
@@ -207,12 +216,18 @@ export default function ProfileScreen({ navigation }) {
           'perfil5animal.png': require('../img/profile/perfil5animal.png'),
           'perfil5flores.png': require('../img/profile/perfil5flores.png')
         };
-
-        const imageSource = imageMap[user.ImagenPerfil_Usuarios];
+        const normalized = typeof filename === 'string' 
+          ? filename.replace(/^\/?(?:img\/)?profile\//i, '') 
+          : filename;
+        const imageSource = imageMap[normalized];
         if (imageSource) {
           setProfileImage(imageSource);
+        } else if (typeof filename === 'string' && (filename.startsWith('http://') || filename.startsWith('https://'))) {
+          // Si viene una URL completa desde el backend
+          setProfileImage({ uri: filename });
         } else {
-          setProfileImage(null);
+          // Fallback: construir URL pública del backend para imágenes
+          setProfileImage({ uri: ApiService.getImageUrl(normalized) });
         }
         loadedImageRef.current = true;
       } else {
@@ -318,9 +333,7 @@ export default function ProfileScreen({ navigation }) {
 
   const loadUserPoints = async () => {
     try {
-      // Simulando carga de puntos del usuario
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setUserPoints(user.Puntos_Usuarios || 250);
+      setUserPoints(user?.Puntos_Usuarios || 0);
     } catch (error) {
       setUserPoints(0);
     }
@@ -328,9 +341,19 @@ export default function ProfileScreen({ navigation }) {
 
   const loadUserPublicationsCount = async () => {
     try {
-      // Simulando carga del contador de publicaciones
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setUserPublicationsCount(3); // Número simulado de publicaciones
+      // Cargar contador real de donaciones desde el backend
+      if (!user?.idUsuarios) {
+        setUserPublicationsCount(0);
+        return;
+      }
+      const stats = await ApiService.getUserStatistics(user.idUsuarios);
+      const total = 
+        stats?.statistics?.totalDonations ??
+        stats?.statistics?.total_donations ??
+        stats?.totalDonations ??
+        stats?.total_donations ??
+        stats?.donations ?? 0;
+      setUserPublicationsCount(Number.isFinite(total) ? total : 0);
     } catch (error) {
       setUserPublicationsCount(0);
     }
@@ -349,6 +372,9 @@ export default function ProfileScreen({ navigation }) {
 
   const handleActionPress = (action) => {
     switch (action) {
+      case 'scanqr':
+        navigation.navigate('ScanQRCitizenScreen');
+        break;
       case 'verify_email':
         Alert.alert('Próximamente', 'La verificación de correo estará disponible pronto');
         break;
@@ -478,17 +504,19 @@ export default function ProfileScreen({ navigation }) {
     setIsLoading(true);
 
     try {
-      // Simular actualización del perfil
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Simular actualización exitosa
-      Alert.alert('Éxito', 'Nombre actualizado correctamente');
-      
-      // Simular actualización del perfil del usuario
-      user.Nombres_Usuarios = editName.nombre.trim();
-      user.Apellidos_Usuarios = editName.apellido.trim();
-      
-      setShowEditNameModal(false);
+      // Guardar cambios del nombre en backend
+      const updateResponse = await ApiService.updateProfile({
+        Nombres_Usuarios: editName.nombre.trim(),
+        Apellidos_Usuarios: editName.apellido.trim(),
+      });
+
+      if (updateResponse?.success) {
+        Alert.alert('Éxito', 'Nombre actualizado correctamente');
+        await refreshProfile();
+        setShowEditNameModal(false);
+      } else {
+        Alert.alert('Error', updateResponse?.message || 'No se pudo actualizar el nombre');
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
       Alert.alert('Error', 'Error de conexión. Verifica tu conexión a internet.');
@@ -538,7 +566,7 @@ export default function ProfileScreen({ navigation }) {
               <Text style={[styles.sidebarWelcomeTitle, { color: themeColors.text }]}>¡Bienvenido a EcoRAEE!</Text>
               <Text style={[styles.sidebarUserName, { color: themeColors.text }]}>{user?.Nombres_Usuarios} {user?.Apellidos_Usuarios}</Text>
               <Text style={[styles.sidebarUserType, { color: themeColors.textSecondary }]}>
-                Recepción EcoRAEE
+                {getRoleLabel(user)} EcoRAEE
               </Text>
               <Text style={[styles.sidebarPointsText, { color: themeColors.text }]}>
                 Puntos: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{userPoints}</Text>
@@ -550,6 +578,10 @@ export default function ProfileScreen({ navigation }) {
               {renderSidebarItem('Inicio', 'home-outline', undefined, () => {
                 setSidebarVisible(false);
                 handleActionPress('home');
+              })}
+              {renderSidebarItem('Escanear QR', 'qr-code-outline', '#4CAF50', () => {
+                setSidebarVisible(false);
+                handleActionPress('scanqr');
               })}
               {renderSidebarItem('Tienda de Canjes', 'cart-outline', '#FF9800', () => {
                 setSidebarVisible(false);
@@ -645,7 +677,7 @@ export default function ProfileScreen({ navigation }) {
                 </View>
                 <Text style={[styles.userEmail, { color: themeColors.textSecondary }]}>{user?.Email_Usuarios}</Text>
                 <Text style={[styles.userType, { color: themeColors.textSecondary }]}>
-                  Recepción
+                  {getRoleLabel(user)}
                 </Text>
               </View>
             </View>

@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
+import ApiService from '../services/ApiService';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -30,63 +31,22 @@ export default function ProfileScreen({ navigation }) {
   const [editName, setEditName] = useState({ nombre: '', apellido: '' });
   const [lastImageChange, setLastImageChange] = useState(null);
   const [isImageChangeBlocked, setIsImageChangeBlocked] = useState(false);
+  const [cooldownEndTime, setCooldownEndTime] = useState(null);
   const [userPoints, setUserPoints] = useState(0);
   const [userPublicationsCount, setUserPublicationsCount] = useState(0);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const isLoadingImageRef = useRef(false);
   const loadedImageRef = useRef(false);
-  const { signOut } = useAuth();
+  const { user, signOut, refreshProfile } = useAuth();
 
-  // Mock user data for demonstration
-  const user = {
-    idUsuarios: 1,
-    Nombres_Usuarios: 'Usuario',
-    Apellidos_Usuarios: 'Demo',
-    Email_Usuarios: 'usuario@demo.com',
-    TipoUsuario_Usuarios: 'Recepcionista',
-    ImagenPerfil_Usuarios: 'perfil1animal.png'
-  };
-
-  // Logout provisto por AuthContext via useAuth()
-
-  const refreshProfile = async () => {
-    // Mock refresh profile function
-    console.log('Refreshing profile...');
-  };
-
-  // Imágenes disponibles en la carpeta img
-  const availableImages = [
-    { id: 1, name: 'perfil1animal.png', source: require('../img/profile/perfil1animal.png') },
-    { id: 2, name: 'perfil1flores.png', source: require('../img/profile/perfil1flores.png') },
-    { id: 3, name: 'perfil2animal.png', source: require('../img/profile/perfil2animal.png') },
-    { id: 4, name: 'perfil2flores.png', source: require('../img/profile/perfil2flores.png') },
-    { id: 5, name: 'perfil3animal.png', source: require('../img/profile/perfil3animal.png') },
-    { id: 6, name: 'perfil3flores.png', source: require('../img/profile/perfil3flores.png') },
-    { id: 7, name: 'perfil4animal.png', source: require('../img/profile/perfil4animal.png') },
-    { id: 8, name: 'perfil4flores.png', source: require('../img/profile/perfil4flores.png') },
-    { id: 9, name: 'perfil5animal.png', source: require('../img/profile/perfil5animal.png') },
-    { id: 10, name: 'perfil5flores.png', source: require('../img/profile/perfil5flores.png') },
-  ];
-
-  useEffect(() => {
-    // Cargar perfil del usuario al entrar
-    // loadUserProfile(); // Removed backend call
-    // Cargar estado del cooldown
-    loadCooldownState();
-    // Cargar puntos del usuario
-    loadUserPoints();
-    // Cargar contador de publicaciones
-    loadUserPublicationsCount();
-    // Cargar preferencia del tema
-    loadThemePreference();
-  }, []);
+  // User data from AuthContext
 
   // Cargar preferencia del tema desde AsyncStorage
   const loadThemePreference = async () => {
     try {
       const savedTheme = await AsyncStorage.getItem('theme_mode');
-      if (savedTheme !== null) {
+      if (savedTheme) {
         setIsDarkMode(savedTheme === 'dark');
       }
     } catch (error) {
@@ -123,6 +83,55 @@ export default function ProfileScreen({ navigation }) {
     sidebar: isDarkMode ? '#16213E' : '#F8F9FA',
     overlay: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)',
   };
+
+  // Etiqueta de rol dinámica según datos del usuario
+  const getRoleLabel = (userObj) => {
+    try {
+      // Si viene texto explícito desde backend
+      const type = userObj?.TipoUsuario_Usuarios;
+      if (typeof type === 'string' && type.trim()) {
+        return type.trim();
+      }
+
+      // Si viene ID numérico, mapear a texto
+      const roleId = userObj?.Roles_Usuarios;
+      if (roleId === 1 || roleId === '1') return 'Ciudadano';
+      if (roleId === 2 || roleId === '2') return 'Recepcionista';
+      if (roleId === 3 || roleId === '3') return 'Administrador';
+
+      // Fallback
+      return 'Usuario';
+    } catch (error) {
+      return 'Usuario';
+    }
+  };
+
+  // Imágenes disponibles en la carpeta img
+  const availableImages = [
+    { id: 1, name: 'perfil1animal.png', source: require('../img/profile/perfil1animal.png') },
+    { id: 2, name: 'perfil1flores.png', source: require('../img/profile/perfil1flores.png') },
+    { id: 3, name: 'perfil2animal.png', source: require('../img/profile/perfil2animal.png') },
+    { id: 4, name: 'perfil2flores.png', source: require('../img/profile/perfil2flores.png') },
+    { id: 5, name: 'perfil3animal.png', source: require('../img/profile/perfil3animal.png') },
+    { id: 6, name: 'perfil3flores.png', source: require('../img/profile/perfil3flores.png') },
+    { id: 7, name: 'perfil4animal.png', source: require('../img/profile/perfil4animal.png') },
+    { id: 8, name: 'perfil4flores.png', source: require('../img/profile/perfil4flores.png') },
+    { id: 9, name: 'perfil5animal.png', source: require('../img/profile/perfil5animal.png') },
+    { id: 10, name: 'perfil5flores.png', source: require('../img/profile/perfil5flores.png') },
+  ];
+
+  useEffect(() => {
+    // Cargar perfil del usuario al entrar
+    // loadUserProfile(); // Removed backend call
+    // Cargar estado del cooldown
+    loadCooldownState();
+    // Cargar puntos del usuario
+    loadUserPoints();
+    // Cargar contador de publicaciones
+    loadUserPublicationsCount();
+    // Cargar preferencia del tema
+    loadThemePreference();
+  }, []);
 
   // Cargar imagen de perfil cuando el usuario esté disponible
   useEffect(() => {
@@ -201,7 +210,18 @@ export default function ProfileScreen({ navigation }) {
           'perfil4animal.png': require('../img/profile/perfil4animal.png'),
           'perfil4flores.png': require('../img/profile/perfil4flores.png'),
           'perfil5animal.png': require('../img/profile/perfil5animal.png'),
-          'perfil5flores.png': require('../img/profile/perfil5flores.png')
+          'perfil5flores.png': require('../img/profile/perfil5flores.png'),
+          // Mapeo para rutas con prefijo 'profile/'
+          'profile/perfil1animal.png': require('../img/profile/perfil1animal.png'),
+          'profile/perfil1flores.png': require('../img/profile/perfil1flores.png'),
+          'profile/perfil2animal.png': require('../img/profile/perfil2animal.png'),
+          'profile/perfil2flores.png': require('../img/profile/perfil2flores.png'),
+          'profile/perfil3animal.png': require('../img/profile/perfil3animal.png'),
+          'profile/perfil3flores.png': require('../img/profile/perfil3flores.png'),
+          'profile/perfil4animal.png': require('../img/profile/perfil4animal.png'),
+          'profile/perfil4flores.png': require('../img/profile/perfil4flores.png'),
+          'profile/perfil5animal.png': require('../img/profile/perfil5animal.png'),
+          'profile/perfil5flores.png': require('../img/profile/perfil5flores.png')
         };
 
         const imageSource = imageMap[user.ImagenPerfil_Usuarios];
@@ -304,8 +324,7 @@ export default function ProfileScreen({ navigation }) {
   const loadUserProfile = async () => {
     setIsLoading(true);
     try {
-      // Mock profile loading
-      console.log('Loading user profile...');
+      await refreshProfile();
     } catch (error) {
       // Silenciar errores de perfil
     } finally {
@@ -315,27 +334,27 @@ export default function ProfileScreen({ navigation }) {
 
   const loadUserPoints = async () => {
     try {
-      if (!user || !user.idUsuarios) {
-        return;
-      }
-
-      // Mock points data
-      setUserPoints(150);
+      setUserPoints(user?.Puntos_Usuarios || 0);
     } catch (error) {
-      // Silenciar errores de puntos
       setUserPoints(0);
     }
   };
 
   const loadUserPublicationsCount = async () => {
     try {
-      if (!user || !user.idUsuarios) {
+      // Cargar contador real de donaciones desde el backend
+      if (!user?.idUsuarios) {
         setUserPublicationsCount(0);
         return;
       }
-
-      // Mock publications count
-      setUserPublicationsCount(5);
+      const stats = await ApiService.getUserStatistics(user.idUsuarios);
+      const total = 
+        stats?.statistics?.totalDonations ??
+        stats?.statistics?.total_donations ??
+        stats?.totalDonations ??
+        stats?.total_donations ??
+        stats?.donations ?? 0;
+      setUserPublicationsCount(Number.isFinite(total) ? total : 0);
     } catch (error) {
       setUserPublicationsCount(0);
     }
@@ -354,6 +373,12 @@ export default function ProfileScreen({ navigation }) {
 
   const handleActionPress = (action) => {
     switch (action) {
+      case 'home':
+        navigation.navigate('ReceptionHomeScreen');
+        break;
+      case 'add_device':
+        navigation.navigate('AddDeviceReceptionScreen');
+        break;
       case 'verify_email':
         Alert.alert('Próximamente', 'La verificación de correo estará disponible pronto');
         break;
@@ -362,17 +387,6 @@ export default function ProfileScreen({ navigation }) {
         break;
       case 'change_password':
         Alert.alert('Próximamente', 'El cambio de contraseña estará disponible pronto');
-        break;
-      case 'home':
-        navigation.navigate('ReceptionHomeScreen');
-        break;
-      case 'donate':
-      case 'donation':
-        navigation.navigate('DonationReceptionScreen');
-        break;
-      case 'shop':
-      case 'exchange':
-        navigation.navigate('ExchangeShopReceptionScreen');
         break;
       default:
         break;
@@ -433,9 +447,16 @@ export default function ProfileScreen({ navigation }) {
       // Reset de los refs para permitir recarga
       loadedImageRef.current = false;
       
-      // Mock save image to database
-      console.log('Saving image to database:', image.name);
-      await refreshProfile();
+      // Guardar imagen en la base de datos usando ApiService
+      try {
+        await ApiService.updateProfile({
+          Imagen_Usuarios: image.source
+        });
+        await refreshProfile();
+      } catch (error) {
+        console.error('Error updating profile image:', error);
+        throw error; // Re-throw para que sea manejado por el catch externo
+      }
       
       // Guardar timestamp del cambio y activar cooldown (específico por usuario)
       setLastImageChange(now);
@@ -475,8 +496,8 @@ export default function ProfileScreen({ navigation }) {
     setIsLoading(true);
 
     try {
-      // Mock update user profile
-      console.log('Updating user profile:', {
+      // Actualizar perfil usando ApiService
+      await ApiService.updateProfile({
         Nombres_Usuarios: editName.nombre.trim(),
         Apellidos_Usuarios: editName.apellido.trim(),
       });
@@ -536,7 +557,7 @@ export default function ProfileScreen({ navigation }) {
                 Recepción EcoRAEE
               </Text>
               <Text style={[styles.sidebarPointsText, { color: themeColors.text }]}>
-                Puntos: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{userPoints}</Text>
+                Donaciones: <Text style={[styles.sidebarPointsValue, { color: themeColors.primary }]}>{userPublicationsCount}</Text>
               </Text>
             </View>
 
@@ -547,14 +568,9 @@ export default function ProfileScreen({ navigation }) {
                 handleActionPress('home');
               })}
 
-{renderSidebarItem('Añadir Dispositivos', 'phone-portrait-outline', '#4CAF50', () => {
-  setSidebarVisible(false);
-  handleActionPress('donate');
-})}
-
-              {renderSidebarItem('Tienda de Canjes', 'cart-outline', '#FF9800', () => {
+              {renderSidebarItem('Añadir Dispositivos', 'add-circle-outline', '#FF9800', () => {
                 setSidebarVisible(false);
-                handleActionPress('shop');
+                handleActionPress('add_device');
               })}
 
               {renderSidebarItem(
@@ -659,11 +675,6 @@ export default function ProfileScreen({ navigation }) {
             )}
             
             <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: themeColors.primary }]}>{userPoints}</Text>
-                <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Puntos Totales</Text>
-              </View>
-              <View style={[styles.statDivider, { backgroundColor: themeColors.border }]} />
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: themeColors.primary }]}>{userPublicationsCount}</Text>
                 <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Donaciones</Text>
