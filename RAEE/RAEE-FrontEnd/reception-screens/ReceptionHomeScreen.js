@@ -399,7 +399,6 @@ export default function HomeScreen({ navigation }) {
     console.log(`[FUNCTION] EL USUARIO INICIO LA CARGA DEL PERFIL - ${time} ${date}`);
     
     setIsLoading(true);
-    console.log('[PROFILE] Simulando carga del perfil...');
     
     // Reset de las referencias de imagen para permitir recarga
     isLoadingImageRef.current = false;
@@ -475,7 +474,7 @@ export default function HomeScreen({ navigation }) {
         break;
       case 'add_device':
         console.log(`[BUTTON] EL USUARIO APRETO EL BOTON AÑADIR DISPOSITIVOS - ${time} ${date}`);
-        navigation.navigate('AddDeviceReceptionScreen');
+        navigation.navigate('DeviceUploadSelectionScreen');
         break;
       case 'verify_email':
         console.log(`[BUTTON] EL USUARIO APRETO EL BOTON VERIFICAR CORREO - ${time} ${date}`);

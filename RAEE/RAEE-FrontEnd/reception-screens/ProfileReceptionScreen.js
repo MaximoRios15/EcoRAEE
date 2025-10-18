@@ -377,7 +377,7 @@ export default function ProfileScreen({ navigation }) {
         navigation.navigate('ReceptionHomeScreen');
         break;
       case 'add_device':
-        navigation.navigate('AddDeviceReceptionScreen');
+        navigation.navigate('DeviceUploadSelectionScreen');
         break;
       case 'verify_email':
         Alert.alert('Próximamente', 'La verificación de correo estará disponible pronto');

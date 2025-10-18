@@ -23,7 +23,9 @@ import ScanQRCitizenScreen from './citizen-screens/ScanQRCitizen';
 
 // Import reception screens
 import ReceptionHomeScreen from './reception-screens/ReceptionHomeScreen';
-import AddDeviceReceptionScreen from './reception-screens/AddDeviceReceptionScreen';
+import DeviceUploadSelectionScreen from './reception-screens/DeviceUploadSelectionScreen';
+import SingleDeviceReceptionScreen from './reception-screens/SingleDeviceReceptionScreen';
+import MultipleDeviceReceptionScreen from './reception-screens/MultipleDeviceReceptionScreen';
 import ProfileReceptionScreen from './reception-screens/ProfileReceptionScreen';
 
 // Import admin screens
@@ -135,7 +137,9 @@ function AppNavigator() {
             
             {/* Reception screens */}
             <Stack.Screen name="ReceptionHomeScreen" component={ReceptionHomeScreen} />
-            <Stack.Screen name="AddDeviceReceptionScreen" component={AddDeviceReceptionScreen} />
+            <Stack.Screen name="DeviceUploadSelectionScreen" component={DeviceUploadSelectionScreen} />
+            <Stack.Screen name="SingleDeviceScreen" component={SingleDeviceReceptionScreen} />
+            <Stack.Screen name="MultipleDeviceScreen" component={MultipleDeviceReceptionScreen} />
             <Stack.Screen name="ProfileReceptionScreen" component={ProfileReceptionScreen} />
             
             {/* Admin screens */}

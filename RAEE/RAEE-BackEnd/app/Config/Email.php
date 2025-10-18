@@ -7,7 +7,7 @@ use CodeIgniter\Config\BaseConfig;
 class Email extends BaseConfig
 {
     public string $fromEmail  = '';
-    public string $fromName   = '';
+    public string $fromName   = 'EcoRAEE';
     public string $recipients = '';
 
     /**
@@ -18,7 +18,7 @@ class Email extends BaseConfig
     /**
      * The mail sending protocol: mail, sendmail, smtp
      */
-    public string $protocol = 'mail';
+    public string $protocol = 'smtp';
 
     /**
      * The server path to Sendmail.
@@ -28,7 +28,7 @@ class Email extends BaseConfig
     /**
      * SMTP Server Hostname
      */
-    public string $SMTPHost = '';
+    public string $SMTPHost = 'smtp.office365.com';
 
     /**
      * SMTP Username
@@ -43,7 +43,7 @@ class Email extends BaseConfig
     /**
      * SMTP Port
      */
-    public int $SMTPPort = 25;
+    public int $SMTPPort = 587;
 
     /**
      * SMTP Timeout (in seconds)
@@ -118,4 +118,20 @@ class Email extends BaseConfig
      * Enable notify message from server
      */
     public bool $DSN = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+        // Override from environment when available (works with .env)
+        $this->fromEmail  = getenv('email.fromEmail') ?: $this->fromEmail;
+        $this->fromName   = getenv('email.fromName') ?: $this->fromName;
+        $this->protocol   = getenv('email.protocol') ?: $this->protocol;
+        $this->SMTPHost   = getenv('email.SMTPHost') ?: $this->SMTPHost;
+        $this->SMTPPort   = getenv('email.SMTPPort') ? (int) getenv('email.SMTPPort') : $this->SMTPPort;
+        $this->SMTPCrypto = getenv('email.SMTPCrypto') ?: $this->SMTPCrypto;
+        $this->SMTPUser   = getenv('email.SMTPUser') ?: $this->SMTPUser;
+        $this->SMTPPass   = getenv('email.SMTPPass') ?: $this->SMTPPass;
+        $this->mailType   = getenv('email.mailType') ?: $this->mailType;
+        $this->charset    = getenv('email.charset') ?: $this->charset;
+    }
 }

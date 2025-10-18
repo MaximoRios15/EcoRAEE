@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 class ApiService {
   constructor() {
     // URL base del backend CodeIgniter 4
-    this.baseURL = 'http://192.168.0.12/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
+    this.baseURL = 'http://192.168.158.172/EcoRAEE/RAEE/RAEE-BackEnd/public/api';
   }
 
   // Configurar headers por defecto
@@ -138,6 +138,14 @@ class ApiService {
   // Obtener estadísticas del usuario
   async getUserStatistics(userId) {
     return await this.makeRequest(`user/statistics?user_id=${userId}`, 'GET');
+  }
+
+  // Buscar usuario por DNI (para recepción)
+  async searchUserByDni(dni) {
+    if (!dni) {
+      throw new Error('DNI es requerido para la búsqueda');
+    }
+    return await this.makeRequest(`user/search-by-dni?dni=${dni}`, 'GET');
   }
 
   // Obtener ubicaciones de recolección
@@ -426,7 +434,28 @@ class ApiService {
 
   // Obtener todas las categorías de equipos
   async getCategories() {
-    return await this.makeRequest('categories', 'GET', null, false);
+    try {
+      const response = await this.makeRequest('categories', 'GET', null, false);
+      
+      // Transformar la respuesta del backend a la estructura esperada por el frontend
+      if (response && response.categories) {
+        return {
+          success: true,
+          data: response.categories,
+          message: response.message || 'Categorías obtenidas exitosamente'
+        };
+      }
+      
+      // Si la respuesta ya tiene la estructura correcta, devolverla tal como está
+      return response;
+    } catch (error) {
+      console.error('Error in getCategories:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.message || 'Error al obtener las categorías'
+      };
+    }
   }
 
   // Crear nueva categoría
@@ -446,12 +475,54 @@ class ApiService {
 
   // Obtener todos los estados de equipos
   async getStates() {
-    return await this.makeRequest('states', 'GET', null, false);
+    try {
+      const response = await this.makeRequest('states', 'GET', null, false);
+      
+      // Transformar la respuesta del backend a la estructura esperada por el frontend
+      if (response && response.states) {
+        return {
+          success: true,
+          data: response.states,
+          message: response.message || 'Estados obtenidos exitosamente'
+        };
+      }
+      
+      // Si la respuesta ya tiene la estructura correcta, devolverla tal como está
+      return response;
+    } catch (error) {
+      console.error('Error in getStates:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.message || 'Error al obtener los estados'
+      };
+    }
   }
 
   // Obtener todas las marcas de equipos
   async getBrands() {
-    return await this.makeRequest('brands', 'GET', null, false);
+    try {
+      const response = await this.makeRequest('brands', 'GET', null, false);
+      
+      // Transformar la respuesta del backend a la estructura esperada por el frontend
+      if (response && response.brands) {
+        return {
+          success: true,
+          data: response.brands,
+          message: response.message || 'Marcas obtenidas exitosamente'
+        };
+      }
+      
+      // Si la respuesta ya tiene la estructura correcta, devolverla tal como está
+      return response;
+    } catch (error) {
+      console.error('Error in getBrands:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.message || 'Error al obtener las marcas'
+      };
+    }
   }
 
   // Crear nuevo estado
